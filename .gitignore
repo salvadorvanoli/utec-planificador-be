@@ -1,0 +1,27 @@
+# Información sobre .gitignore https://docs.github.com/get-started/git-basics/ignoring-files
+
+# Build
+target/
+build/
+.gradle/
+
+# IDEs
+.idea/
+.vscode/
+.settings/
+
+# Java
+*.class
+*.jar
+*.war
+
+# Logs
+*.log
+
+# Configuración
+application-*.properties
+.env*
+
+# Sistema
+.DS_Store
+Thumbs.db
