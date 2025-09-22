@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: planificador
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/planificador}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:1234}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mvc:
+    cors:
+      allowed-origins: http://localhost:4200,http://127.0.0.1:4200
+      allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD
+      allowed-headers: "*"
+      allow-credentials: true
+      max-age: 3600
