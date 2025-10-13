@@ -11,5 +11,4 @@ import lombok.EqualsAndHashCode;
 @Table(name = "Analyst")
 public class Analyst extends Position {
 
-    // Campos específicos para Analista se agregarán más adelante
 }

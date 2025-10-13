@@ -11,5 +11,4 @@ import lombok.EqualsAndHashCode;
 @Table(name = "Teacher")
 public class Teacher extends Position {
 
-    // Campos específicos para Docente se agregarán más adelante
 }

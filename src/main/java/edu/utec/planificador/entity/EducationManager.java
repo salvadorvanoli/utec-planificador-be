@@ -11,5 +11,4 @@ import lombok.EqualsAndHashCode;
 @Table(name = "EducationManager")
 public class EducationManager extends Position {
 
-    // Campos específicos para ResponsableEducacion se agregarán más adelante
 }

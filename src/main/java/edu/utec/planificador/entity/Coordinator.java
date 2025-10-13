@@ -11,5 +11,4 @@ import lombok.EqualsAndHashCode;
 @Table(name = "Coordinator")
 public class Coordinator extends Position {
 
-    // Campos específicos para Coordinador se agregarán más adelante
 }
