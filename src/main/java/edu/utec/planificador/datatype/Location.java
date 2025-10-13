@@ -1,4 +1,4 @@
-package edu.utec.planificador.valueobject;
+package edu.utec.planificador.datatype;
 
 import jakarta.persistence.Embeddable;
 import lombok.Data;

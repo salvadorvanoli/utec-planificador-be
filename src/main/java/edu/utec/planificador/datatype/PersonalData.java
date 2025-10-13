@@ -1,4 +1,4 @@
-package edu.utec.planificador.valueobject;
+package edu.utec.planificador.datatype;
 
 import edu.utec.planificador.util.Constants;
 import jakarta.persistence.Column;
