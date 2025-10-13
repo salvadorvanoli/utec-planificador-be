@@ -1,7 +1,7 @@
 package edu.utec.planificador.entity;
 
+import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.util.Constants;
-import edu.utec.planificador.valueobject.PersonalData;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
