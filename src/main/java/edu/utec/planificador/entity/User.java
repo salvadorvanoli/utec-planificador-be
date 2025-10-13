@@ -1,0 +1,38 @@
+package edu.utec.planificador.entity;
+
+import edu.utec.planificador.util.Constants;
+import edu.utec.planificador.valueobject.PersonalData;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+@Entity
+@Table(name = "User")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @Column(unique = true, nullable = false, length = Constants.MAX_EMAIL_LENGTH)
+    @Size(max = Constants.MAX_EMAIL_LENGTH, message = "El correo electrónico no es válido (máximo " + Constants.MAX_EMAIL_LENGTH + " caracteres)")
+    @Pattern(regexp = Constants.EMAIL_REGEX, message = "El correo debe tener el formato nombre.apellido@utec.edu.uy")
+    private String utecEmail;
+
+    @Column(nullable = false, length = Constants.MAX_PASSWORD_LENGTH)
+    @Size(min = Constants.MIN_PASSWORD_LENGTH, max = Constants.MAX_PASSWORD_LENGTH, message = "La contraseña debe tener entre " + Constants.MIN_PASSWORD_LENGTH + " y " + Constants.MAX_PASSWORD_LENGTH + " caracteres")
+    private String password;
+
+    @Embedded
+    @Valid
+    private PersonalData personalData;
+}
