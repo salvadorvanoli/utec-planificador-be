@@ -1,7 +1,7 @@
 package edu.utec.planificador.util;
 
 import edu.utec.planificador.dto.response.EnumResponse;
-import edu.utec.planificador.enumerated.DisplayableEnum;
+import edu.utec.planificador.enumeration.DisplayableEnum;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
