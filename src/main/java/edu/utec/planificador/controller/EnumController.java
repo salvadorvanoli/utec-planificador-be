@@ -2,6 +2,7 @@ package edu.utec.planificador.controller;
 
 import edu.utec.planificador.dto.response.EnumResponse;
 import edu.utec.planificador.service.EnumService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,13 +15,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/enums")
+@RequiredArgsConstructor
 public class EnumController {
 
     private final EnumService enumService;
-
-    public EnumController(EnumService enumService) {
-        this.enumService = enumService;
-    }
 
     @GetMapping("/all")
     public ResponseEntity<Map<String, List<EnumResponse>>> getAllEnums() {
