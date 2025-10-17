@@ -1,4 +1,4 @@
-package edu.utec.planificador.enumerated;
+package edu.utec.planificador.enumeration;
 
 public enum Shift implements DisplayableEnum {
     
