@@ -1,10 +1,3 @@
-# ============================================
-# Spring Boot Configuration - Base
-# ============================================
-# Common configuration shared across all profiles.
-# Profile-specific configs override these values.
-# ============================================
-
 server:
   port: ${SERVER_PORT:8080}
   servlet:
@@ -14,9 +7,6 @@ spring:
   application:
     name: planificador
   
-  # ==========================================
-  # Database Configuration
-  # ==========================================
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/planificador_db}
     username: ${DATABASE_USERNAME:planificador_user}
@@ -29,9 +19,6 @@ spring:
       idle-timeout: ${HIKARI_IDLE_TIMEOUT:600000}
       max-lifetime: ${HIKARI_MAX_LIFETIME:1800000}
   
-  # ==========================================
-  # JPA Configuration (Common settings)
-  # ==========================================
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
@@ -45,9 +32,6 @@ spring:
         order_updates: true
     open-in-view: false
   
-  # ==========================================
-  # CORS Configuration
-  # ==========================================
   mvc:
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
@@ -56,9 +40,6 @@ spring:
       allow-credentials: true
       max-age: 3600
 
-# ==========================================
-# Actuator Configuration (Common)
-# ==========================================
 management:
   endpoints:
     web:

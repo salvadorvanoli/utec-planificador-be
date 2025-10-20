@@ -1,12 +1,4 @@
-# ============================================
-# Spring Boot Configuration - Development
-# ============================================
-# Only override settings that differ from base config.
-# This file is merged with application.yml when profile=dev.
-# ============================================
-
 server:
-  # Error handling - Verbose for development
   error:
     include-message: always
     include-binding-errors: always
@@ -14,9 +6,6 @@ server:
     include-exception: true
 
 spring:
-  # ==========================================
-  # JPA Configuration (Dev overrides)
-  # ==========================================
   jpa:
     show-sql: true
     properties:
@@ -24,9 +13,6 @@ spring:
         format_sql: true
         use_sql_comments: true
   
-  # ==========================================
-  # DevTools Configuration
-  # ==========================================
   devtools:
     restart:
       enabled: true
@@ -34,9 +20,6 @@ spring:
     livereload:
       enabled: true
 
-# ==========================================
-# Logging Configuration
-# ==========================================
 logging:
   level:
     root: INFO
@@ -53,9 +36,6 @@ logging:
     max-size: 10MB
     max-history: 7
 
-# ==========================================
-# Actuator Configuration (Dev overrides)
-# ==========================================
 management:
   endpoints:
     web:
