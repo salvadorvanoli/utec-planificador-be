@@ -12,12 +12,12 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "Position")
+@Table(name = "position")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Position {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
