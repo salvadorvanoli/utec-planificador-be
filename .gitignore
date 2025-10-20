@@ -10,9 +10,15 @@ target/
 
 # Logs
 *.log
+logs/
 
 # Configuración
-.env*
+.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose.override.local.yml
 
 # Sistema
 .DS_Store
