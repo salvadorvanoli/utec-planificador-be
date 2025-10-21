@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "EducationManager")
+@Table(name = "education_manager")
 public class EducationManager extends Position {
 
 }

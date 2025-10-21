@@ -2,19 +2,20 @@ package edu.utec.planificador.entity;
 
 import edu.utec.planificador.datatype.Location;
 import edu.utec.planificador.util.Constants;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -30,16 +31,20 @@ public class Campus {
     private Long id;
 
     @Column(unique = true, nullable = false, length = Constants.MAX_CAMPUS_NAME_LENGTH)
+    @NotBlank(message = "El nombre de la sede es obligatorio")
+    @Size(max = Constants.MAX_CAMPUS_NAME_LENGTH, message = "El nombre de la sede no puede exceder " + Constants.MAX_CAMPUS_NAME_LENGTH + " caracteres")
     private String name;
 
     @Embedded
+    @Valid
     private Location location;
 
-    @OneToMany(mappedBy = "campus", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany
+    @JoinTable(
+        name = "campus_program",
+        joinColumns = @JoinColumn(name = "campus_id"),
+        inverseJoinColumns = @JoinColumn(name = "program_id")
+    )
     @OrderBy("name ASC")
     private List<Program> programs = new ArrayList<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "regional_technical_institute_id", nullable = false)
-    private RegionalTechnicalInstitute regionalTechnicalInstitute;
 }

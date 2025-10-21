@@ -15,7 +15,7 @@ public final class Constants {
     public static final int MAX_COUNTRY_LENGTH = 50;
     public static final int MAX_CITY_LENGTH = 50;
 
-    // Regional Technical Institute constants
+    // Regional Technological Institute constants
     public static final int MAX_RTI_NAME_LENGTH = 150;
 
     // Campus constants
@@ -26,6 +26,11 @@ public final class Constants {
 
     // Curricular Unit constants
     public static final int MAX_CURRICULAR_UNIT_NAME_LENGTH = 200;
+
+    // Location constants
+    public static final int MAX_STATE_LENGTH = 50;
+    public static final int MAX_STREET_LENGTH = 100;
+    public static final int MAX_STREET_NUMBER_LENGTH = 10;
 
     private Constants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");

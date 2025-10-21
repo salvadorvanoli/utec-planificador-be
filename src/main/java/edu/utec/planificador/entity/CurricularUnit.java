@@ -16,6 +16,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.HashSet;
@@ -31,9 +35,13 @@ public class CurricularUnit {
     private Long id;
 
     @Column(nullable = false, length = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH)
+    @NotBlank(message = "El nombre de la unidad curricular es obligatorio")
+    @Size(max = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH, message = "El nombre de la unidad curricular no puede exceder " + Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH + " caracteres")
     private String name;
 
     @Column(nullable = false)
+    @NotNull(message = "Los créditos son obligatorios")
+    @Min(value = 1, message = "Los créditos deben ser al menos 1")
     private Integer credits;
 
     @ElementCollection(targetClass = DomainArea.class, fetch = FetchType.LAZY)
@@ -51,8 +59,4 @@ public class CurricularUnit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "term_id", nullable = false)
     private Term term;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_id", nullable = false)
-    private Program program;
 }

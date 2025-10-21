@@ -7,8 +7,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -22,4 +30,17 @@ public abstract class Position {
 
     @Column(nullable = false)
     private Boolean isActive = true;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToMany
+    @JoinTable(
+        name = "position_campus",
+        joinColumns = @JoinColumn(name = "position_id"),
+        inverseJoinColumns = @JoinColumn(name = "campus_id")
+    )
+    @OrderBy("name ASC")
+    private List<Campus> campuses = new ArrayList<>();
 }
