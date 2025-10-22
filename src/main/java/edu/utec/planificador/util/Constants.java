@@ -32,6 +32,20 @@ public final class Constants {
     public static final int MAX_STREET_LENGTH = 100;
     public static final int MAX_STREET_NUMBER_LENGTH = 10;
 
+    // Course constants
+    public static final int MAX_COURSE_DESCRIPTION_LENGTH = 2000;
+
+    // Activity constants
+    public static final int MAX_ACTIVITY_DESCRIPTION_LENGTH = 1000;
+    public static final int MIN_ACTIVITY_DURATION = 1;
+
+    // Programmatic Content constants
+    public static final int MAX_PROGRAMMATIC_CONTENT_LENGTH = 1000;
+
+    // Weekly Planning constants
+    public static final int MIN_WEEK_NUMBER = 1;
+    public static final int MAX_WEEK_NUMBER = 52;
+
     private Constants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
