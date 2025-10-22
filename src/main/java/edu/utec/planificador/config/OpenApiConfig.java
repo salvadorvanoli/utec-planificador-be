@@ -1,0 +1,71 @@
+package edu.utec.planificador.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Value("${server.servlet.context-path:/api}")
+    private String contextPath;
+
+    @Value("${server.port:8080}")
+    private String serverPort;
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        final String securitySchemeName = "bearerAuth";
+
+        return new OpenAPI()
+                .info(getApiInfo())
+                .servers(getServers())
+                .addSecurityItem(new SecurityRequirement()
+                        .addList(securitySchemeName))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName, getSecurityScheme()));
+    }
+
+    private Info getApiInfo() {
+        return new Info()
+                .title("UTEC Teaching Planner API")
+                .description("REST API for the UTEC Teaching Planner system. " +
+                        "This API allows managing academic plans, courses, teachers, " +
+                        "programmatic contents and educational activities.")
+                .version("1.0.0")
+                .contact(new Contact()
+                        .name("UTEC Development Team")
+                        .email("soporte@utec.edu.uy")
+                        .url("https://utec.edu.uy"))
+                .license(new License()
+                        .name("MIT License")
+                        .url("https://opensource.org/licenses/MIT"));
+    }
+
+    private List<Server> getServers() {
+        Server localServer = new Server()
+                .url("http://localhost:" + serverPort + contextPath)
+                .description("Local development server");
+
+        return List.of(localServer);
+    }
+
+    private SecurityScheme getSecurityScheme() {
+        return new SecurityScheme()
+                .name("bearerAuth")
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Enter the JWT token without the 'Bearer' prefix");
+    }
+}
