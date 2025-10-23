@@ -18,6 +18,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
   mvc:
     cors:
       allowed-origins: http://localhost:4200,http://127.0.0.1:4200
@@ -25,6 +27,10 @@ spring:
       allowed-headers: "*"
       allow-credentials: true
       max-age: 3600
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 
 springdoc:
   api-docs:
