@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public abstract class Position {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @NotNull
     private User user;
 
     @ManyToMany

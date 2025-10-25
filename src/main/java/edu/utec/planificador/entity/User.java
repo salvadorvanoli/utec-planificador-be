@@ -29,12 +29,12 @@ public class User {
     private Long id;
 
     @Column(unique = true, nullable = false, length = Constants.MAX_EMAIL_LENGTH)
-    @Size(max = Constants.MAX_EMAIL_LENGTH, message = "El correo electrónico no es válido (máximo " + Constants.MAX_EMAIL_LENGTH + " caracteres)")
-    @Pattern(regexp = Constants.EMAIL_REGEX, message = "El correo debe tener el formato nombre.apellido@utec.edu.uy")
+    @Size(max = Constants.MAX_EMAIL_LENGTH)
+    @Pattern(regexp = Constants.EMAIL_REGEX, message = "{validation.email.utec.format}")
     private String utecEmail;
 
     @Column(nullable = false, length = Constants.MAX_PASSWORD_LENGTH)
-    @Size(min = Constants.MIN_PASSWORD_LENGTH, max = Constants.MAX_PASSWORD_LENGTH, message = "La contraseña debe tener entre " + Constants.MIN_PASSWORD_LENGTH + " y " + Constants.MAX_PASSWORD_LENGTH + " caracteres")
+    @Size(min = Constants.MIN_PASSWORD_LENGTH, max = Constants.MAX_PASSWORD_LENGTH)
     private String password;
 
     @Embedded

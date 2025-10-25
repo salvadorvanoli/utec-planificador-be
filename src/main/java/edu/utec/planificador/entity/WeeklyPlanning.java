@@ -35,13 +35,13 @@ public class WeeklyPlanning {
     private Long id;
 
     @Column(nullable = false)
-    @NotNull(message = "El número de semana es obligatorio")
-    @Min(value = Constants.MIN_WEEK_NUMBER, message = "El número de semana debe ser al menos " + Constants.MIN_WEEK_NUMBER)
-    @Max(value = Constants.MAX_WEEK_NUMBER, message = "El número de semana no puede exceder " + Constants.MAX_WEEK_NUMBER)
+    @NotNull
+    @Min(Constants.MIN_WEEK_NUMBER)
+    @Max(Constants.MAX_WEEK_NUMBER)
     private Integer weekNumber;
 
     @Column(nullable = false)
-    @NotNull(message = "La fecha de inicio es obligatoria")
+    @NotNull
     private LocalDate startDate;
 
     @ElementCollection(fetch = FetchType.LAZY)

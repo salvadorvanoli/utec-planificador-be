@@ -26,8 +26,8 @@ public class ProgrammaticContent {
     private Long id;
 
     @Column(nullable = false, length = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)
-    @NotBlank(message = "El contenido programático es obligatorio")
-    @Size(max = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH, message = "El contenido programático no puede exceder " + Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)
     private String content;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

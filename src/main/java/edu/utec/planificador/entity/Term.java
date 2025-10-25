@@ -35,15 +35,16 @@ public class Term {
     private Long id;
 
     @Column(nullable = false)
-    @NotNull(message = "El número de semestre es obligatorio")
-    @Min(value = 1, message = "El número de semestre debe ser al menos 1")
+    @NotNull
+    @Min(1)
     private Integer number;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id", nullable = false)
+    @NotNull
     private Program program;
 
-    @OneToMany(mappedBy = "term", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "term", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("name ASC")
     private List<CurricularUnit> curricularUnits = new ArrayList<>();
 }

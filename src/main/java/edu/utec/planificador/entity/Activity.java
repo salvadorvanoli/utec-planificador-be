@@ -37,13 +37,13 @@ public class Activity {
     private Long id;
 
     @Column(nullable = false, length = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
-    @NotBlank(message = "La descripción de la actividad es obligatoria")
-    @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH, message = "La descripción de la actividad no puede exceder " + Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     private String description;
 
     @Column(nullable = false)
-    @NotNull(message = "La duración en minutos es obligatoria")
-    @Min(value = Constants.MIN_ACTIVITY_DURATION, message = "La duración debe ser al menos " + Constants.MIN_ACTIVITY_DURATION + " minuto")
+    @NotNull
+    @Min(Constants.MIN_ACTIVITY_DURATION)
     private Integer durationInMinutes;
 
     @ElementCollection(targetClass = CognitiveProcess.class, fetch = FetchType.LAZY)
@@ -60,7 +60,7 @@ public class Activity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "La modalidad de aprendizaje es obligatoria")
+    @NotNull
     private LearningModality learningModality;
 
     @ElementCollection(targetClass = TeachingStrategy.class, fetch = FetchType.LAZY)

@@ -39,13 +39,13 @@ public class CurricularUnit {
     private Long id;
 
     @Column(nullable = false, length = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH)
-    @NotBlank(message = "El nombre de la unidad curricular es obligatorio")
-    @Size(max = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH, message = "El nombre de la unidad curricular no puede exceder " + Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH)
     private String name;
 
     @Column(nullable = false)
-    @NotNull(message = "Los créditos son obligatorios")
-    @Min(value = 1, message = "Los créditos deben ser al menos 1")
+    @NotNull
+    @Min(1)
     private Integer credits;
 
     @ElementCollection(targetClass = DomainArea.class, fetch = FetchType.LAZY)
@@ -62,7 +62,7 @@ public class CurricularUnit {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "term_id", nullable = false)
-    @NotNull(message = "El semestre es obligatorio")
+    @NotNull
     private Term term;
 
     @OneToMany(mappedBy = "curricularUnit", cascade = CascadeType.ALL, orphanRemoval = true)

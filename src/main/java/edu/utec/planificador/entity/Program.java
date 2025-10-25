@@ -29,18 +29,18 @@ public class Program {
     private Long id;
 
     @Column(nullable = false, length = Constants.MAX_PROGRAM_NAME_LENGTH)
-    @NotBlank(message = "El nombre de la carrera es obligatorio")
-    @Size(max = Constants.MAX_PROGRAM_NAME_LENGTH, message = "El nombre de la carrera no puede exceder " + Constants.MAX_PROGRAM_NAME_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_PROGRAM_NAME_LENGTH)
     private String name;
 
     @Column(nullable = false)
-    @NotNull(message = "La duración en semestres es obligatoria")
-    @Min(value = 1, message = "La duración debe ser al menos 1 semestre")
+    @NotNull
+    @Min(1)
     private Integer durationInTerms;
 
     @Column(nullable = false)
-    @NotNull(message = "El total de créditos es obligatorio")
-    @Min(value = 1, message = "El total de créditos debe ser al menos 1")
+    @NotNull
+    @Min(1)
     private Integer totalCredits;
 
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)

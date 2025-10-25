@@ -27,8 +27,8 @@ public class RegionalTechnologicalInstitute {
     private Long id;
 
     @Column(nullable = false, unique = true, length = Constants.MAX_RTI_NAME_LENGTH)
-    @NotBlank(message = "El nombre del instituto tecnológico regional es obligatorio")
-    @Size(max = Constants.MAX_RTI_NAME_LENGTH, message = "El nombre del instituto tecnológico regional no puede exceder " + Constants.MAX_RTI_NAME_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_RTI_NAME_LENGTH)
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

@@ -31,8 +31,8 @@ public class Campus {
     private Long id;
 
     @Column(unique = true, nullable = false, length = Constants.MAX_CAMPUS_NAME_LENGTH)
-    @NotBlank(message = "El nombre de la sede es obligatorio")
-    @Size(max = Constants.MAX_CAMPUS_NAME_LENGTH, message = "El nombre de la sede no puede exceder " + Constants.MAX_CAMPUS_NAME_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_CAMPUS_NAME_LENGTH)
     private String name;
 
     @Embedded
