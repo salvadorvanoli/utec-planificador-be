@@ -29,7 +29,12 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,36 +44,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Data
+@Getter
+@ToString(exclude = {"curricularUnit", "teachers", "weeklyPlannings", "modifications"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "course")
 public class Course {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "El turno es obligatorio")
+    @NotNull
     private Shift shift;
 
+    @Setter
     @Column(length = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
-    @Size(max = Constants.MAX_COURSE_DESCRIPTION_LENGTH, message = "La descripción no puede exceder " + Constants.MAX_COURSE_DESCRIPTION_LENGTH + " caracteres")
-    @NotBlank(message = "La descripción es obligatoria")
+    @NotBlank
+    @Size(max = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     private String description;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "La fecha de inicio es obligatoria")
+    @NotNull
     private LocalDate startDate;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "La fecha de fin es obligatoria")
+    @NotNull
     private LocalDate endDate;
 
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "El sistema de calificación parcial es obligatorio")
+    @NotNull
     private PartialGradingSystem partialGradingSystem;
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -76,14 +90,16 @@ public class Course {
     @MapKeyColumn(name = "delivery_format")
     @MapKeyEnumerated(EnumType.STRING)
     @Column(name = "hours")
-    private Map<DeliveryFormat, Integer> formatoHoras = new HashMap<>();
+    private Map<DeliveryFormat, Integer> hoursPerDeliveryFormat = new HashMap<>();
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "Debe especificar si está relacionado con investigación")
+    @NotNull
     private Boolean isRelatedToInvestigation = false;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "Debe especificar si involucra actividades con el sector productivo")
+    @NotNull
     private Boolean involvesActivitiesWithProductiveSector = false;
 
     @ElementCollection(targetClass = SustainableDevelopmentGoal.class, fetch = FetchType.LAZY)
@@ -98,9 +114,10 @@ public class Course {
     @Enumerated(EnumType.STRING)
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curricular_unit_id", nullable = false)
-    @NotNull(message = "La unidad curricular es obligatoria")
+    @NotNull
     private CurricularUnit curricularUnit;
 
     @ManyToMany
@@ -111,11 +128,13 @@ public class Course {
     )
     private List<Teacher> teachers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "course_id")
     @OrderBy("weekNumber ASC")
     private List<WeeklyPlanning> weeklyPlannings = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "course_id")
     @OrderBy("id DESC")
     private List<Modification> modifications = new ArrayList<>();
 }

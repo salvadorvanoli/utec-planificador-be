@@ -12,23 +12,33 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@ToString(exclude = {"campuses"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "regional_technological_institute")
 public class RegionalTechnologicalInstitute {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter
     @Column(nullable = false, unique = true, length = Constants.MAX_RTI_NAME_LENGTH)
-    @NotBlank(message = "El nombre del instituto tecnológico regional es obligatorio")
-    @Size(max = Constants.MAX_RTI_NAME_LENGTH, message = "El nombre del instituto tecnológico regional no puede exceder " + Constants.MAX_RTI_NAME_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_RTI_NAME_LENGTH)
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

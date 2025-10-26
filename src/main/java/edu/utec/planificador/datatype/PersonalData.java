@@ -13,31 +13,31 @@ import lombok.Data;
 public class PersonalData {
 
     @Column(unique = true, length = Constants.MAX_IDENTITY_DOCUMENT_LENGTH)
-    @Size(max = Constants.MAX_IDENTITY_DOCUMENT_LENGTH, message = "El documento de identidad no puede exceder " + Constants.MAX_IDENTITY_DOCUMENT_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_IDENTITY_DOCUMENT_LENGTH)
     private String identityDocument;
 
     @Column(length = Constants.MAX_USER_NAME_LENGTH)
-    @Size(max = Constants.MAX_USER_NAME_LENGTH, message = "El nombre no puede exceder " + Constants.MAX_USER_NAME_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_USER_NAME_LENGTH)
     private String name;
 
     @Column(length = Constants.MAX_USER_LASTNAMES_LENGTH)
-    @Size(max = Constants.MAX_USER_LASTNAMES_LENGTH, message = "El apellido no puede exceder " + Constants.MAX_USER_LASTNAMES_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_USER_LASTNAMES_LENGTH)
     private String lastName;
 
     @Column(length = Constants.MAX_PHONE_NUMBER_LENGTH)
-    @Pattern(regexp = Constants.PHONE_NUMBER_REGEX, message = "El número de teléfono debe tener el formato 09XXXXXXX o 9XXXXXXX")
+    @Pattern(regexp = Constants.PHONE_NUMBER_REGEX, message = "{validation.phone.uruguay.format}")
     private String phoneNumber;
 
     @Column(length = Constants.MAX_COUNTRY_LENGTH)
-    @Size(max = Constants.MAX_COUNTRY_LENGTH, message = "El país no puede exceder " + Constants.MAX_COUNTRY_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_COUNTRY_LENGTH)
     private String country;
 
     @Column(length = Constants.MAX_CITY_LENGTH)
-    @Size(max = Constants.MAX_CITY_LENGTH, message = "La ciudad no puede exceder " + Constants.MAX_CITY_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_CITY_LENGTH)
     private String city;
 
     @Column(length = Constants.MAX_EMAIL_LENGTH)
-    @Email(message = "El formato del email personal no es válido")
-    @Size(max = Constants.MAX_EMAIL_LENGTH, message = "El email personal no puede exceder " + Constants.MAX_EMAIL_LENGTH + " caracteres")
+    @Email
+    @Size(max = Constants.MAX_EMAIL_LENGTH)
     private String personalEmail;
 }

@@ -22,28 +22,39 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "activity")
 public class Activity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter
     @Column(nullable = false, length = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
-    @NotBlank(message = "La descripción de la actividad es obligatoria")
-    @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH, message = "La descripción de la actividad no puede exceder " + Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     private String description;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "La duración en minutos es obligatoria")
-    @Min(value = Constants.MIN_ACTIVITY_DURATION, message = "La duración debe ser al menos " + Constants.MIN_ACTIVITY_DURATION + " minuto")
+    @NotNull
+    @Min(Constants.MIN_ACTIVITY_DURATION)
     private Integer durationInMinutes;
 
     @ElementCollection(targetClass = CognitiveProcess.class, fetch = FetchType.LAZY)
@@ -58,9 +69,10 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Set<TransversalCompetency> transversalCompetencies = new HashSet<>();
 
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "La modalidad de aprendizaje es obligatoria")
+    @NotNull
     private LearningModality learningModality;
 
     @ElementCollection(targetClass = TeachingStrategy.class, fetch = FetchType.LAZY)

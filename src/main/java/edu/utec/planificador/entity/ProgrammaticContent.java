@@ -11,23 +11,33 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@ToString(exclude = {"activities"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "programmatic_content")
 public class ProgrammaticContent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter
     @Column(nullable = false, length = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)
-    @NotBlank(message = "El contenido programático es obligatorio")
-    @Size(max = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH, message = "El contenido programático no puede exceder " + Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH + " caracteres")
+    @NotBlank
+    @Size(max = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)
     private String content;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

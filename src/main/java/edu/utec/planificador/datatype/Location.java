@@ -11,18 +11,18 @@ import lombok.Data;
 public class Location {
 
     @Column(length = Constants.MAX_STATE_LENGTH)
-    @Size(max = Constants.MAX_STATE_LENGTH, message = "El departamento no puede exceder " + Constants.MAX_STATE_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_STATE_LENGTH)
     private String state;
 
     @Column(length = Constants.MAX_CITY_LENGTH)
-    @Size(max = Constants.MAX_CITY_LENGTH, message = "La ciudad no puede exceder " + Constants.MAX_CITY_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_CITY_LENGTH)
     private String city;
 
     @Column(length = Constants.MAX_STREET_LENGTH)
-    @Size(max = Constants.MAX_STREET_LENGTH, message = "La calle no puede exceder " + Constants.MAX_STREET_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_STREET_LENGTH)
     private String street;
 
     @Column(length = Constants.MAX_STREET_NUMBER_LENGTH)
-    @Size(max = Constants.MAX_STREET_NUMBER_LENGTH, message = "El número no puede exceder " + Constants.MAX_STREET_NUMBER_LENGTH + " caracteres")
+    @Size(max = Constants.MAX_STREET_NUMBER_LENGTH)
     private String number;
 }

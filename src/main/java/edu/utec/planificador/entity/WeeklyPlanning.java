@@ -19,29 +19,40 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "weekly_planning")
 public class WeeklyPlanning {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "El número de semana es obligatorio")
-    @Min(value = Constants.MIN_WEEK_NUMBER, message = "El número de semana debe ser al menos " + Constants.MIN_WEEK_NUMBER)
-    @Max(value = Constants.MAX_WEEK_NUMBER, message = "El número de semana no puede exceder " + Constants.MAX_WEEK_NUMBER)
+    @NotNull
+    @Min(Constants.MIN_WEEK_NUMBER)
+    @Max(Constants.MAX_WEEK_NUMBER)
     private Integer weekNumber;
 
+    @Setter
     @Column(nullable = false)
-    @NotNull(message = "La fecha de inicio es obligatoria")
+    @NotNull
     private LocalDate startDate;
 
     @ElementCollection(fetch = FetchType.LAZY)
