@@ -29,7 +29,12 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,33 +44,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Data
+@Getter
+@ToString(exclude = {"curricularUnit", "teachers", "weeklyPlannings", "modifications"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "course")
 public class Course {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
     private Shift shift;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(length = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     private String description;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     private LocalDate startDate;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     private LocalDate endDate;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -76,12 +90,14 @@ public class Course {
     @MapKeyColumn(name = "delivery_format")
     @MapKeyEnumerated(EnumType.STRING)
     @Column(name = "hours")
-    private Map<DeliveryFormat, Integer> formatoHoras = new HashMap<>();
+    private Map<DeliveryFormat, Integer> hoursPerDeliveryFormat = new HashMap<>();
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     private Boolean isRelatedToInvestigation = false;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     private Boolean involvesActivitiesWithProductiveSector = false;
@@ -98,6 +114,7 @@ public class Course {
     @Enumerated(EnumType.STRING)
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
+    @Setter(AccessLevel.PACKAGE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curricular_unit_id", nullable = false)
     @NotNull

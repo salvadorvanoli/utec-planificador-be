@@ -19,27 +19,38 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "weekly_planning")
 public class WeeklyPlanning {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     @Min(Constants.MIN_WEEK_NUMBER)
     @Max(Constants.MAX_WEEK_NUMBER)
     private Integer weekNumber;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     private LocalDate startDate;

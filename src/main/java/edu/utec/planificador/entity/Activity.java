@@ -22,25 +22,36 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "activity")
 public class Activity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false, length = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     private String description;
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @NotNull
     @Min(Constants.MIN_ACTIVITY_DURATION)
@@ -58,6 +69,7 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Set<TransversalCompetency> transversalCompetencies = new HashSet<>();
 
+    @Setter(AccessLevel.PACKAGE)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
