@@ -76,7 +76,7 @@ public class Course {
     @MapKeyColumn(name = "delivery_format")
     @MapKeyEnumerated(EnumType.STRING)
     @Column(name = "hours")
-    private Map<DeliveryFormat, Integer> formatoHoras = new HashMap<>();
+    private Map<DeliveryFormat, Integer> hoursPerDeliveryFormat = new HashMap<>();
 
     @Column(nullable = false)
     @NotNull
