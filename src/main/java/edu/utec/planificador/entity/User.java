@@ -37,18 +37,18 @@ public class User {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(unique = true, nullable = false, length = Constants.MAX_EMAIL_LENGTH)
     @Size(max = Constants.MAX_EMAIL_LENGTH)
     @Pattern(regexp = Constants.EMAIL_REGEX, message = "{validation.email.utec.format}")
     private String utecEmail;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false, length = Constants.MAX_PASSWORD_LENGTH)
     @Size(min = Constants.MIN_PASSWORD_LENGTH, max = Constants.MAX_PASSWORD_LENGTH)
     private String password;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Embedded
     @Valid
     private PersonalData personalData;

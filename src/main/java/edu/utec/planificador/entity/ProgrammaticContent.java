@@ -34,7 +34,7 @@ public class ProgrammaticContent {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false, length = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_PROGRAMMATIC_CONTENT_LENGTH)

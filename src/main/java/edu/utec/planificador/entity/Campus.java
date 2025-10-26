@@ -39,13 +39,13 @@ public class Campus {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(unique = true, nullable = false, length = Constants.MAX_CAMPUS_NAME_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_CAMPUS_NAME_LENGTH)
     private String name;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Embedded
     @Valid
     private Location location;

@@ -32,12 +32,12 @@ public class Modification {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private LocalDateTime modificationDate = LocalDateTime.now();
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     @NotNull

@@ -45,13 +45,13 @@ public class Activity {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false, length = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     private String description;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     @Min(Constants.MIN_ACTIVITY_DURATION)
@@ -69,7 +69,7 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Set<TransversalCompetency> transversalCompetencies = new HashSet<>();
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull

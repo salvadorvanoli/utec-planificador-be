@@ -38,11 +38,11 @@ public abstract class Position {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     @NotNull

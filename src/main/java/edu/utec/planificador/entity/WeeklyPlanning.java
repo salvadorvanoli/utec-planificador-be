@@ -43,14 +43,14 @@ public class WeeklyPlanning {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     @Min(Constants.MIN_WEEK_NUMBER)
     @Max(Constants.MAX_WEEK_NUMBER)
     private Integer weekNumber;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private LocalDate startDate;

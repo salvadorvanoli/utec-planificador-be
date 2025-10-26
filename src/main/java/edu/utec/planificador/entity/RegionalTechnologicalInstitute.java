@@ -35,7 +35,7 @@ public class RegionalTechnologicalInstitute {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false, unique = true, length = Constants.MAX_RTI_NAME_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_RTI_NAME_LENGTH)

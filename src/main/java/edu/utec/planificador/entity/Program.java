@@ -37,19 +37,19 @@ public class Program {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false, length = Constants.MAX_PROGRAM_NAME_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_PROGRAM_NAME_LENGTH)
     private String name;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     @Min(1)
     private Integer durationInTerms;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     @Min(1)

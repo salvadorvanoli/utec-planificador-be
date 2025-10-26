@@ -57,29 +57,29 @@ public class Course {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
     private Shift shift;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(length = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     private String description;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private LocalDate startDate;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private LocalDate endDate;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -92,12 +92,12 @@ public class Course {
     @Column(name = "hours")
     private Map<DeliveryFormat, Integer> hoursPerDeliveryFormat = new HashMap<>();
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private Boolean isRelatedToInvestigation = false;
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @Column(nullable = false)
     @NotNull
     private Boolean involvesActivitiesWithProductiveSector = false;
@@ -114,7 +114,7 @@ public class Course {
     @Enumerated(EnumType.STRING)
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
-    @Setter(AccessLevel.PACKAGE)
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curricular_unit_id", nullable = false)
     @NotNull
