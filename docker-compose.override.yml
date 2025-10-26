@@ -1,0 +1,30 @@
+# Development overrides (auto-merged with docker-compose.yml)
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    
+    environment:
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+    
+    volumes:
+      - ./scripts/init-db:/docker-entrypoint-initdb.d:ro
+
+  app:
+    build:
+      target: runtime
+    
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JPA_SHOW_SQL: "true"
+      JPA_DDL_AUTO: update
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_DEVTOOLS_LIVERELOAD_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    
+    ports:
+      - "5005:5005"
+    
+    volumes:
+      - ./build:/app/build:ro
+      - ./logs:/app/logs
