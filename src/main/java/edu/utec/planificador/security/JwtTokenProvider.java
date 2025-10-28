@@ -53,9 +53,11 @@ public class JwtTokenProvider {
 
         byte[] secretBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         if (secretBytes.length < MINIMUM_SECRET_LENGTH) {
-            log.warn("JWT secret is weak ({} bytes). Recommended: {} bytes minimum for HMAC-SHA512. " +
-                    "Generate a stronger secret with: openssl rand -base64 64", 
-                    secretBytes.length, MINIMUM_SECRET_LENGTH);
+            log.warn(
+                "JWT secret is weak ({} bytes). Recommended: {} bytes minimum for HMAC-SHA512. " +
+                "Generate a stronger secret with: openssl rand -base64 64", 
+                secretBytes.length, MINIMUM_SECRET_LENGTH
+            );
         }
     }
 
