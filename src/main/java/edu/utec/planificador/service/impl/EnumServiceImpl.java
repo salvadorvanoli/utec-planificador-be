@@ -1,7 +1,18 @@
 package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.response.EnumResponse;
-import edu.utec.planificador.enumeration.*;
+import edu.utec.planificador.enumeration.CognitiveProcess;
+import edu.utec.planificador.enumeration.DeliveryFormat;
+import edu.utec.planificador.enumeration.DomainArea;
+import edu.utec.planificador.enumeration.LearningModality;
+import edu.utec.planificador.enumeration.LearningResource;
+import edu.utec.planificador.enumeration.PartialGradingSystem;
+import edu.utec.planificador.enumeration.ProfessionalCompetency;
+import edu.utec.planificador.enumeration.Shift;
+import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
+import edu.utec.planificador.enumeration.TeachingStrategy;
+import edu.utec.planificador.enumeration.TransversalCompetency;
+import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.service.EnumService;
 import edu.utec.planificador.util.EnumUtils;
 import org.springframework.stereotype.Service;
