@@ -12,6 +12,7 @@ spring:
     username: ${DATABASE_USERNAME:planificador_user}
     password: ${DATABASE_PASSWORD:change_me}
     driver-class-name: org.postgresql.Driver
+    
     hikari:
       maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
       minimum-idle: ${HIKARI_MIN_IDLE:5}
@@ -33,13 +34,8 @@ spring:
     open-in-view: false
   
   mvc:
-    cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
-      allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD
-      allowed-headers: "*"
-      allow-credentials: true
-      max-age: 3600
     throw-exception-if-no-handler-found: true
+
   web:
     resources:
       add-mappings: false
@@ -69,3 +65,43 @@ springdoc:
   show-actuator: false
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:VXRlY1BsYW5pZmljYWRvckRvY2VudGVTZWNyZXRLZXlGb3JKV1RBdXRoZW50aWNhdGlvbjIwMjVVcnVndWF5VGVjaG5vbG9naWNhbFVuaXZlcnNpdHk=}
+    expiration: ${JWT_EXPIRATION:86400000}
+    issuer: ${JWT_ISSUER:UTEC-Planificador}
+  
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  
+  auth:
+    default-provider: ${AUTH_DEFAULT_PROVIDER:LOCAL}
+  
+  ldap:
+    enabled: ${LDAP_ENABLED:false}
+    url: ${LDAP_URL:ldap://localhost:389}
+    base: ${LDAP_BASE:dc=utec,dc=edu,dc=uy}
+    user-dn-pattern: ${LDAP_USER_DN_PATTERN:uid={0},ou=people}
+    user-search-filter: ${LDAP_USER_SEARCH_FILTER:(uid={0})}
+    default-role: ${LDAP_DEFAULT_ROLE:TEACHER}
+    default-campus-id: ${LDAP_DEFAULT_CAMPUS_ID:1}
+    manager:
+      dn: ${LDAP_MANAGER_DN:}
+      password: ${LDAP_MANAGER_PASSWORD:}
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    edu.utec.planificador: ${LOG_LEVEL:INFO}
+    edu.utec.planificador.security: ${LOG_SECURITY_LEVEL:INFO}
+    org.springframework.security: ${LOG_SPRING_SECURITY:WARN}
+    org.springframework.ldap: ${LOG_LDAP:WARN}
+    org.springframework.security.crypto.password: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:logs/application.log}
+    max-size: 10MB
+    max-history: 30

@@ -28,3 +28,84 @@ services:
     volumes:
       - ./build:/app/build:ro
       - ./logs:/app/logs
+
+  adminer:
+    image: adminer:4-standalone
+    container_name: ${COMPOSE_PROJECT_NAME:-planificador}-adminer
+    restart: unless-stopped
+    
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    
+    networks:
+      - app-network
+    
+    depends_on:
+      - db
+    
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha
+  
+  ldap:
+    profiles: ["ldap"]
+    image: osixia/openldap:1.5.0
+    container_name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap
+    hostname: ldap.utec.edu.uy
+    restart: unless-stopped
+    
+    environment:
+      LDAP_ORGANISATION: "Universidad Tecnologica del Uruguay"
+      LDAP_DOMAIN: "utec.edu.uy"
+      LDAP_BASE_DN: "dc=utec,dc=edu,dc=uy"
+      LDAP_ADMIN_PASSWORD: "admin123"
+      LDAP_CONFIG_PASSWORD: "config123"
+      LDAP_READONLY_USER: "false"
+      LDAP_RFC2307BIS_SCHEMA: "true"
+      LDAP_BACKEND: "mdb"
+      LDAP_TLS: "false"
+      LDAP_LOG_LEVEL: "256"
+    
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+    
+    ports:
+      - "389:389"
+      - "636:636"
+    
+    networks:
+      - app-network
+    
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=utec,dc=edu,dc=uy", "-D", "cn=admin,dc=utec,dc=edu,dc=uy", "-w", "admin123"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  phpldapadmin:
+    profiles: ["ldap"]
+    image: osixia/phpldapadmin:0.9.0
+    container_name: ${COMPOSE_PROJECT_NAME:-planificador}-phpldapadmin
+    restart: unless-stopped
+    
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: ldap
+      PHPLDAPADMIN_HTTPS: "false"
+      PHPLDAPADMIN_LDAP_CLIENT_TLS: "false"
+    
+    ports:
+      - "6443:80"
+    
+    networks:
+      - app-network
+    
+    depends_on:
+      - ldap
+
+volumes:
+  ldap-data:
+    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-data
+  ldap-config:
+    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-config
