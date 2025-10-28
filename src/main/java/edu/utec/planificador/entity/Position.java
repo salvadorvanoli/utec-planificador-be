@@ -1,7 +1,10 @@
 package edu.utec.planificador.entity;
 
+import edu.utec.planificador.enumeration.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,6 +41,11 @@ public abstract class Position {
     @EqualsAndHashCode.Include
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 30)
+    @NotNull
+    private Role role;
+
     @Setter
     @Column(nullable = false)
     private Boolean isActive = true;
@@ -56,4 +64,18 @@ public abstract class Position {
     )
     @OrderBy("name ASC")
     private List<Campus> campuses = new ArrayList<>();
+
+    protected Position(Role role) {
+        this.role = role;
+    }
+
+    public void addCampus(Campus campus) {
+        if (campus != null && !this.campuses.contains(campus)) {
+            this.campuses.add(campus);
+        }
+    }
+
+    public void removeCampus(Campus campus) {
+        this.campuses.remove(campus);
+    }
 }
