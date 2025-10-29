@@ -17,9 +17,17 @@ RUN gradle clean bootJar --no-daemon -x test
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
+RUN apk add --no-cache tzdata curl
+ENV TZ=America/Montevideo
+
 LABEL maintainer="UTEC Planificador Team"
-LABEL description="Backend del Planificador Docente"
+LABEL description="Backend del Planificador Docente - Spring Boot REST API"
 LABEL version="1.0.0"
+LABEL org.opencontainers.image.title="UTEC Planificador Backend"
+LABEL org.opencontainers.image.description="Sistema de planificación docente para UTEC"
+LABEL org.opencontainers.image.vendor="Universidad Tecnológica del Uruguay"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/salvadorvanoli/utec-planificador-be"
 
 RUN addgroup -S spring && adduser -S spring -G spring
 

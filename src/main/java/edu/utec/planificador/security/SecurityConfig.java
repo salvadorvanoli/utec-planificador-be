@@ -47,14 +47,14 @@ public class SecurityConfig {
         "/auth/login",
         "/auth/register",
         "/auth/health",
-        "/v3/api-docs/**",
+        "/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
         "/swagger-resources/**",
         "/webjars/**",
         "/actuator/health",
         "/actuator/info",
-        "/api/v1/enums/**"
+        "/enums/**"
     };
 
     @Bean

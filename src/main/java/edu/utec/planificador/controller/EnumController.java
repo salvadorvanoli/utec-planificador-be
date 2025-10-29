@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/enums")
+@RequestMapping("/enums")
 @RequiredArgsConstructor
 @Tag(name = "Enumerations", description = "Endpoints to retrieve system enumeration values")
 public class EnumController {
@@ -26,19 +26,19 @@ public class EnumController {
     private final EnumService enumService;
 
     @Operation(
-            summary = "Get all enumerations",
-            description = "Returns a map with all enumerations available in the system. " +
-                    "The result is cached for 24 hours to optimize performance."
+        summary = "Get all enumerations",
+        description = "Returns a map with all enumerations available in the system. " +
+            "The result is cached for 24 hours to optimize performance."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Enumerations retrieved successfully"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<Map<String, List<EnumResponse>>> getAllEnums() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getAllEnums());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getAllEnums());
     }
 
     @Operation(
@@ -52,8 +52,8 @@ public class EnumController {
     @GetMapping("/domain-areas")
     public ResponseEntity<List<EnumResponse>> getDomainAreas() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getDomainAreas());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getDomainAreas());
     }
 
     @Operation(
@@ -67,8 +67,8 @@ public class EnumController {
     @GetMapping("/cognitive-processes")
     public ResponseEntity<List<EnumResponse>> getCognitiveProcesses() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getCognitiveProcesses());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getCognitiveProcesses());
     }
 
     @Operation(
@@ -82,8 +82,8 @@ public class EnumController {
     @GetMapping("/shifts")
     public ResponseEntity<List<EnumResponse>> getShifts() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getShifts());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getShifts());
     }
 
     @Operation(
@@ -97,8 +97,8 @@ public class EnumController {
     @GetMapping("/delivery-formats")
     public ResponseEntity<List<EnumResponse>> getDeliveryFormats() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getDeliveryFormats());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getDeliveryFormats());
     }
 
     @Operation(
@@ -112,8 +112,8 @@ public class EnumController {
     @GetMapping("/transversal-competencies")
     public ResponseEntity<List<EnumResponse>> getTransversalCompetencies() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getTransversalCompetencies());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getTransversalCompetencies());
     }
 
     @Operation(
@@ -127,8 +127,8 @@ public class EnumController {
     @GetMapping("/partial-grading-systems")
     public ResponseEntity<List<EnumResponse>> getPartialGradingSystems() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getPartialGradingSystems());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getPartialGradingSystems());
     }
 
     @Operation(
@@ -142,8 +142,8 @@ public class EnumController {
     @GetMapping("/professional-competencies")
     public ResponseEntity<List<EnumResponse>> getProfessionalCompetencies() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getProfessionalCompetencies());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getProfessionalCompetencies());
     }
 
     @Operation(
@@ -157,8 +157,8 @@ public class EnumController {
     @GetMapping("/sustainable-development-goals")
     public ResponseEntity<List<EnumResponse>> getSustainableDevelopmentGoals() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getSustainableDevelopmentGoals());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getSustainableDevelopmentGoals());
     }
 
     @Operation(
@@ -172,8 +172,8 @@ public class EnumController {
     @GetMapping("/teaching-strategies")
     public ResponseEntity<List<EnumResponse>> getTeachingStrategies() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getTeachingStrategies());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getTeachingStrategies());
     }
 
     @Operation(
@@ -187,8 +187,8 @@ public class EnumController {
     @GetMapping("/learning-modalities")
     public ResponseEntity<List<EnumResponse>> getLearningModalities() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getLearningModalities());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getLearningModalities());
     }
 
     @Operation(
@@ -202,8 +202,8 @@ public class EnumController {
     @GetMapping("/learning-resources")
     public ResponseEntity<List<EnumResponse>> getLearningResources() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getLearningResources());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getLearningResources());
     }
 
     @Operation(
@@ -217,7 +217,7 @@ public class EnumController {
     @GetMapping("/universal-design-learning-principles")
     public ResponseEntity<List<EnumResponse>> getUniversalDesignLearningPrinciples() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
-                .body(enumService.getUniversalDesignLearningPrinciples());
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(24)))
+            .body(enumService.getUniversalDesignLearningPrinciples());
     }
 }
