@@ -21,7 +21,7 @@ public class PositionRequest {
     @Schema(
         description = "Position type", 
         example = "TEACHER",
-        allowableValues = {"TEACHER", "COORDINATOR", "EDUCATION_MANAGER", "ANALYST"}
+        allowableValues = {"TEACHER", "COORDINATOR", "EDUCATION_MANAGER", "ANALYST", "ADMINISTRATOR"}
     )
     @NotNull(message = "{validation.position.type.required}")
     private PositionType type;
@@ -29,7 +29,7 @@ public class PositionRequest {
     @Schema(
         description = "Role assigned to this position", 
         example = "TEACHER",
-        allowableValues = {"ADMIN", "EDUCATION_MANAGER", "COORDINATOR", "TEACHER", "ANALYST"}
+        allowableValues = {"ADMINISTRATOR", "EDUCATION_MANAGER", "COORDINATOR", "TEACHER", "ANALYST"}
     )
     @NotNull(message = "{validation.position.role.required}")
     private Role role;
@@ -45,6 +45,7 @@ public class PositionRequest {
         TEACHER,
         COORDINATOR,
         EDUCATION_MANAGER,
-        ANALYST
+        ANALYST,
+        ADMINISTRATOR
     }
 }

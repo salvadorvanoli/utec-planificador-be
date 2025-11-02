@@ -1,6 +1,7 @@
 package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.request.PositionRequest;
+import edu.utec.planificador.entity.Administrator;
 import edu.utec.planificador.entity.Analyst;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Coordinator;
@@ -46,6 +47,7 @@ public class PositionServiceImpl implements PositionService {
             case COORDINATOR -> new Coordinator(user);
             case EDUCATION_MANAGER -> new EducationManager(user);
             case ANALYST -> new Analyst(user);
+            case ADMINISTRATOR -> new Administrator(user);
         };
     }
 
