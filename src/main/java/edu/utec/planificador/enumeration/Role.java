@@ -13,9 +13,8 @@ import java.util.stream.Collectors;
 public enum Role {
 
     ADMINISTRATOR("Administrador", Set.of(
-        Permission.USER_CREATE,
         Permission.USER_READ,
-        Permission.USER_UPDATE,
+        Permission.USER_WRITE,
         Permission.USER_DELETE,
         Permission.REGIONAL_TECHNICAL_INSTITUTE_READ,
         Permission.REGIONAL_TECHNICAL_INSTITUTE_WRITE,
@@ -108,9 +107,8 @@ public enum Role {
     }
 
     public enum Permission {
-        USER_CREATE,
         USER_READ,
-        USER_UPDATE,
+        USER_WRITE,
         USER_DELETE,
 
         // Organizational structure
