@@ -17,12 +17,12 @@ public class CampusMapper {
         }
 
         return CampusResponse.builder()
-                .id(campus.getId())
-                .name(campus.getName())
-                .regionalTechnologicalInstitute(
-                    rtiMapper.toResponse(campus.getRegionalTechnologicalInstitute())
-                )
-                .build();
+            .id(campus.getId())
+            .name(campus.getName())
+            .regionalTechnologicalInstitute(
+                rtiMapper.toResponse(campus.getRegionalTechnologicalInstitute())
+            )
+            .build();
     }
 
     public CampusResponse toSimplifiedResponse(Campus campus) {
@@ -31,8 +31,8 @@ public class CampusMapper {
         }
 
         return CampusResponse.builder()
-                .id(campus.getId())
-                .name(campus.getName())
-                .build();
+            .id(campus.getId())
+            .name(campus.getName())
+            .build();
     }
 }

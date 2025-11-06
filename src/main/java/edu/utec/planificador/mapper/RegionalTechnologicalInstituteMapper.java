@@ -13,8 +13,8 @@ public class RegionalTechnologicalInstituteMapper {
         }
 
         return RegionalTechnologicalInstituteResponse.builder()
-                .id(institute.getId())
-                .name(institute.getName())
-                .build();
+            .id(institute.getId())
+            .name(institute.getName())
+            .build();
     }
 }
