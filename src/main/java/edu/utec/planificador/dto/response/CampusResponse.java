@@ -18,4 +18,7 @@ public class CampusResponse {
 
     @Schema(description = "Campus name", example = "UTEC Rivera")
     private String name;
+
+    @Schema(description = "Regional Technological Institute information")
+    private RegionalTechnologicalInstituteResponse regionalTechnologicalInstitute;
 }
