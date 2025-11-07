@@ -1,5 +1,6 @@
 package edu.utec.planificador.security;
 
+import edu.utec.planificador.util.CookieUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
+    private final CookieUtil cookieUtil;
 
     @Override
     protected void doFilterInternal(
@@ -64,9 +66,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
+        var cookieToken = cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
+        if (cookieToken.isPresent()) {
+            log.debug("JWT token found in encrypted cookie");
+            return cookieToken.get();
+        }
+
         String bearerToken = request.getHeader("Authorization");
-        
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            log.debug("JWT token found in Authorization header (fallback)");
             return bearerToken.substring(7);
         }
         

@@ -4,7 +4,9 @@ import edu.utec.planificador.dto.request.LoginRequest;
 import edu.utec.planificador.dto.request.RegisterRequest;
 import edu.utec.planificador.dto.response.AuthResponse;
 import edu.utec.planificador.dto.response.UserResponse;
+import edu.utec.planificador.security.JwtTokenProvider;
 import edu.utec.planificador.service.AuthenticationService;
+import edu.utec.planificador.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +34,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private final CookieUtil cookieUtil;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     @Operation(
         summary = "User login",
-        description = "Authenticates a user with email and password. Supports LOCAL and LDAP authentication."
+        description = "Authenticates a user with email and password. Sets HttpOnly cookie with JWT token. Supports LOCAL and LDAP authentication."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Successful authentication",
+            description = "Successful authentication. JWT token set in HttpOnly cookie.",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = AuthResponse.class)
@@ -57,12 +62,19 @@ public class AuthController {
             content = @Content
         )
     })
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response) {
         log.info("POST /auth/login - User: {}", loginRequest.getEmail());
-        
-        AuthResponse response = authenticationService.login(loginRequest);
-        
-        return ResponseEntity.ok(response);
+
+        AuthResponse authResponse = authenticationService.login(loginRequest);
+
+        int maxAgeSeconds = (int) (authResponse.getExpiresIn() / 1000);
+        cookieUtil.addJwtCookie(response, authResponse.getAccessToken(), maxAgeSeconds);
+
+        log.info("JWT cookie set for user: {}", loginRequest.getEmail());
+
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/register")
@@ -92,9 +104,9 @@ public class AuthController {
     })
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("POST /auth/register - User: {}", registerRequest.getEmail());
-        
+
         AuthResponse response = authenticationService.register(registerRequest);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -121,9 +133,57 @@ public class AuthController {
     })
     public ResponseEntity<UserResponse> getCurrentUser() {
         log.info("GET /auth/me");
-        
+
         UserResponse response = authenticationService.getCurrentUser();
-        
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    @Operation(
+        summary = "User logout",
+        description = "Logs out the user by clearing the JWT cookie"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Logout successful. JWT cookie cleared."
+    )
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        log.info("POST /auth/logout");
+
+        cookieUtil.deleteJwtCookie(response);
+
+        log.info("User logged out successfully, cookie cleared");
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/status")
+    @Operation(
+        summary = "Check authentication status",
+        description = "Validates the JWT cookie and returns user information if the session is valid",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Valid session",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = UserResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Invalid or expired session",
+            content = @Content
+        )
+    })
+    public ResponseEntity<UserResponse> checkStatus() {
+        log.info("GET /auth/status");
+
+        UserResponse response = authenticationService.getCurrentUser();
+
         return ResponseEntity.ok(response);
     }
 
@@ -140,3 +200,4 @@ public class AuthController {
         return ResponseEntity.ok("Authentication service is operational");
     }
 }
+

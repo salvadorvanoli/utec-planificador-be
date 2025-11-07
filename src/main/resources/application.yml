@@ -84,6 +84,13 @@ security:
     expiration: ${JWT_EXPIRATION:86400000}
     issuer: ${JWT_ISSUER:UTEC-Planificador}
   
+  encryption:
+    secret: ${ENCRYPTION_SECRET:VXRlY1BsYW5pZmljYWRvckVuY3J5cHRpb25TZWNyZXRLZXkyMDI1VXJ1Z3VheVRlY2hub2xvZ2ljYWxVbml2ZXJzaXR5QUVTMjU2R0NN}
+
+  cookie:
+    secure: ${COOKIE_SECURE:false}  # true en producción (solo HTTPS)
+    domain: ${COOKIE_DOMAIN:}
+
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   
