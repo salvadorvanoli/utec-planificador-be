@@ -11,12 +11,15 @@ import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.CognitiveProcess;
+import edu.utec.planificador.enumeration.DeliveryFormat;
 import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
 import edu.utec.planificador.enumeration.Shift;
+import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.TeachingStrategy;
 import edu.utec.planificador.enumeration.TransversalCompetency;
+import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.ProgramRepository;
@@ -26,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +47,7 @@ public class DataSeeder implements CommandLineRunner {
     private final TermRepository termRepository;
     private final CurricularUnitRepository curricularUnitRepository;
     private final CourseRepository courseRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -78,7 +83,7 @@ public class DataSeeder implements CommandLineRunner {
 
         User user = new User(
             "juan.perez@utec.edu.uy",
-            "$2a$10$dummyHashedPassword123456789012345678901234567890", // Password hasheado dummy
+            passwordEncoder.encode("password"),
             personalData
         );
         user = userRepository.save(user);
@@ -132,9 +137,23 @@ public class DataSeeder implements CommandLineRunner {
             curricularUnit
         );
         
-        // Agregar el teacher al course
         course.getTeachers().add(teacher);
         
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 60);      // 60 horas presenciales
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);        // 20 horas virtuales
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.HYBRID, 10);         // 10 horas híbridas
+
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);  // Educación de calidad
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);  // Industria, innovación e infraestructura
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_8);  // Trabajo decente y crecimiento económico
+
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);    // Múltiples formas de representación
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ACTION_EXPRESSION); // Múltiples formas de acción y expresión
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);        // Múltiples formas de implicación
+
+        course.setIsRelatedToInvestigation(true);
+        course.setInvolvesActivitiesWithProductiveSector(true);
+
         course = courseRepository.save(course);
         log.info("✓ Created course: {} (ID: {})", course.getDescription(), course.getId());
         log.info("  - Shift: {}", course.getShift());
