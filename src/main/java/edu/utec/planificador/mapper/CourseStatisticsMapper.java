@@ -39,11 +39,6 @@ public class CourseStatisticsMapper {
         List<Activity> activities = new ArrayList<>();
 
         for (WeeklyPlanning wp : course.getWeeklyPlannings()) {
-            // Activities directly in weekly planning
-            if (wp.getActivities() != null) {
-                activities.addAll(wp.getActivities());
-            }
-
             // Activities in programmatic contents
             if (wp.getProgrammaticContents() != null) {
                 wp.getProgrammaticContents().forEach(pc -> {

@@ -55,25 +55,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         """)
     List<ProgrammaticContent> loadProgrammaticContentActivities(@Param("courseId") Long courseId);
 
-    // Cuarta query: cargar activities de weekly plannings
-    @Query("""
-        SELECT DISTINCT wp FROM WeeklyPlanning wp
-        LEFT JOIN FETCH wp.activities
-        WHERE wp.id IN (
-            SELECT wp2.id FROM Course c
-            JOIN c.weeklyPlannings wp2
-            WHERE c.id = :courseId
-        )
-        """)
-    List<WeeklyPlanning> loadWeeklyPlanningActivities(@Param("courseId") Long courseId);
-
     // Metodo helper para cargar lo necesario
     default Optional<Course> findByIdWithFullDetails(Long courseId) {
         Optional<Course> courseOpt = findByIdWithWeeklyPlannings(courseId);
         if (courseOpt.isPresent()) {
             loadProgrammaticContents(courseId);
             loadProgrammaticContentActivities(courseId);
-            loadWeeklyPlanningActivities(courseId);
         }
         return courseOpt;
     }

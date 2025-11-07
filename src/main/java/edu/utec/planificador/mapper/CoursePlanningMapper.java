@@ -134,7 +134,6 @@ public class CoursePlanningMapper {
                 .startDate(planning.getStartDate())
                 .bibliographicReferences(planning.getBibliographicReferences())
                 .programmaticContents(mapProgrammaticContents(planning.getProgrammaticContents()))
-                .activities(mapActivities(planning.getActivities()))
                 .build();
     }
 

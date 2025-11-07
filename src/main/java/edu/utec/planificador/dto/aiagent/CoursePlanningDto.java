@@ -80,7 +80,6 @@ public class CoursePlanningDto {
         private LocalDate startDate;
         private List<String> bibliographicReferences;
         private List<ProgrammaticContentDto> programmaticContents;
-        private List<ActivityDto> activities;
     }
 
     @Data
