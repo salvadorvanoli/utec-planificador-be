@@ -47,6 +47,12 @@ public class CurricularUnit {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public CurricularUnit(String name, Integer credits, Term term) {
+        this.name = name;
+        this.credits = credits;
+        this.term = term;
+    }
+
     @Setter
     @Column(nullable = false, length = Constants.MAX_CURRICULAR_UNIT_NAME_LENGTH)
     @NotBlank
@@ -59,13 +65,13 @@ public class CurricularUnit {
     @Min(1)
     private Integer credits;
 
-    @ElementCollection(targetClass = DomainArea.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = DomainArea.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "curricular_unit_domain_areas", joinColumns = @JoinColumn(name = "curricular_unit_id"))
     @Column(name = "domain_area")
     @Enumerated(EnumType.STRING)
     private Set<DomainArea> domainAreas = new HashSet<>();
 
-    @ElementCollection(targetClass = ProfessionalCompetency.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = ProfessionalCompetency.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "curricular_unit_professional_competencies", joinColumns = @JoinColumn(name = "curricular_unit_id"))
     @Column(name = "professional_competency")
     @Enumerated(EnumType.STRING)

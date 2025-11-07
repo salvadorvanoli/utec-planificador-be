@@ -11,8 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -43,6 +41,19 @@ public class WeeklyPlanning {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public WeeklyPlanning(Integer weekNumber, LocalDate startDate) {
+        this.weekNumber = weekNumber;
+        this.startDate = startDate;
+        // Calculate endDate as 6 days after startDate (Monday to Sunday)
+        this.endDate = startDate.plusDays(6);
+    }
+
+    public WeeklyPlanning(Integer weekNumber, LocalDate startDate, LocalDate endDate) {
+        this.weekNumber = weekNumber;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
     @Setter
     @Column(nullable = false)
     @NotNull
@@ -55,21 +66,17 @@ public class WeeklyPlanning {
     @NotNull
     private LocalDate startDate;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @Setter
+    @Column(nullable = false)
+    @NotNull
+    private LocalDate endDate;
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "weekly_planning_bibliographic_references", joinColumns = @JoinColumn(name = "weekly_planning_id"))
     @Column(name = "reference", length = 500)
     private List<String> bibliographicReferences = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "weekly_planning_programmatic_content",
-        joinColumns = @JoinColumn(name = "weekly_planning_id"),
-        inverseJoinColumns = @JoinColumn(name = "programmatic_content_id")
-    )
+    @OneToMany(mappedBy = "weeklyPlanning", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     private List<ProgrammaticContent> programmaticContents = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("id ASC")
-    private List<Activity> activities = new ArrayList<>();
 }

@@ -17,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -45,11 +46,28 @@ public class Activity {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public Activity(String description, Integer durationInMinutes, LearningModality learningModality, ProgrammaticContent programmaticContent) {
+        this.description = description;
+        this.durationInMinutes = durationInMinutes;
+        this.learningModality = learningModality;
+        this.programmaticContent = programmaticContent;
+    }
+
+    @Setter
+    @Column(length = 200)
+    @Size(max = 200)
+    private String title;
+
     @Setter
     @Column(nullable = false, length = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     @NotBlank
     @Size(max = Constants.MAX_ACTIVITY_DESCRIPTION_LENGTH)
     private String description;
+
+    @Setter
+    @Column(length = 7)
+    @Size(max = 7)
+    private String color;
 
     @Setter
     @Column(nullable = false)
@@ -86,4 +104,9 @@ public class Activity {
     @Column(name = "learning_resource")
     @Enumerated(EnumType.STRING)
     private Set<LearningResource> learningResources = new HashSet<>();
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "programmatic_content_id", nullable = false)
+    private ProgrammaticContent programmaticContent;
 }

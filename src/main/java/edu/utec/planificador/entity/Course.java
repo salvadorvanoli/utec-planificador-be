@@ -57,6 +57,16 @@ public class Course {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public Course(Shift shift, String description, LocalDate startDate, LocalDate endDate, 
+                  PartialGradingSystem partialGradingSystem, CurricularUnit curricularUnit) {
+        this.shift = shift;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.partialGradingSystem = partialGradingSystem;
+        this.curricularUnit = curricularUnit;
+    }
+
     @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -85,7 +95,7 @@ public class Course {
     @NotNull
     private PartialGradingSystem partialGradingSystem;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "course_delivery_format_hours", joinColumns = @JoinColumn(name = "course_id"))
     @MapKeyColumn(name = "delivery_format")
     @MapKeyEnumerated(EnumType.STRING)
@@ -102,13 +112,13 @@ public class Course {
     @NotNull
     private Boolean involvesActivitiesWithProductiveSector = false;
 
-    @ElementCollection(targetClass = SustainableDevelopmentGoal.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = SustainableDevelopmentGoal.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "course_sustainable_development_goals", joinColumns = @JoinColumn(name = "course_id"))
     @Column(name = "sustainable_development_goal")
     @Enumerated(EnumType.STRING)
     private Set<SustainableDevelopmentGoal> sustainableDevelopmentGoals = new HashSet<>();
 
-    @ElementCollection(targetClass = UniversalDesignLearningPrinciple.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = UniversalDesignLearningPrinciple.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "course_universal_design_learning_principles", joinColumns = @JoinColumn(name = "course_id"))
     @Column(name = "universal_design_learning_principle")
     @Enumerated(EnumType.STRING)

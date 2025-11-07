@@ -9,8 +9,8 @@ spring:
   
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/planificador_db}
-    username: ${DATABASE_USERNAME:planificador_user}
-    password: ${DATABASE_PASSWORD:change_me}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
     
     hikari:

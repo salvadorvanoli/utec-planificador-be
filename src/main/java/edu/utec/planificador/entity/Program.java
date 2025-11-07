@@ -37,6 +37,12 @@ public class Program {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public Program(String name, Integer durationInTerms, Integer totalCredits) {
+        this.name = name;
+        this.durationInTerms = durationInTerms;
+        this.totalCredits = totalCredits;
+    }
+
     @Setter
     @Column(nullable = false, length = Constants.MAX_PROGRAM_NAME_LENGTH)
     @NotBlank

@@ -43,6 +43,11 @@ public class Term {
     @EqualsAndHashCode.Include
     private Long id;
 
+    public Term(Integer number, Program program) {
+        this.number = number;
+        this.program = program;
+    }
+
     @Setter
     @Column(nullable = false)
     @NotNull
