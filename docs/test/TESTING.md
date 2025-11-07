@@ -141,7 +141,7 @@ class UserControllerTest {
     private UserService userService;
     
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "EDUCATION_MANAGER")
     void shouldGetUserById() throws Exception {
         // Given
         when(userService.findById(1L))

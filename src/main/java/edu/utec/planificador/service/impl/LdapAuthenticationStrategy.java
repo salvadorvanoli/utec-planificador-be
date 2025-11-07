@@ -204,7 +204,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
             case COORDINATOR -> PositionRequest.PositionType.COORDINATOR;
             case EDUCATION_MANAGER -> PositionRequest.PositionType.EDUCATION_MANAGER;
             case ANALYST -> PositionRequest.PositionType.ANALYST;
-            case ADMIN -> PositionRequest.PositionType.EDUCATION_MANAGER;
+            case ADMINISTRATOR -> PositionRequest.PositionType.ADMINISTRATOR;
         };
     }
 
