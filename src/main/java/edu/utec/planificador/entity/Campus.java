@@ -32,7 +32,7 @@ import java.util.List;
 @Getter
 @ToString(exclude = {"programs"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @Entity
 @Table(name = "campus")
 public class Campus {

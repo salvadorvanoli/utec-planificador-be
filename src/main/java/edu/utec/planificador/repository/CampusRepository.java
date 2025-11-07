@@ -11,10 +11,9 @@ import java.util.Optional;
 public interface CampusRepository extends JpaRepository<Campus, Long> {
 
     Optional<Campus> findByName(String name);
-    
+
+    List<Campus> findByRegionalTechnologicalInstituteId(Long rtiId);
+
     boolean existsByName(String name);
-    
-    List<Campus> findByRegionalTechnologicalInstituteId(Long regionalTechnologicalInstituteId);
-    
-    boolean existsByRegionalTechnologicalInstituteId(Long regionalTechnologicalInstituteId);
 }
+

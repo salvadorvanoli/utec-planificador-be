@@ -18,6 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.positions WHERE u.utecEmail = :email")
     Optional<User> findByUtecEmailWithPositions(@Param("email") String email);
 
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.positions WHERE u.id = :userId")
+    Optional<User> findByIdWithPositions(@Param("userId") Long userId);
+
     boolean existsByUtecEmail(String utecEmail);
 
     List<User> findByAuthProvider(AuthProvider authProvider);

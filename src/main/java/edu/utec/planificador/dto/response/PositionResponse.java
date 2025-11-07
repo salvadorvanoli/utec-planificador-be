@@ -32,6 +32,9 @@ public class PositionResponse {
     )
     private Role role;
 
+    @Schema(description = "Regional Technological Institute associated with this position")
+    private RegionalTechnologicalInstituteResponse regionalTechnologicalInstitute;
+
     @Schema(description = "List of campuses where this position applies")
     @Builder.Default
     private List<CampusResponse> campuses = new ArrayList<>();

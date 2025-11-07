@@ -2,10 +2,13 @@ package edu.utec.planificador.config;
 
 import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.entity.Activity;
+import edu.utec.planificador.entity.Campus;
+import edu.utec.planificador.entity.Coordinator;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
 import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.ProgrammaticContent;
+import edu.utec.planificador.entity.RegionalTechnologicalInstitute;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
@@ -17,9 +20,11 @@ import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
 import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
+import edu.utec.planificador.repository.CampusRepository;
 import edu.utec.planificador.enumeration.TeachingStrategy;
 import edu.utec.planificador.enumeration.TransversalCompetency;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
+import edu.utec.planificador.repository.RegionalTechnologicalInstituteRepository;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.ProgramRepository;
@@ -48,6 +53,8 @@ public class DataSeeder implements CommandLineRunner {
     private final CurricularUnitRepository curricularUnitRepository;
     private final CourseRepository courseRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RegionalTechnologicalInstituteRepository rtiRepository;
+    private final CampusRepository campusRepository;
 
     @Override
     @Transactional
@@ -71,13 +78,53 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedData() {
-        // 1. Crear User para el Teacher
-        log.info("Creating user for teacher...");
+        log.info("Creating Regional Technological Institutes (RTI)...");
+        RegionalTechnologicalInstitute rtiMontevideo = new RegionalTechnologicalInstitute();
+        rtiMontevideo.setName("ITR Montevideo");
+        rtiMontevideo = rtiRepository.save(rtiMontevideo);
+        log.info("✓ Created RTI: {} (ID: {})", rtiMontevideo.getName(), rtiMontevideo.getId());
+
+        RegionalTechnologicalInstitute rtiNorte = new RegionalTechnologicalInstitute();
+        rtiNorte.setName("ITR Norte");
+        rtiNorte = rtiRepository.save(rtiNorte);
+        log.info("✓ Created RTI: {} (ID: {})", rtiNorte.getName(), rtiNorte.getId());
+
+        RegionalTechnologicalInstitute rtiSur = new RegionalTechnologicalInstitute();
+        rtiSur.setName("ITR Sur");
+        rtiSur = rtiRepository.save(rtiSur);
+        log.info("✓ Created RTI: {} (ID: {})", rtiSur.getName(), rtiSur.getId());
+
+        log.info("Creating Campuses...");
+        Campus campusCentro = new Campus();
+        campusCentro.setName("Campus Centro");
+        campusCentro.setRegionalTechnologicalInstitute(rtiMontevideo);
+        campusCentro = campusRepository.save(campusCentro);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusCentro.getName(), rtiMontevideo.getName(), campusCentro.getId());
+
+        Campus campusPocitos = new Campus();
+        campusPocitos.setName("Campus Pocitos");
+        campusPocitos.setRegionalTechnologicalInstitute(rtiMontevideo);
+        campusPocitos = campusRepository.save(campusPocitos);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusPocitos.getName(), rtiMontevideo.getName(), campusPocitos.getId());
+
+        Campus campusRivera = new Campus();
+        campusRivera.setName("Campus Rivera");
+        campusRivera.setRegionalTechnologicalInstitute(rtiNorte);
+        campusRivera = campusRepository.save(campusRivera);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusRivera.getName(), rtiNorte.getName(), campusRivera.getId());
+
+        Campus campusMaldonado = new Campus();
+        campusMaldonado.setName("Campus Maldonado");
+        campusMaldonado.setRegionalTechnologicalInstitute(rtiSur);
+        campusMaldonado = campusRepository.save(campusMaldonado);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusMaldonado.getName(), rtiSur.getName(), campusMaldonado.getId());
+
+        log.info("Creating user...");
         PersonalData personalData = new PersonalData();
         personalData.setName("Juan");
         personalData.setLastName("Pérez");
         personalData.setIdentityDocument("12345678");
-        personalData.setPhoneNumber("099123456"); // Formato uruguayo: 09XXXXXXX
+        personalData.setPhoneNumber("099123456");
         personalData.setCountry("Uruguay");
         personalData.setCity("Montevideo");
 
@@ -89,15 +136,32 @@ public class DataSeeder implements CommandLineRunner {
         user = userRepository.save(user);
         log.info("✓ Created user: {} (ID: {})", user.getUtecEmail(), user.getId());
 
-        // 2. Crear Teacher
-        log.info("Creating teacher...");
-        Teacher teacher = new Teacher(user);
-        user.addPosition(teacher);
-        user = userRepository.save(user);
-        teacher = (Teacher) user.getPositions().get(0);
-        log.info("✓ Created teacher for user: {} (ID: {})", user.getUtecEmail(), teacher.getId());
+        log.info("Creating positions for user...");
 
-        // 3. Crear Program
+        Teacher teacherMontevideo = new Teacher(user);
+        teacherMontevideo.addCampus(campusCentro);
+        teacherMontevideo.addCampus(campusPocitos);
+        user.addPosition(teacherMontevideo);
+        log.info("✓ Created Teacher position for {} at ITR Montevideo (Campuses: Centro, Pocitos)", user.getUtecEmail());
+
+        Coordinator coordinatorMontevideo = new Coordinator(user);
+        coordinatorMontevideo.addCampus(campusCentro);
+        user.addPosition(coordinatorMontevideo);
+        log.info("✓ Created Coordinator position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+
+        Teacher teacherNorte = new Teacher(user);
+        teacherNorte.addCampus(campusRivera);
+        user.addPosition(teacherNorte);
+        log.info("✓ Created Teacher position for {} at ITR Norte (Campus: Rivera)", user.getUtecEmail());
+
+        Teacher teacherSur = new Teacher(user);
+        teacherSur.addCampus(campusMaldonado);
+        user.addPosition(teacherSur);
+        log.info("✓ Created Teacher position for {} at ITR Sur (Campus: Maldonado)", user.getUtecEmail());
+
+        user = userRepository.save(user);
+        log.info("✓ Saved all positions for user: {}", user.getUtecEmail());
+
         log.info("Creating program...");
         Program program = new Program(
             "Ingeniería en Tecnologías de la Información",
@@ -107,13 +171,11 @@ public class DataSeeder implements CommandLineRunner {
         program = programRepository.save(program);
         log.info("✓ Created program: {} (ID: {})", program.getName(), program.getId());
 
-        // 4. Crear Term
         log.info("Creating term...");
         Term term = new Term(1, program);
         term = termRepository.save(term);
         log.info("✓ Created term: Semestre {} (ID: {})", term.getNumber(), term.getId());
 
-        // 5. Crear Curricular Unit
         log.info("Creating curricular unit...");
         CurricularUnit curricularUnit = new CurricularUnit(
             "Programación Avanzada",
@@ -126,7 +188,6 @@ public class DataSeeder implements CommandLineRunner {
             curricularUnit.getCredits(), 
             curricularUnit.getId());
 
-        // 6. Crear Course
         log.info("Creating course...");
         Course course = new Course(
             Shift.MORNING,
@@ -137,19 +198,25 @@ public class DataSeeder implements CommandLineRunner {
             curricularUnit
         );
         
-        course.getTeachers().add(teacher);
-        
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 60);      // 60 horas presenciales
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);        // 20 horas virtuales
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.HYBRID, 10);         // 10 horas híbridas
+        final Campus finalCampusCentro = campusCentro;
+        teacherMontevideo = (Teacher) user.getPositions().stream()
+            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusCentro))
+            .findFirst()
+            .orElseThrow();
 
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);  // Educación de calidad
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);  // Industria, innovación e infraestructura
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_8);  // Trabajo decente y crecimiento económico
+        course.getTeachers().add(teacherMontevideo);
 
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);    // Múltiples formas de representación
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ACTION_EXPRESSION); // Múltiples formas de acción y expresión
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);        // Múltiples formas de implicación
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 60);
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);
+        course.getHoursPerDeliveryFormat().put(DeliveryFormat.HYBRID, 10);
+
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
+        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_8);
+
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ACTION_EXPRESSION);
+        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);
 
         course.setIsRelatedToInvestigation(true);
         course.setInvolvesActivitiesWithProductiveSector(true);
@@ -161,10 +228,24 @@ public class DataSeeder implements CommandLineRunner {
         log.info("  - End date: {}", course.getEndDate());
         log.info("  - Teacher: {}", user.getUtecEmail());
 
-        // Crear WeeklyPlannings para aproximadamente 1 mes (4 semanas)
         createWeeklyPlanningsWithContent(course);
         
         log.info("Data seeding completed successfully");
+        log.info("");
+        log.info("==================================================");
+        log.info("Test Data Summary:");
+        log.info("==================================================");
+        log.info("User: juan.perez@utec.edu.uy");
+        log.info("Password: password");
+        log.info("");
+        log.info("Positions:");
+        log.info("  - Teacher at ITR Montevideo (Campuses: Centro, Pocitos)");
+        log.info("  - Coordinator at ITR Montevideo (Campus: Centro)");
+        log.info("  - Teacher at ITR Norte (Campus: Rivera)");
+        log.info("  - Teacher at ITR Sur (Campus: Maldonado)");
+        log.info("");
+        log.info("Test endpoint: GET /api/v1/user/positions");
+        log.info("==================================================");
     }
 
     private void createWeeklyPlanningsWithContent(Course course) {
