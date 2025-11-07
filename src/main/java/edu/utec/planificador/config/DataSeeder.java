@@ -2,10 +2,13 @@ package edu.utec.planificador.config;
 
 import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.entity.Activity;
+import edu.utec.planificador.entity.Administrator;
+import edu.utec.planificador.entity.Analyst;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Coordinator;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.EducationManager;
 import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.RegionalTechnologicalInstitute;
@@ -149,6 +152,21 @@ public class DataSeeder implements CommandLineRunner {
         user.addPosition(coordinatorMontevideo);
         log.info("✓ Created Coordinator position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
 
+        Administrator administratorMontevideo = new Administrator(user);
+        administratorMontevideo.addCampus(campusCentro);
+        user.addPosition(administratorMontevideo);
+        log.info("✓ Created Administrator position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+
+        EducationManager educationManagerMontevideo = new EducationManager(user);
+        educationManagerMontevideo.addCampus(campusCentro);
+        user.addPosition(educationManagerMontevideo);
+        log.info("✓ Created Education Manager position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+
+        Analyst analystMontevideo = new Analyst(user);
+        analystMontevideo.addCampus(campusCentro);
+        user.addPosition(analystMontevideo);
+        log.info("✓ Created Analyst position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+
         Teacher teacherNorte = new Teacher(user);
         teacherNorte.addCampus(campusRivera);
         user.addPosition(teacherNorte);
@@ -241,8 +259,13 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Positions:");
         log.info("  - Teacher at ITR Montevideo (Campuses: Centro, Pocitos)");
         log.info("  - Coordinator at ITR Montevideo (Campus: Centro)");
+        log.info("  - Administrator at ITR Montevideo (Campus: Centro)");
+        log.info("  - Education Manager at ITR Montevideo (Campus: Centro)");
+        log.info("  - Analyst at ITR Montevideo (Campus: Centro)");
         log.info("  - Teacher at ITR Norte (Campus: Rivera)");
         log.info("  - Teacher at ITR Sur (Campus: Maldonado)");
+        log.info("");
+        log.info("Campus Centro has ALL roles!");
         log.info("");
         log.info("Test endpoint: GET /api/v1/user/positions");
         log.info("==================================================");
