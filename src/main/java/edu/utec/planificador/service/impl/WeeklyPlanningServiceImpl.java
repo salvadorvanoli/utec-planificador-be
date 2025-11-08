@@ -7,6 +7,7 @@ import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.WeeklyPlanningRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.WeeklyPlanningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +25,15 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
 
     private final WeeklyPlanningRepository weeklyPlanningRepository;
     private final CourseRepository courseRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public WeeklyPlanningResponse createWeeklyPlanning(Long courseId, WeeklyPlanningRequest request) {
         log.debug("Creating weekly planning for courseId={}", courseId);
+
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -54,6 +59,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     @Override
     @Transactional(readOnly = true)
     public WeeklyPlanningResponse getWeeklyPlanningById(Long id) {
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(id);
+
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + id));
 
@@ -64,6 +72,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     @Transactional(readOnly = true)
     public List<WeeklyPlanningResponse> getWeeklyPlanningsByCourseId(Long courseId) {
         log.debug("Getting all weekly plannings for courseId={}", courseId);
+
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
 
         // Verify course exists
         if (!courseRepository.existsById(courseId)) {
@@ -82,6 +93,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     public WeeklyPlanningResponse getWeeklyPlanningByCourseIdAndWeekNumber(Long courseId, Integer weekNumber) {
         log.debug("Getting weekly planning for courseId={} and weekNumber={}", courseId, weekNumber);
 
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findByCourseIdAndWeekNumber(courseId, weekNumber)
             .orElseThrow(() -> new ResourceNotFoundException(
                 String.format("WeeklyPlanning not found for courseId=%d and weekNumber=%d", courseId, weekNumber)
@@ -95,6 +109,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     public WeeklyPlanningResponse getWeeklyPlanningByCourseIdAndDate(Long courseId, LocalDate date) {
         log.debug("Getting weekly planning for courseId={} and date={}", courseId, date);
 
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findByCourseIdAndDate(courseId, date)
             .orElseThrow(() -> new ResourceNotFoundException(
                 String.format("WeeklyPlanning not found for courseId=%d and date=%s", courseId, date)
@@ -106,6 +123,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     @Override
     @Transactional
     public WeeklyPlanningResponse updateWeeklyPlanning(Long id, WeeklyPlanningRequest request) {
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(id);
+
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + id));
 
@@ -127,6 +147,9 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     @Override
     @Transactional
     public void deleteWeeklyPlanning(Long id) {
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(id);
+
         if (!weeklyPlanningRepository.existsById(id)) {
             throw new ResourceNotFoundException("WeeklyPlanning not found with id: " + id);
         }
@@ -148,3 +171,4 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
             .build();
     }
 }
+

@@ -10,6 +10,7 @@ import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CourseService;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +27,16 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final CurricularUnitRepository curricularUnitRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public CourseResponse createCourse(CourseRequest request) {
         log.debug("Creating course with description: {}", request.getDescription());
         
+        // Validate access to curricular unit before creating course
+        accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
         
@@ -86,13 +91,14 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse getCourseById(Long id) {
         log.debug("Getting course by id: {}", id);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(id);
+
         Course course = courseRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
         // Mapear dentro de la transacción para acceder a colecciones LAZY
-        CourseResponse response = mapToResponse(course);
-        
-        return response;
+        return mapToResponse(course);
     }
 
     @Override
@@ -100,6 +106,10 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse updateCourse(Long id, CourseRequest request) {
         log.debug("Updating course with id: {}", id);
         
+        // Validate access to both course and new curricular unit
+        accessControlService.validateCourseAccess(id);
+        accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
+
         Course course = courseRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
@@ -144,6 +154,9 @@ public class CourseServiceImpl implements CourseService {
     public void deleteCourse(Long id) {
         log.debug("Deleting course with id: {}", id);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(id);
+
         if (!courseRepository.existsById(id)) {
             throw new ResourceNotFoundException("Course not found with id: " + id);
         }
@@ -177,6 +190,9 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse addSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal) {
         log.debug("Adding Sustainable Development Goal {} to course {}", goal, courseId);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         
@@ -193,6 +209,9 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse removeSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal) {
         log.debug("Removing Sustainable Development Goal {} from course {}", goal, courseId);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         
@@ -216,6 +235,9 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse addUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle) {
         log.debug("Adding Universal Design Learning Principle {} to course {}", principle, courseId);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         
@@ -232,6 +254,9 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse removeUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle) {
         log.debug("Removing Universal Design Learning Principle {} from course {}", principle, courseId);
         
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         

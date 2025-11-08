@@ -11,6 +11,7 @@ import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.mapper.CoursePlanningMapper;
 import edu.utec.planificador.mapper.CourseStatisticsMapper;
 import edu.utec.planificador.repository.CourseRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.AIAgentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,11 +31,17 @@ public class AIAgentServiceImpl implements AIAgentService {
     private final CourseRepository courseRepository;
     private final CoursePlanningMapper coursePlanningMapper;
     private final CourseStatisticsMapper courseStatisticsMapper;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional(readOnly = true)
     public ChatResponse sendChatMessage(String sessionId, String message, Long courseId) {
         log.info("Sending chat message for session: {}, courseId: {}", sessionId, courseId);
+
+        // Validate access to course if courseId is provided
+        if (courseId != null) {
+            accessControlService.validateCourseAccess(courseId);
+        }
 
         AIChatRequest request = AIChatRequest.builder()
                 .sessionId(sessionId)
@@ -80,6 +87,9 @@ public class AIAgentServiceImpl implements AIAgentService {
     public SuggestionsResponse getSuggestions(Long courseId) {
         log.info("Getting suggestions for course: {}", courseId);
 
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
         Course course = getCourseWithDetails(courseId);
         CoursePlanningDto coursePlanningDto = coursePlanningMapper.toDto(course);
 
@@ -118,6 +128,9 @@ public class AIAgentServiceImpl implements AIAgentService {
     @Transactional(readOnly = true)
     public ReportResponse generateReport(Long courseId) {
         log.info("Generating report for course: {}", courseId);
+
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
 
         Course course = getCourseWithDetails(courseId);
         CoursePlanningDto coursePlanningDto = coursePlanningMapper.toDto(course);

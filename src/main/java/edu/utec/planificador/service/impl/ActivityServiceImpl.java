@@ -11,6 +11,7 @@ import edu.utec.planificador.enumeration.TransversalCompetency;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.ActivityRepository;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +27,15 @@ public class ActivityServiceImpl implements ActivityService {
 
     private final ActivityRepository activityRepository;
     private final ProgrammaticContentRepository programmaticContentRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public ActivityResponse createActivity(ActivityRequest request) {
         log.debug("Creating activity for programmaticContentId={}", request.getProgrammaticContentId());
+
+        // Validate access to programmatic content
+        accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
@@ -47,22 +52,22 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Set collections
         if (request.getCognitiveProcesses() != null) {
-            request.getCognitiveProcesses().forEach(cp -> 
+            request.getCognitiveProcesses().forEach(cp ->
                 activity.getCognitiveProcesses().add(CognitiveProcess.valueOf(cp))
             );
         }
         if (request.getTransversalCompetencies() != null) {
-            request.getTransversalCompetencies().forEach(tc -> 
+            request.getTransversalCompetencies().forEach(tc ->
                 activity.getTransversalCompetencies().add(TransversalCompetency.valueOf(tc))
             );
         }
         if (request.getTeachingStrategies() != null) {
-            request.getTeachingStrategies().forEach(ts -> 
+            request.getTeachingStrategies().forEach(ts ->
                 activity.getTeachingStrategies().add(TeachingStrategy.valueOf(ts))
             );
         }
         if (request.getLearningResources() != null) {
-            request.getLearningResources().forEach(lr -> 
+            request.getLearningResources().forEach(lr ->
                 activity.getLearningResources().add(LearningResource.valueOf(lr))
             );
         }
@@ -78,6 +83,9 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional(readOnly = true)
     public ActivityResponse getActivityById(Long id) {
+        // Validate access to activity
+        accessControlService.validateActivityAccess(id);
+
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
 
@@ -87,6 +95,10 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public ActivityResponse updateActivity(Long id, ActivityRequest request) {
+        // Validate access to both activity and new programmatic content
+        accessControlService.validateActivityAccess(id);
+        accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
+
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
 
@@ -102,28 +114,28 @@ public class ActivityServiceImpl implements ActivityService {
         // Update collections
         activity.getCognitiveProcesses().clear();
         if (request.getCognitiveProcesses() != null) {
-            request.getCognitiveProcesses().forEach(cp -> 
+            request.getCognitiveProcesses().forEach(cp ->
                 activity.getCognitiveProcesses().add(CognitiveProcess.valueOf(cp))
             );
         }
 
         activity.getTransversalCompetencies().clear();
         if (request.getTransversalCompetencies() != null) {
-            request.getTransversalCompetencies().forEach(tc -> 
+            request.getTransversalCompetencies().forEach(tc ->
                 activity.getTransversalCompetencies().add(TransversalCompetency.valueOf(tc))
             );
         }
 
         activity.getTeachingStrategies().clear();
         if (request.getTeachingStrategies() != null) {
-            request.getTeachingStrategies().forEach(ts -> 
+            request.getTeachingStrategies().forEach(ts ->
                 activity.getTeachingStrategies().add(TeachingStrategy.valueOf(ts))
             );
         }
 
         activity.getLearningResources().clear();
         if (request.getLearningResources() != null) {
-            request.getLearningResources().forEach(lr -> 
+            request.getLearningResources().forEach(lr ->
                 activity.getLearningResources().add(LearningResource.valueOf(lr))
             );
         }
@@ -144,6 +156,9 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public void deleteActivity(Long id) {
+        // Validate access to activity
+        accessControlService.validateActivityAccess(id);
+
         if (!activityRepository.existsById(id)) {
             throw new ResourceNotFoundException("Activity not found with id: " + id);
         }
@@ -168,3 +183,4 @@ public class ActivityServiceImpl implements ActivityService {
             .build();
     }
 }
+
