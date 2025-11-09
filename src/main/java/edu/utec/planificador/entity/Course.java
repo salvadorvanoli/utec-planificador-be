@@ -147,4 +147,16 @@ public class Course {
     @JoinColumn(name = "course_id")
     @OrderBy("id DESC")
     private List<Modification> modifications = new ArrayList<>();
+
+    public String getPeriod() {
+        if (startDate == null || curricularUnit == null || curricularUnit.getTerm() == null) {
+            return null;
+        }
+        
+        int year = startDate.getYear();
+        int semester = curricularUnit.getTerm().getNumber();
+        int periodSemester = (semester % 2 == 0) ? 2 : 1;
+        
+        return String.format("%d-%dS", year, periodSemester);
+    }
 }
