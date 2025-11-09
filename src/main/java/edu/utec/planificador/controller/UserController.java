@@ -111,7 +111,7 @@ public class UserController {
     @Operation(
         summary = "Get teachers",
         description = "Returns all users with TEACHER role. " +
-                      "Optionally filters by Regional Technological Institute. " +
+                      "Optionally filters by Campus. " +
                       "This endpoint is publicly accessible for course catalog purposes."
     )
     @ApiResponses(value = {
@@ -130,12 +130,12 @@ public class UserController {
         )
     })
     public ResponseEntity<List<UserBasicResponse>> getTeachers(
-        @Parameter(description = "Regional Technological Institute ID to filter teachers", example = "1")
-        @RequestParam(required = false) Long rtiId
+        @Parameter(description = "Campus ID to filter teachers", example = "1")
+        @RequestParam(required = false) Long campusId
     ) {
-        log.info("GET /user/teachers - rtiId: {}", rtiId);
+        log.info("GET /user/teachers - campusId: {}", campusId);
 
-        List<UserBasicResponse> response = userPositionService.getUsers(Role.TEACHER, rtiId);
+        List<UserBasicResponse> response = userPositionService.getUsers(Role.TEACHER, campusId);
 
         return ResponseEntity.ok(response);
     }
@@ -144,7 +144,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('USER_READ')")
     @Operation(
         summary = "Get users with optional filters",
-        description = "Returns users filtered by role and/or Regional Technological Institute. " +
+        description = "Returns users filtered by role and/or Campus. " +
                       "If no filters are specified, returns all users. " +
                       "Role can be TEACHER, COORDINATOR, EDUCATION_MANAGER, etc. " +
                       "This endpoint requires authentication and is intended for administrative use.",
@@ -183,12 +183,12 @@ public class UserController {
     public ResponseEntity<List<UserBasicResponse>> getUsers(
         @Parameter(description = "Role to filter users (TEACHER, COORDINATOR, EDUCATION_MANAGER)", example = "TEACHER")
         @RequestParam(required = false) Role role,
-        @Parameter(description = "Regional Technological Institute ID to filter users", example = "1")
-        @RequestParam(required = false) Long rtiId
+        @Parameter(description = "Campus ID to filter users", example = "1")
+        @RequestParam(required = false) Long campusId
     ) {
-        log.info("GET /user - role: {}, rtiId: {}", role, rtiId);
+        log.info("GET /user - role: {}, campusId: {}", role, campusId);
 
-        List<UserBasicResponse> response = userPositionService.getUsers(role, rtiId);
+        List<UserBasicResponse> response = userPositionService.getUsers(role, campusId);
 
         return ResponseEntity.ok(response);
     }

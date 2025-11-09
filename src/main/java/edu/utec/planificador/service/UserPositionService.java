@@ -13,5 +13,5 @@ public interface UserPositionService {
 
     List<PeriodResponse> getUserPeriodsByCampus(Long campusId);
 
-    List<UserBasicResponse> getUsers(Role role, Long rtiId);
+    List<UserBasicResponse> getUsers(Role role, Long campusId);
 }

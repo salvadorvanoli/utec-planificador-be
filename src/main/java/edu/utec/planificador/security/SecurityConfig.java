@@ -57,7 +57,7 @@ public class SecurityConfig {
         "/actuator/info",
         "/enums/**",
         "/user/teachers",
-        "/regional-technological-institutes",
+        "/campuses",
         "/courses/**",                  // ⚠️ Temporalmente sin seguridad para desarrollo
         "/curricular-units/**",         // ⚠️ Temporalmente sin seguridad para desarrollo
         "/weekly-plannings/**",         // ⚠️ Temporalmente sin seguridad para desarrollo

@@ -20,5 +20,14 @@ public interface CampusRepository extends JpaRepository<Campus, Long> {
 
     @Query("SELECT c FROM Campus c JOIN c.programs p WHERE p.id = :programId")
     List<Campus> findByProgram(@Param("programId") Long programId);
+
+    @Query("""
+        SELECT DISTINCT c FROM Campus c
+        JOIN c.positions position
+        WHERE position.user.id = :userId
+        AND position.isActive = true
+        ORDER BY c.name ASC
+        """)
+    List<Campus> findByUserId(@Param("userId") Long userId);
 }
 
