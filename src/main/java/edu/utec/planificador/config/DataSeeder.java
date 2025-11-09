@@ -167,18 +167,13 @@ public class DataSeeder implements CommandLineRunner {
         user.addPosition(analystMontevideo);
         log.info("✓ Created Analyst position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
 
-        Teacher teacherNorte = new Teacher(user);
-        teacherNorte.addCampus(campusRivera);
-        user.addPosition(teacherNorte);
-        log.info("✓ Created Teacher position for {} at ITR Norte (Campus: Rivera)", user.getUtecEmail());
-
-        Teacher teacherSur = new Teacher(user);
-        teacherSur.addCampus(campusMaldonado);
-        user.addPosition(teacherSur);
-        log.info("✓ Created Teacher position for {} at ITR Sur (Campus: Maldonado)", user.getUtecEmail());
+        // NO agregamos posiciones en ITR Norte ni ITR Sur para el usuario 1
+        // Esto permite que el control de acceso funcione correctamente
+        // Usuario 1 SOLO tiene acceso a ITR Montevideo (Campus Centro y Pocitos)
 
         user = userRepository.save(user);
         log.info("✓ Saved all positions for user: {}", user.getUtecEmail());
+        log.info("✓ User 1 has access ONLY to ITR Montevideo (Centro and Pocitos)");
 
         log.info("Creating program...");
         Program program = new Program(
@@ -188,6 +183,11 @@ public class DataSeeder implements CommandLineRunner {
         );
         program = programRepository.save(program);
         log.info("✓ Created program: {} (ID: {})", program.getName(), program.getId());
+
+        // Asociar programa con Campus Centro
+        campusCentro.getPrograms().add(program);
+        campusCentro = campusRepository.save(campusCentro);
+        log.info("✓ Associated program {} with Campus Centro", program.getName());
 
         log.info("Creating term...");
         Term term = new Term(1, program);
@@ -251,36 +251,140 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Data seeding completed successfully");
         log.info("");
         log.info("==================================================");
-        log.info("Test Data Summary:");
+        log.info("🧪 ACCESS CONTROL TEST DATA SUMMARY:");
         log.info("==================================================");
-        log.info("User: juan.perez@utec.edu.uy");
-        log.info("Password: password");
         log.info("");
+        log.info("👤 USER 1: juan.perez@utec.edu.uy");
+        log.info("Password: password");
         log.info("Positions:");
         log.info("  - Teacher at ITR Montevideo (Campuses: Centro, Pocitos)");
         log.info("  - Coordinator at ITR Montevideo (Campus: Centro)");
         log.info("  - Administrator at ITR Montevideo (Campus: Centro)");
         log.info("  - Education Manager at ITR Montevideo (Campus: Centro)");
         log.info("  - Analyst at ITR Montevideo (Campus: Centro)");
+        log.info("✅ HAS ACCESS to: ITR Montevideo ONLY");
+        log.info("⛔ NO ACCESS to: ITR Norte, ITR Sur");
+        log.info("✅ Can access Course ID: {} (ITR Montevideo)", course.getId());
+        log.info("");
+
+        // ========================================
+        // SEGUNDO USUARIO Y CURSO PARA TESTING DE CONTROL DE ACCESO
+        // ========================================
+        log.info("Creating second user for access control testing...");
+        PersonalData personalData2 = new PersonalData();
+        personalData2.setName("María");
+        personalData2.setLastName("González");
+        personalData2.setIdentityDocument("87654321");
+        personalData2.setPhoneNumber("099654321");
+        personalData2.setCountry("Uruguay");
+        personalData2.setCity("Rivera");
+
+        User user2 = new User(
+            "maria.gonzalez@utec.edu.uy",
+            passwordEncoder.encode("password123"),
+            personalData2
+        );
+        user2 = userRepository.save(user2);
+        log.info("✓ Created second user: {} (ID: {})", user2.getUtecEmail(), user2.getId());
+
+        // María solo tiene acceso al ITR Norte (Campus Rivera)
+        Coordinator coordinatorNorte = new Coordinator(user2);
+        coordinatorNorte.addCampus(campusRivera);
+        user2.addPosition(coordinatorNorte);
+
+        Teacher teacherNorte2 = new Teacher(user2);
+        teacherNorte2.addCampus(campusRivera);
+        user2.addPosition(teacherNorte2);
+
+        user2 = userRepository.save(user2);
+        log.info("✓ User 2 has positions ONLY at ITR Norte (Campus: Rivera)");
+
+        // Crear programa para ITR Norte
+        Program programNorte = new Program("Tecnólogo en Informática", 6, 180);
+        programNorte = programRepository.save(programNorte);
+        campusRivera.getPrograms().add(programNorte);
+        campusRivera = campusRepository.save(campusRivera);
+        log.info("✓ Created program for ITR Norte: {}", programNorte.getName());
+
+        // Crear término para programa Norte
+        Term termNorte = new Term(1, programNorte);
+        termNorte = termRepository.save(termNorte);
+
+        // Crear unidad curricular para Norte
+        CurricularUnit curricularUnitNorte = new CurricularUnit("Desarrollo Web", 6, termNorte);
+        curricularUnitNorte = curricularUnitRepository.save(curricularUnitNorte);
+
+        // Obtener el teacher guardado desde las posiciones del user2
+        final Campus finalCampusRivera = campusRivera;
+        Teacher savedTeacherNorte2 = (Teacher) user2.getPositions().stream()
+            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusRivera))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Teacher position not found for user2"));
+
+        // Crear curso para ITR Norte (solo User 2 tiene acceso)
+        Course courseNorte = new Course(
+            Shift.EVENING,
+            "Curso de Desarrollo Web - ITR Norte",
+            LocalDate.of(2025, 3, 1),
+            LocalDate.of(2025, 7, 15),
+            PartialGradingSystem.PGS_2,
+            curricularUnitNorte
+        );
+        courseNorte.getTeachers().add(savedTeacherNorte2);
+        courseNorte.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 50);
+        courseNorte.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
+        courseNorte.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
+        courseNorte = courseRepository.save(courseNorte);
+        log.info("✓ Created course for ITR Norte: {} (ID: {})", courseNorte.getDescription(), courseNorte.getId());
+
+        // RESUMEN FINAL
+        log.info("");
+        log.info("==================================================");
+        log.info("📊 ACCESS CONTROL TESTING - FINAL SUMMARY:");
+        log.info("==================================================");
+        log.info("");
+        log.info("👤 USER 2: maria.gonzalez@utec.edu.uy");
+        log.info("Password: password123");
+        log.info("Positions:");
+        log.info("  - Coordinator at ITR Norte (Campus: Rivera)");
         log.info("  - Teacher at ITR Norte (Campus: Rivera)");
-        log.info("  - Teacher at ITR Sur (Campus: Maldonado)");
+        log.info("✅ HAS ACCESS to: ITR Norte ONLY");
+        log.info("⛔ NO ACCESS to: ITR Montevideo, ITR Sur");
+        log.info("✅ Can access Course ID: {} (ITR Norte)", courseNorte.getId());
+        log.info("⛔ CANNOT access Course ID: {} (ITR Montevideo)", course.getId());
         log.info("");
-        log.info("Campus Centro has ALL roles!");
+        log.info("==================================================");
+        log.info("🧪 TEST SCENARIOS TO VERIFY ACCESS CONTROL:");
+        log.info("==================================================");
         log.info("");
-        log.info("Test endpoint: GET /api/v1/user/positions");
+        log.info("1️⃣  Login as User 1 (juan.perez@utec.edu.uy):");
+        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", course.getId());
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseNorte.getId());
+        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", course.getId());
+        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", courseNorte.getId());
+        log.info("");
+        log.info("2️⃣  Login as User 2 (maria.gonzalez@utec.edu.uy):");
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
+        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", courseNorte.getId());
+        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", course.getId());
+        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", courseNorte.getId());
+        log.info("");
+        log.info("==================================================");
+        log.info("Course {} belongs to ITR Montevideo (Campus Centro)", course.getId());
+        log.info("Course {} belongs to ITR Norte (Campus Rivera)", courseNorte.getId());
         log.info("==================================================");
     }
 
     private void createWeeklyPlanningsWithContent(Course course) {
         log.info("Creating WeeklyPlannings with content for course: {}", course.getDescription());
-        
+
         // Semana 1: 2025-03-03 al 2025-03-09
         WeeklyPlanning week1 = new WeeklyPlanning(
             1,
             LocalDate.of(2025, 3, 3),
             LocalDate.of(2025, 3, 9)
         );
-        
+
         // Contenidos para semana 1
         ProgrammaticContent content1Week1 = new ProgrammaticContent(
             "Introducción a POO",
@@ -288,7 +392,7 @@ public class DataSeeder implements CommandLineRunner {
             week1
         );
         content1Week1.setColor("#4A90E2");
-        
+
         Activity activity1Content1 = new Activity(
             "Clase magistral sobre POO - Presentación de conceptos con ejemplos en Java",
             120,

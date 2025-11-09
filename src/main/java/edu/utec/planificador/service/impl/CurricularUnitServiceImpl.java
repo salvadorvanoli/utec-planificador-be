@@ -9,6 +9,7 @@ import edu.utec.planificador.enumeration.ProfessionalCompetency;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.TermRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CurricularUnitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,34 +23,38 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
 
     private final CurricularUnitRepository curricularUnitRepository;
     private final TermRepository termRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public CurricularUnitResponse createCurricularUnit(CurricularUnitRequest request) {
         log.debug("Creating curricular unit with name: {}", request.getName());
-        
+
+        // Validate access to term before creating curricular unit
+        accessControlService.validateTermAccess(request.getTermId());
+
         Term term = termRepository.findById(request.getTermId())
             .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + request.getTermId()));
-        
+
         CurricularUnit curricularUnit = new CurricularUnit(
             request.getName(),
             request.getCredits(),
             term
         );
-        
+
         // Set collections
         if (request.getDomainAreas() != null) {
             curricularUnit.getDomainAreas().addAll(request.getDomainAreas());
         }
-        
+
         if (request.getProfessionalCompetencies() != null) {
             curricularUnit.getProfessionalCompetencies().addAll(request.getProfessionalCompetencies());
         }
-        
+
         CurricularUnit savedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Curricular unit created successfully with id: {}", savedCurricularUnit.getId());
-        
+
         return mapToResponse(savedCurricularUnit);
     }
 
@@ -57,10 +62,13 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional(readOnly = true)
     public CurricularUnitResponse getCurricularUnitById(Long id) {
         log.debug("Getting curricular unit by id: {}", id);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(id);
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + id));
-        
+
         return mapToResponse(curricularUnit);
     }
 
@@ -68,33 +76,37 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public CurricularUnitResponse updateCurricularUnit(Long id, CurricularUnitRequest request) {
         log.debug("Updating curricular unit with id: {}", id);
-        
+
+        // Validate access to both curricular unit and new term
+        accessControlService.validateCurricularUnitAccess(id);
+        accessControlService.validateTermAccess(request.getTermId());
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + id));
-        
+
         Term term = termRepository.findById(request.getTermId())
             .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + request.getTermId()));
-        
+
         // Update fields
         curricularUnit.setName(request.getName());
         curricularUnit.setCredits(request.getCredits());
         curricularUnit.setTerm(term);
-        
+
         // Update collections
         curricularUnit.getDomainAreas().clear();
         if (request.getDomainAreas() != null) {
             curricularUnit.getDomainAreas().addAll(request.getDomainAreas());
         }
-        
+
         curricularUnit.getProfessionalCompetencies().clear();
         if (request.getProfessionalCompetencies() != null) {
             curricularUnit.getProfessionalCompetencies().addAll(request.getProfessionalCompetencies());
         }
-        
+
         CurricularUnit updatedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Curricular unit updated successfully with id: {}", updatedCurricularUnit.getId());
-        
+
         return mapToResponse(updatedCurricularUnit);
     }
 
@@ -102,13 +114,16 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public void deleteCurricularUnit(Long id) {
         log.debug("Deleting curricular unit with id: {}", id);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(id);
+
         if (!curricularUnitRepository.existsById(id)) {
             throw new ResourceNotFoundException("Curricular unit not found with id: " + id);
         }
-        
+
         curricularUnitRepository.deleteById(id);
-        
+
         log.info("Curricular unit deleted successfully with id: {}", id);
     }
 
@@ -129,15 +144,18 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public CurricularUnitResponse addDomainArea(Long curricularUnitId, DomainArea domainArea) {
         log.debug("Adding Domain Area {} to curricular unit {}", domainArea, curricularUnitId);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(curricularUnitId);
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
-        
+
         curricularUnit.getDomainAreas().add(domainArea);
         CurricularUnit updatedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Domain Area {} added to curricular unit {}", domainArea, curricularUnitId);
-        
+
         return mapToResponse(updatedCurricularUnit);
     }
 
@@ -145,20 +163,23 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public CurricularUnitResponse removeDomainArea(Long curricularUnitId, DomainArea domainArea) {
         log.debug("Removing Domain Area {} from curricular unit {}", domainArea, curricularUnitId);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(curricularUnitId);
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
-        
+
         boolean removed = curricularUnit.getDomainAreas().remove(domainArea);
-        
+
         if (!removed) {
             log.warn("Domain Area {} was not found in curricular unit {}", domainArea, curricularUnitId);
         }
-        
+
         CurricularUnit updatedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Domain Area {} removed from curricular unit {}", domainArea, curricularUnitId);
-        
+
         return mapToResponse(updatedCurricularUnit);
     }
 
@@ -168,15 +189,18 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public CurricularUnitResponse addProfessionalCompetency(Long curricularUnitId, ProfessionalCompetency competency) {
         log.debug("Adding Professional Competency {} to curricular unit {}", competency, curricularUnitId);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(curricularUnitId);
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
-        
+
         curricularUnit.getProfessionalCompetencies().add(competency);
         CurricularUnit updatedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Professional Competency {} added to curricular unit {}", competency, curricularUnitId);
-        
+
         return mapToResponse(updatedCurricularUnit);
     }
 
@@ -184,20 +208,24 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional
     public CurricularUnitResponse removeProfessionalCompetency(Long curricularUnitId, ProfessionalCompetency competency) {
         log.debug("Removing Professional Competency {} from curricular unit {}", competency, curricularUnitId);
-        
+
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(curricularUnitId);
+
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
-        
+
         boolean removed = curricularUnit.getProfessionalCompetencies().remove(competency);
-        
+
         if (!removed) {
             log.warn("Professional Competency {} was not found in curricular unit {}", competency, curricularUnitId);
         }
-        
+
         CurricularUnit updatedCurricularUnit = curricularUnitRepository.save(curricularUnit);
-        
+
         log.info("Professional Competency {} removed from curricular unit {}", competency, curricularUnitId);
-        
+
         return mapToResponse(updatedCurricularUnit);
     }
 }
+

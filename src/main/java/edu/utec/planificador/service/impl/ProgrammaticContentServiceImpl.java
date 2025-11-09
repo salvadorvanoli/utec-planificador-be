@@ -7,6 +7,7 @@ import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
 import edu.utec.planificador.repository.WeeklyPlanningRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.ProgrammaticContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +23,15 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
 
     private final ProgrammaticContentRepository programmaticContentRepository;
     private final WeeklyPlanningRepository weeklyPlanningRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public ProgrammaticContentResponse createProgrammaticContent(ProgrammaticContentRequest request) {
         log.debug("Creating programmatic content for weeklyPlanningId={}", request.getWeeklyPlanningId());
+
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(request.getWeeklyPlanningId());
 
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
             .orElseThrow(() -> new ResourceNotFoundException("Weekly planning not found with id: " + request.getWeeklyPlanningId()));
@@ -44,6 +49,9 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Override
     @Transactional(readOnly = true)
     public ProgrammaticContentResponse getProgrammaticContentById(Long id) {
+        // Validate access to programmatic content
+        accessControlService.validateProgrammaticContentAccess(id);
+
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
 
@@ -53,6 +61,10 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Override
     @Transactional
     public ProgrammaticContentResponse updateProgrammaticContent(Long id, ProgrammaticContentRequest request) {
+        // Validate access to both programmatic content and new weekly planning
+        accessControlService.validateProgrammaticContentAccess(id);
+        accessControlService.validateWeeklyPlanningAccess(request.getWeeklyPlanningId());
+
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
 
@@ -79,6 +91,9 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Override
     @Transactional
     public void deleteProgrammaticContent(Long id) {
+        // Validate access to programmatic content
+        accessControlService.validateProgrammaticContentAccess(id);
+
         if (!programmaticContentRepository.existsById(id)) {
             throw new ResourceNotFoundException("ProgrammaticContent not found with id: " + id);
         }
@@ -98,3 +113,4 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
             .build();
     }
 }
+
