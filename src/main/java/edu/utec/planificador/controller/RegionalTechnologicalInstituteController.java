@@ -34,7 +34,8 @@ public class RegionalTechnologicalInstituteController {
         summary = "Get Regional Technological Institutes",
         description = "Returns all Regional Technological Institutes, optionally filtered by user. " +
                       "If userId is provided, returns only RTIs where that user has active positions. " +
-                      "If userId is not provided, returns all RTIs."
+                      "If userId is not provided, returns all RTIs. " +
+                      "This endpoint is publicly accessible - no authentication required."
     )
     @ApiResponses(value = {
         @ApiResponse(

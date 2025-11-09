@@ -112,7 +112,7 @@ public class UserController {
         description = "Returns users filtered by role and/or Regional Technological Institute. " +
                       "If no filters are specified, returns all users. " +
                       "Role can be TEACHER, COORDINATOR, EDUCATION_MANAGER, etc. " +
-                      "No authentication required."
+                      "This endpoint is publicly accessible - no authentication required."
     )
     @ApiResponses(value = {
         @ApiResponse(
