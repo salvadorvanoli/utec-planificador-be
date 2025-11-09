@@ -1,7 +1,9 @@
 package edu.utec.planificador.controller;
 
 import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.dto.response.UserPositionsResponse;
+import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.service.UserPositionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -100,6 +102,47 @@ public class UserController {
         log.info("GET /user/periods - campusId: {}", campusId);
 
         List<PeriodResponse> response = userPositionService.getUserPeriodsByCampus(campusId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @Operation(
+        summary = "Get users with optional filters",
+        description = "Returns users filtered by role and/or Regional Technological Institute. " +
+                      "If no filters are specified, returns all users. " +
+                      "Role can be TEACHER, COORDINATOR, EDUCATION_MANAGER, etc. " +
+                      "No authentication required."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Users retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = UserBasicResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid role specified",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content
+        )
+    })
+    public ResponseEntity<List<UserBasicResponse>> getUsers(
+        @Parameter(description = "Role to filter users (TEACHER, COORDINATOR, EDUCATION_MANAGER)", example = "TEACHER")
+        @RequestParam(required = false) Role role,
+        @Parameter(description = "Regional Technological Institute ID to filter users", example = "1")
+        @RequestParam(required = false) Long rtiId
+    ) {
+        log.info("GET /user - role: {}, rtiId: {}", role, rtiId);
+
+        List<UserBasicResponse> response = userPositionService.getUsers(role, rtiId);
 
         return ResponseEntity.ok(response);
     }

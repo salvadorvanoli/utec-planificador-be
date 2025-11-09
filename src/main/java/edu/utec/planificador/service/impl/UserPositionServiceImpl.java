@@ -1,14 +1,18 @@
 package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.dto.response.UserPositionsResponse;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.User;
+import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.mapper.PositionMapper;
+import edu.utec.planificador.mapper.UserMapper;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.UserPositionService;
+import edu.utec.planificador.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 public class UserPositionServiceImpl implements UserPositionService {
 
     private final PositionMapper positionMapper;
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
@@ -79,15 +84,27 @@ public class UserPositionServiceImpl implements UserPositionService {
         List<Course> courses = courseRepository.findByUserIdAndCampusId(currentUser.getId(), campusId);
 
         List<PeriodResponse> periods = courses.stream()
-                .map(Course::getPeriod)
-                .filter(period -> period != null)
-                .distinct()
-                .sorted(Comparator.reverseOrder())
-                .map(period -> PeriodResponse.builder().period(period).build())
-                .collect(Collectors.toList());
+            .map(Course::getPeriod)
+            .filter(period -> period != null)
+            .distinct()
+            .sorted(Comparator.reverseOrder())
+            .map(period -> PeriodResponse.builder().period(period).build())
+            .collect(Collectors.toList());
 
         log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
 
         return periods;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserBasicResponse> getUsers(Role role, Long rtiId) {
+        log.debug("Getting users with role: {}, rtiId: {}", role, rtiId);
+        
+        List<User> users = userRepository.findAll(UserSpecification.withFilters(role, rtiId));
+
+        return users.stream()
+            .map(userMapper::toBasicResponse)
+            .collect(Collectors.toList());
     }
 }
