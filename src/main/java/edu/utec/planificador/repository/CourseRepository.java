@@ -1,14 +1,10 @@
 package edu.utec.planificador.repository;
 
 import edu.utec.planificador.entity.Course;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CourseRepository extends JpaRepository<Course, Long> {
+public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
     // Primera query: cargar el curso con la estructura básica
     @Query("""
@@ -64,18 +60,4 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         }
         return courseOpt;
     }
-
-    @Query("""
-        SELECT DISTINCT c FROM Course c
-        JOIN c.teachers t
-        JOIN c.curricularUnit cu
-        JOIN cu.term term
-        JOIN term.program p
-        JOIN p.campuses campus
-        WHERE t.user.id = :userId
-        AND campus.id = :campusId
-        AND t.isActive = true
-        ORDER BY c.startDate DESC
-        """)
-    List<Course> findByUserIdAndCampusId(@Param("userId") Long userId, @Param("campusId") Long campusId);
 }

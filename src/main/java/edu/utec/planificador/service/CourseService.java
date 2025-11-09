@@ -5,6 +5,8 @@ import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 
+import java.util.List;
+
 public interface CourseService {
 
     CourseResponse createCourse(CourseRequest request);
@@ -14,6 +16,8 @@ public interface CourseService {
     CourseResponse updateCourse(Long id, CourseRequest request);
 
     void deleteCourse(Long id);
+
+    List<CourseResponse> getCourses(Long userId, Long campusId, String period);
 
     // Sustainable Development Goals (ODS)
     CourseResponse addSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal);

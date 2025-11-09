@@ -6,6 +6,8 @@ import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.service.CourseService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,7 +25,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -65,6 +70,44 @@ public class CourseController {
         CourseResponse response = courseService.createCourse(request);
         
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    @Operation(
+        summary = "Get courses with optional filters",
+        description = "Returns courses filtered by user (teacher), campus, and/or period. " +
+                      "If no filters are specified, returns all courses. " +
+                      "Period format: 'YYYY-1S' or 'YYYY-2S' (e.g., '2024-1S' for first semester of 2024). " +
+                      "This endpoint is publicly accessible - no authentication required."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Courses retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = CourseResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content
+        )
+    })
+    public ResponseEntity<List<CourseResponse>> getCourses(
+        @Parameter(description = "User ID to filter courses by teacher", example = "1")
+        @RequestParam(required = false) Long userId,
+        @Parameter(description = "Campus ID to filter courses", example = "1")
+        @RequestParam(required = false) Long campusId,
+        @Parameter(description = "Period to filter courses (format: YYYY-1S or YYYY-2S)", example = "2024-1S")
+        @RequestParam(required = false) String period
+    ) {
+        log.info("GET /courses - userId: {}, campusId: {}, period: {}", userId, campusId, period);
+        
+        List<CourseResponse> response = courseService.getCourses(userId, campusId, period);
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

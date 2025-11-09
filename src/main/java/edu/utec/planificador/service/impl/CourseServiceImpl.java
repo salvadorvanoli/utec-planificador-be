@@ -12,6 +12,7 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CourseService;
+import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -164,6 +165,20 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.deleteById(id);
         
         log.info("Course deleted successfully with id: {}", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getCourses(Long userId, Long campusId, String period) {
+        log.debug("Getting courses - userId: {}, campusId: {}, period: {}", userId, campusId, period);
+
+        List<Course> courses = courseRepository.findAll(
+            CourseSpecification.withFilters(userId, campusId, period)
+        );
+
+        return courses.stream()
+            .map(this::mapToResponse)
+            .toList();
     }
 
     private CourseResponse mapToResponse(Course course) {

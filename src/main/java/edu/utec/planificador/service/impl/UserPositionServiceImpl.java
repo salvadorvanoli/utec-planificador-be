@@ -12,6 +12,7 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.UserPositionService;
+import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +82,9 @@ public class UserPositionServiceImpl implements UserPositionService {
 
         log.debug("Getting periods for user: {} in campus: {}", currentUser.getUtecEmail(), campusId);
 
-        List<Course> courses = courseRepository.findByUserIdAndCampusId(currentUser.getId(), campusId);
+        List<Course> courses = courseRepository.findAll(
+            CourseSpecification.withFilters(currentUser.getId(), campusId, null)
+        );
 
         List<PeriodResponse> periods = courses.stream()
             .map(Course::getPeriod)
