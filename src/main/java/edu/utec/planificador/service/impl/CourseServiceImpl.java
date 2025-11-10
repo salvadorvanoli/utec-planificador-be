@@ -18,6 +18,8 @@ import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -174,16 +176,22 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CourseResponse> getCourses(Long userId, Long campusId, String period) {
-        log.debug("Getting courses - userId: {}, campusId: {}, period: {}", userId, campusId, period);
-
-        List<Course> courses = courseRepository.findAll(
-            CourseSpecification.withFilters(userId, campusId, period)
+    public Page<CourseResponse> getCourses(Long userId, Long campusId, String period, Pageable pageable) {
+        log.debug("Getting courses - userId: {}, campusId: {}, period: {}, page: {}, size: {}", 
+            userId, campusId, period, pageable.getPageNumber(), pageable.getPageSize()
         );
 
-        return courses.stream()
-            .map(this::mapToResponse)
-            .toList();
+        Page<Course> coursesPage = courseRepository.findAll(
+            CourseSpecification.withFilters(userId, campusId, period),
+            pageable
+        );
+
+        log.debug("Found {} courses (page {} of {})", 
+            coursesPage.getNumberOfElements(), 
+            coursesPage.getNumber() + 1, 
+            coursesPage.getTotalPages());
+
+        return coursesPage.map(this::mapToResponse);
     }
 
     @Override
