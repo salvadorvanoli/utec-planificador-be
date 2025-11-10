@@ -26,7 +26,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "User", description = "User management endpoints")
 public class UserController {
@@ -55,7 +55,7 @@ public class UserController {
         )
     })
     public ResponseEntity<UserPositionsResponse> getCurrentUserPositions() {
-        log.info("GET /user/positions");
+        log.info("GET /users/positions");
 
         UserPositionsResponse response = userPositionService.getCurrentUserPositions();
 
@@ -88,7 +88,7 @@ public class UserController {
         @Parameter(description = "Campus ID to filter teachers", example = "1")
         @RequestParam(required = false) Long campusId
     ) {
-        log.info("GET /user/teachers - campusId: {}", campusId);
+        log.info("GET /users/teachers - campusId: {}", campusId);
 
         List<UserBasicResponse> response = userPositionService.getUsers(Role.TEACHER, campusId);
 
@@ -141,7 +141,7 @@ public class UserController {
         @Parameter(description = "Campus ID to filter users", example = "1")
         @RequestParam(required = false) Long campusId
     ) {
-        log.info("GET /user - role: {}, campusId: {}", role, campusId);
+        log.info("GET /users - role: {}, campusId: {}", role, campusId);
 
         List<UserBasicResponse> response = userPositionService.getUsers(role, campusId);
 
