@@ -18,6 +18,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -76,19 +80,20 @@ public class CourseController {
 
     @GetMapping
     @Operation(
-        summary = "Get courses with optional filters",
-        description = "Returns courses filtered by user (teacher), campus, and/or period. " +
+        summary = "Get courses with optional filters and pagination",
+        description = "Returns courses filtered by user (teacher), campus, and/or period with pagination support. " +
                       "If no filters are specified, returns all courses. " +
                       "Period format: 'YYYY-1S' or 'YYYY-2S' (e.g., '2024-1S' for first semester of 2024). " +
-                      "This endpoint is publicly accessible - no authentication required."
+                      "This endpoint is publicly accessible - no authentication required. " +
+                      "Results are sorted by startDate in descending order (most recent first)."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Courses retrieved successfully",
+            description = "Courses retrieved successfully with pagination metadata",
             content = @Content(
                 mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = CourseResponse.class))
+                schema = @Schema(implementation = Page.class)
             )
         ),
         @ApiResponse(
@@ -97,17 +102,30 @@ public class CourseController {
             content = @Content
         )
     })
-    public ResponseEntity<List<CourseResponse>> getCourses(
+    public ResponseEntity<Page<CourseResponse>> getCourses(
         @Parameter(description = "User ID to filter courses by teacher", example = "1")
         @RequestParam(required = false) Long userId,
         @Parameter(description = "Campus ID to filter courses", example = "1")
         @RequestParam(required = false) Long campusId,
         @Parameter(description = "Period to filter courses (format: YYYY-1S or YYYY-2S)", example = "2024-1S")
-        @RequestParam(required = false) String period
+        @RequestParam(required = false) String period,
+        @Parameter(description = "Page number (0-indexed)", example = "0")
+        @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size (number of items per page)", example = "10")
+        @RequestParam(defaultValue = "10") int size
     ) {
-        log.info("GET /courses - userId: {}, campusId: {}, period: {}", userId, campusId, period);
+        log.info("GET /courses - userId: {}, campusId: {}, period: {}, page: {}, size: {}", 
+                 userId, campusId, period, page, size);
         
-        List<CourseResponse> response = courseService.getCourses(userId, campusId, period);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startDate"));
+        Page<CourseResponse> response = courseService.getCourses(userId, campusId, period, pageable);
+        
+        log.info("Returning {} courses (page {} of {}, total: {})", 
+            response.getNumberOfElements(), 
+            response.getNumber() + 1, 
+            response.getTotalPages(),
+            response.getTotalElements()
+        );
         
         return ResponseEntity.ok(response);
     }

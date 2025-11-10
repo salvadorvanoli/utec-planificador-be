@@ -23,7 +23,7 @@ public interface CampusRepository extends JpaRepository<Campus, Long> {
 
     @Query("""
         SELECT DISTINCT c FROM Campus c
-        JOIN c.positions position
+        JOIN Position position ON c MEMBER OF position.campuses
         WHERE position.user.id = :userId
         AND position.isActive = true
         ORDER BY c.name ASC

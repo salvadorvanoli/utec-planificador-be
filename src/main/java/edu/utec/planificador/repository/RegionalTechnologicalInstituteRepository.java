@@ -19,7 +19,7 @@ public interface RegionalTechnologicalInstituteRepository extends JpaRepository<
     @Query("""
         SELECT DISTINCT rti FROM RegionalTechnologicalInstitute rti
         JOIN Campus campus ON campus.regionalTechnologicalInstitute.id = rti.id
-        JOIN campus.positions position
+        JOIN Position position ON campus MEMBER OF position.campuses
         WHERE position.user.id = :userId
         AND position.isActive = true
         ORDER BY rti.name ASC
