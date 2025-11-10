@@ -203,7 +203,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AuthResponse.builder()
             .accessToken(token)
             .tokenType("Bearer")
-            .expiresIn(tokenProvider.getExpirationMs() / 1000)
+            .expiresIn(tokenProvider.getExpirationMs())
             .email(user.getUtecEmail())
             .fullName(fullName)
             .roles(roleNames)
