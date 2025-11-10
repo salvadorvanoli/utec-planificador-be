@@ -1,6 +1,5 @@
 package edu.utec.planificador.controller;
 
-import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.dto.response.UserPositionsResponse;
 import edu.utec.planificador.enumeration.Role;
@@ -59,50 +58,6 @@ public class UserController {
         log.info("GET /user/positions");
 
         UserPositionsResponse response = userPositionService.getCurrentUserPositions();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/periods")
-    @Operation(
-        summary = "Get user periods by campus",
-        description = "Returns all unique academic periods for the authenticated user's courses in a specific campus. " +
-                      "Periods are formatted as 'YYYY-XS' where X is 1 for odd semesters or 2 for even semesters. " +
-                      "For example: '2025-1S' for semester 3 in 2025, or '2025-2S' for semester 4 in 2025.",
-        security = @SecurityRequirement(name = "Bearer Authentication")
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Periods retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = PeriodResponse.class))
-            )
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Not authenticated",
-            content = @Content
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "User does not have access to the specified campus",
-            content = @Content
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Campus not found",
-            content = @Content
-        )
-    })
-    public ResponseEntity<List<PeriodResponse>> getUserPeriodsByCampus(
-        @Parameter(description = "Campus ID to filter courses", required = true, example = "1")
-        @RequestParam Long campusId
-    ) {
-        log.info("GET /user/periods - campusId: {}", campusId);
-
-        List<PeriodResponse> response = userPositionService.getUserPeriodsByCampus(campusId);
 
         return ResponseEntity.ok(response);
     }

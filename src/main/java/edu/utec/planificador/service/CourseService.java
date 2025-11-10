@@ -2,6 +2,7 @@ package edu.utec.planificador.service;
 
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseResponse;
+import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 
@@ -18,6 +19,8 @@ public interface CourseService {
     void deleteCourse(Long id);
 
     List<CourseResponse> getCourses(Long userId, Long campusId, String period);
+
+    List<PeriodResponse> getPeriodsByCampus(Long campusId);
 
     // Sustainable Development Goals (ODS)
     CourseResponse addSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal);

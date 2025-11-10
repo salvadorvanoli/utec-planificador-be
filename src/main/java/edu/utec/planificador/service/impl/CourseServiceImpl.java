@@ -2,8 +2,10 @@ package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseResponse;
+import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
@@ -16,9 +18,12 @@ import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -179,6 +184,33 @@ public class CourseServiceImpl implements CourseService {
         return courses.stream()
             .map(this::mapToResponse)
             .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PeriodResponse> getPeriodsByCampus(Long campusId) {
+        accessControlService.validateCampusAccess(campusId);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        log.debug("Getting periods for user: {} in campus: {}", currentUser.getUtecEmail(), campusId);
+
+        List<Course> courses = courseRepository.findAll(
+            CourseSpecification.withFilters(currentUser.getId(), campusId, null)
+        );
+
+        List<PeriodResponse> periods = courses.stream()
+            .map(Course::getPeriod)
+            .filter(period -> period != null)
+            .distinct()
+            .sorted(Comparator.reverseOrder())
+            .map(period -> PeriodResponse.builder().period(period).build())
+            .toList();
+
+        log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
+
+        return periods;
     }
 
     private CourseResponse mapToResponse(Course course) {

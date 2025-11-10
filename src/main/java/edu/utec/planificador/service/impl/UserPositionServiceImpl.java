@@ -1,18 +1,13 @@
 package edu.utec.planificador.service.impl;
 
-import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.dto.response.UserPositionsResponse;
-import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.mapper.PositionMapper;
 import edu.utec.planificador.mapper.UserMapper;
-import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.UserRepository;
-import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.UserPositionService;
-import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +27,6 @@ public class UserPositionServiceImpl implements UserPositionService {
     private final PositionMapper positionMapper;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
-    private final CourseRepository courseRepository;
-    private final AccessControlService accessControlService;
 
     @Override
     @Transactional(readOnly = true)
@@ -70,33 +62,6 @@ public class UserPositionServiceImpl implements UserPositionService {
                 .fullName(fullName)
                 .positions(positions)
                 .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PeriodResponse> getUserPeriodsByCampus(Long campusId) {
-        accessControlService.validateCampusAccess(campusId);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-
-        log.debug("Getting periods for user: {} in campus: {}", currentUser.getUtecEmail(), campusId);
-
-        List<Course> courses = courseRepository.findAll(
-            CourseSpecification.withFilters(currentUser.getId(), campusId, null)
-        );
-
-        List<PeriodResponse> periods = courses.stream()
-            .map(Course::getPeriod)
-            .filter(period -> period != null)
-            .distinct()
-            .sorted(Comparator.reverseOrder())
-            .map(period -> PeriodResponse.builder().period(period).build())
-            .collect(Collectors.toList());
-
-        log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
-
-        return periods;
     }
 
     @Override

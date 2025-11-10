@@ -2,6 +2,7 @@ package edu.utec.planificador.controller;
 
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseResponse;
+import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.service.CourseService;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -107,6 +109,50 @@ public class CourseController {
         
         List<CourseResponse> response = courseService.getCourses(userId, campusId, period);
         
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/periods")
+    @Operation(
+        summary = "Get course periods by campus",
+        description = "Returns all unique academic periods for the authenticated user's courses in a specific campus. " +
+                      "Periods are formatted as 'YYYY-XS' where X is 1 for odd semesters or 2 for even semesters. " +
+                      "For example: '2025-1S' for semester 3 in 2025, or '2025-2S' for semester 4 in 2025.",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Periods retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = PeriodResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Not authenticated",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "User does not have access to the specified campus",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Campus not found",
+            content = @Content
+        )
+    })
+    public ResponseEntity<List<PeriodResponse>> getPeriodsByCampus(
+        @Parameter(description = "Campus ID to filter courses", required = true, example = "1")
+        @RequestParam Long campusId
+    ) {
+        log.info("GET /courses/periods - campusId: {}", campusId);
+
+        List<PeriodResponse> response = courseService.getPeriodsByCampus(campusId);
+
         return ResponseEntity.ok(response);
     }
 
