@@ -23,11 +23,12 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
 
     @Override
     public User authenticate(String email, String password) {
-        log.debug("Attempting local authentication for user: {}", email);
+        log.debug("Attempting LOCAL authentication for user: {}", email);
 
         User user = userRepository.findByUtecEmail(email)
             .orElseThrow(() -> {
-                log.warn("Authentication failed for {}: user not found", email);
+                log.warn("LOCAL authentication failed for {}: user not found", email);
+
                 return new InvalidCredentialsException(
                     messageSource.getMessage("auth.error.invalid-credentials", 
                         null, 
@@ -37,27 +38,34 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
 
         if (user.getAuthProvider() != AuthProvider.LOCAL) {
             log.warn(
-                "Authentication failed for {}: incorrect provider configured (expected LOCAL, got {})",
+                "LOCAL authentication failed for {}: incorrect provider (expected LOCAL, got {})",
                 email,
                 user.getAuthProvider()
             );
+
             throw new InvalidCredentialsException(
-                "Este usuario no está configurado para autenticación local. " +
-                "Por favor, use " + user.getAuthProvider().getDisplayName()
+                messageSource.getMessage(
+                    "auth.error.incorrect-auth-provider",
+                    new Object[]{user.getAuthProvider().getDisplayName()},
+                    LocaleContextHolder.getLocale()
+                )
             );
         }
 
         if (!user.isEnabled()) {
-            log.warn("Authentication failed for {}: account disabled", email);
+            log.warn("LOCAL authentication failed for {}: account disabled", email);
+
             throw new InvalidCredentialsException(
                 messageSource.getMessage("auth.error.account-disabled", 
                     null, 
-                    LocaleContextHolder.getLocale())
+                    LocaleContextHolder.getLocale()
+                )
             );
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("Authentication failed for {}: invalid credentials", email);
+            log.warn("LOCAL authentication failed for {}: invalid password", email);
+
             throw new InvalidCredentialsException(
                 messageSource.getMessage("auth.error.invalid-credentials", 
                     null, 

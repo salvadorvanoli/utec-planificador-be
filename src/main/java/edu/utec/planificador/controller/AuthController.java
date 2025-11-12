@@ -1,10 +1,8 @@
 package edu.utec.planificador.controller;
 
 import edu.utec.planificador.dto.request.LoginRequest;
-import edu.utec.planificador.dto.request.RegisterRequest;
 import edu.utec.planificador.dto.response.AuthResponse;
 import edu.utec.planificador.dto.response.UserResponse;
-import edu.utec.planificador.security.JwtTokenProvider;
 import edu.utec.planificador.service.AuthenticationService;
 import edu.utec.planificador.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +16,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +32,6 @@ public class AuthController {
 
     private final AuthenticationService authenticationService;
     private final CookieUtil cookieUtil;
-    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     @Operation(
@@ -75,39 +71,6 @@ public class AuthController {
         log.info("JWT cookie set for user: {}", loginRequest.getEmail());
 
         return ResponseEntity.ok(authResponse);
-    }
-
-    @PostMapping("/register")
-    @Operation(
-        summary = "Register new user",
-        description = "Creates a new user with LOCAL authentication. Does not apply to LDAP users."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "User created successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = AuthResponse.class)
-            )
-        ),
-        @ApiResponse(
-            responseCode = "409",
-            description = "User already exists",
-            content = @Content
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid input data",
-            content = @Content
-        )
-    })
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        log.info("POST /auth/register - User: {}", registerRequest.getEmail());
-
-        AuthResponse response = authenticationService.register(registerRequest);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/me")

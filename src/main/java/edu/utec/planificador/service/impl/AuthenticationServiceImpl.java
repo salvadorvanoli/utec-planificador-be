@@ -1,21 +1,15 @@
 package edu.utec.planificador.service.impl;
 
-import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.dto.request.LoginRequest;
-import edu.utec.planificador.dto.request.RegisterRequest;
 import edu.utec.planificador.dto.response.AuthResponse;
 import edu.utec.planificador.dto.response.UserResponse;
-import edu.utec.planificador.entity.Position;
 import edu.utec.planificador.entity.User;
-import edu.utec.planificador.enumeration.AuthProvider;
-import edu.utec.planificador.exception.DuplicateResourceException;
 import edu.utec.planificador.exception.InvalidCredentialsException;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.security.JwtTokenProvider;
 import edu.utec.planificador.security.LoginAttemptService;
 import edu.utec.planificador.service.AuthenticationService;
 import edu.utec.planificador.service.AuthenticationStrategy;
-import edu.utec.planificador.service.PositionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +18,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,13 +30,11 @@ import java.util.List;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final List<AuthenticationStrategy> authenticationStrategies;
     private final LoginAttemptService loginAttemptService;
     private final HttpServletRequest request;
     private final MessageSource messageSource;
-    private final PositionService positionService;
 
     @Value("${security.auth.default-provider:LOCAL}")
     private String defaultAuthProvider;
@@ -106,45 +97,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             loginAttemptService.loginFailed(email, true);
             throw e;
         }
-    }
-
-    @Override
-    @Transactional
-    public AuthResponse register(RegisterRequest registerRequest) {
-        log.info("Registration attempt for user: {}", registerRequest.getEmail());
-
-        if (userRepository.existsByUtecEmail(registerRequest.getEmail())) {
-            throw new DuplicateResourceException("Usuario", "email", registerRequest.getEmail());
-        }
-
-        PersonalData personalData = new PersonalData();
-        String[] nameParts = registerRequest.getFullName().split(" ", 2);
-        personalData.setName(nameParts.length > 0 ? nameParts[0] : registerRequest.getFullName());
-        personalData.setLastName(nameParts.length > 1 ? nameParts[1] : "");
-        personalData.setIdentityDocument(registerRequest.getCi());
-        personalData.setPhoneNumber(registerRequest.getPhone());
-
-        final User user = new User(
-                registerRequest.getEmail(),
-                passwordEncoder.encode(registerRequest.getPassword()),
-                personalData
-        );
-
-        user.setAuthProvider(AuthProvider.LOCAL);
-        user.setEnabled(true);
-
-        registerRequest.getPositions().forEach(positionRequest -> {
-            Position position = positionService.createPosition(user, positionRequest);
-            user.addPosition(position);
-        });
-
-        User savedUser = userRepository.save(user);
-
-        String token = tokenProvider.generateTokenFromUser(savedUser);
-
-        log.info("User registered successfully: {}", registerRequest.getEmail());
-
-        return buildAuthResponse(token, savedUser);
     }
 
     @Override
