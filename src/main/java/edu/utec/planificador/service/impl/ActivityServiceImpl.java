@@ -3,8 +3,11 @@ package edu.utec.planificador.service.impl;
 import edu.utec.planificador.dto.request.ActivityRequest;
 import edu.utec.planificador.dto.response.ActivityResponse;
 import edu.utec.planificador.entity.Activity;
+import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.ProgrammaticContent;
+import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.enumeration.CognitiveProcess;
+import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.TeachingStrategy;
 import edu.utec.planificador.enumeration.TransversalCompetency;
@@ -18,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +33,7 @@ public class ActivityServiceImpl implements ActivityService {
     private final ActivityRepository activityRepository;
     private final ProgrammaticContentRepository programmaticContentRepository;
     private final AccessControlService accessControlService;
+    private final ModificationServiceImpl modificationService;
 
     @Override
     @Transactional
@@ -77,6 +83,13 @@ public class ActivityServiceImpl implements ActivityService {
         Activity saved = activityRepository.save(activity);
         log.info("Created activity with id={}", saved.getId());
 
+        // Log modification
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
+            modificationService.logActivityCreation(saved, teacher, course);
+        }
+
         return mapToResponse(saved);
     }
 
@@ -105,6 +118,18 @@ public class ActivityServiceImpl implements ActivityService {
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
 
+        // Save OLD values BEFORE modifying
+        String oldTitle = activity.getTitle();
+        String oldDescription = activity.getDescription();
+        Integer oldDuration = activity.getDurationInMinutes();
+        LearningModality oldModality = activity.getLearningModality();
+        String oldColor = activity.getColor();
+        Set<CognitiveProcess> oldCognitiveProcesses = new HashSet<>(activity.getCognitiveProcesses());
+        Set<TransversalCompetency> oldTransversalCompetencies = new HashSet<>(activity.getTransversalCompetencies());
+        Set<TeachingStrategy> oldTeachingStrategies = new HashSet<>(activity.getTeachingStrategies());
+        Set<LearningResource> oldLearningResources = new HashSet<>(activity.getLearningResources());
+
+        // Now modify the entity
         activity.setDescription(request.getDescription());
         activity.setDurationInMinutes(request.getDurationInMinutes());
         activity.setLearningModality(request.getLearningModality());
@@ -150,6 +175,21 @@ public class ActivityServiceImpl implements ActivityService {
         Activity updated = activityRepository.save(activity);
         log.info("Updated activity with id={}", updated.getId());
 
+        // Log modification using saved old values
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
+            // Create temporary old activity with saved values
+            Activity oldActivitySnapshot = new Activity(oldDescription, oldDuration, oldModality, activity.getProgrammaticContent());
+            oldActivitySnapshot.setTitle(oldTitle);
+            oldActivitySnapshot.setColor(oldColor);
+            oldActivitySnapshot.getCognitiveProcesses().addAll(oldCognitiveProcesses);
+            oldActivitySnapshot.getTransversalCompetencies().addAll(oldTransversalCompetencies);
+            oldActivitySnapshot.getTeachingStrategies().addAll(oldTeachingStrategies);
+            oldActivitySnapshot.getLearningResources().addAll(oldLearningResources);
+            modificationService.logActivityUpdate(oldActivitySnapshot, updated, teacher, course);
+        }
+
         return mapToResponse(updated);
     }
 
@@ -159,8 +199,15 @@ public class ActivityServiceImpl implements ActivityService {
         // Validate access to activity
         accessControlService.validateActivityAccess(id);
 
-        if (!activityRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Activity not found with id: " + id);
+        Activity activity = activityRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
+
+        // Log modification before deletion
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(
+                activity.getProgrammaticContent().getWeeklyPlanning().getId());
+            modificationService.logActivityDeletion(activity, teacher, course);
         }
 
         activityRepository.deleteById(id);

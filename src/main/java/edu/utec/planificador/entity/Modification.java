@@ -20,7 +20,7 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Getter
-@ToString(exclude = {"teacher"})
+@ToString(exclude = {"teacher", "course"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -38,8 +38,26 @@ public class Modification {
     private LocalDateTime modificationDate = LocalDateTime.now();
 
     @Setter
+    @Column(nullable = false, length = 2000)
+    @NotNull
+    private String description;
+
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     @NotNull
     private Teacher teacher;
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    @NotNull
+    private Course course;
+
+    public Modification(String description, Teacher teacher, Course course) {
+        this.description = description;
+        this.teacher = teacher;
+        this.course = course;
+        this.modificationDate = LocalDateTime.now();
+    }
 }

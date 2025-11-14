@@ -2,7 +2,9 @@ package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.request.ProgrammaticContentRequest;
 import edu.utec.planificador.dto.response.ProgrammaticContentResponse;
+import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.ProgrammaticContent;
+import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
@@ -24,6 +26,7 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     private final ProgrammaticContentRepository programmaticContentRepository;
     private final WeeklyPlanningRepository weeklyPlanningRepository;
     private final AccessControlService accessControlService;
+    private final ModificationServiceImpl modificationService;
 
     @Override
     @Transactional
@@ -42,6 +45,13 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
 
         ProgrammaticContent saved = programmaticContentRepository.save(pc);
         log.info("Created programmatic content with id={}", saved.getId());
+
+        // Log modification
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(request.getWeeklyPlanningId());
+            modificationService.logProgrammaticContentCreation(saved, teacher, course);
+        }
 
         return mapToResponse(saved);
     }
@@ -71,6 +81,12 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
             .orElseThrow(() -> new ResourceNotFoundException("Weekly planning not found with id: " + request.getWeeklyPlanningId()));
 
+        // Save OLD values BEFORE modifying
+        String oldTitle = pc.getTitle();
+        String oldContent = pc.getContent();
+        String oldColor = pc.getColor();
+
+        // Now modify the entity
         pc.setTitle(request.getTitle());
         pc.setContent(request.getContent());
         pc.setColor(request.getColor());
@@ -85,6 +101,16 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         ProgrammaticContent updated = programmaticContentRepository.save(pc);
         log.info("Updated programmatic content with id={}", updated.getId());
 
+        // Log modification using saved old values
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
+            // Create temporary old content with saved values
+            ProgrammaticContent oldContentSnapshot = new ProgrammaticContent(oldTitle, oldContent, pc.getWeeklyPlanning());
+            oldContentSnapshot.setColor(oldColor);
+            modificationService.logProgrammaticContentUpdate(oldContentSnapshot, updated, teacher, course);
+        }
+
         return mapToResponse(updated);
     }
 
@@ -94,8 +120,14 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         // Validate access to programmatic content
         accessControlService.validateProgrammaticContentAccess(id);
 
-        if (!programmaticContentRepository.existsById(id)) {
-            throw new ResourceNotFoundException("ProgrammaticContent not found with id: " + id);
+        ProgrammaticContent pc = programmaticContentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
+
+        // Log modification before deletion
+        Teacher teacher = modificationService.getCurrentTeacher();
+        if (teacher != null) {
+            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
+            modificationService.logProgrammaticContentDeletion(pc, teacher, course);
         }
 
         programmaticContentRepository.deleteById(id);
