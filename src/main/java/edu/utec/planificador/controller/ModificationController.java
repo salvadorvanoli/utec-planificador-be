@@ -56,7 +56,6 @@ public class ModificationController {
     ) {
         log.info("GET /api/v1/modifications/courses/{} - page={}, size={}", courseId, page, size);
 
-        // Validate access to course
         accessControlService.validateCourseAccess(courseId);
 
         Pageable pageable = PageRequest.of(page, size);

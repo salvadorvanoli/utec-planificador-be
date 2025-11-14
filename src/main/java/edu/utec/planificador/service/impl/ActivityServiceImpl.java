@@ -40,7 +40,6 @@ public class ActivityServiceImpl implements ActivityService {
     public ActivityResponse createActivity(ActivityRequest request) {
         log.debug("Creating activity for programmaticContentId={}", request.getProgrammaticContentId());
 
-        // Validate access to programmatic content
         accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
@@ -56,7 +55,6 @@ public class ActivityServiceImpl implements ActivityService {
         activity.setTitle(request.getTitle());
         activity.setColor(request.getColor());
 
-        // Set collections
         if (request.getCognitiveProcesses() != null) {
             request.getCognitiveProcesses().forEach(cp ->
                 activity.getCognitiveProcesses().add(CognitiveProcess.valueOf(cp))
@@ -82,8 +80,6 @@ public class ActivityServiceImpl implements ActivityService {
 
         Activity saved = activityRepository.save(activity);
         log.info("Created activity with id={}", saved.getId());
-
-        // Log modification
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
             Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
@@ -96,7 +92,6 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional(readOnly = true)
     public ActivityResponse getActivityById(Long id) {
-        // Validate access to activity
         accessControlService.validateActivityAccess(id);
 
         Activity activity = activityRepository.findById(id)
@@ -108,7 +103,6 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public ActivityResponse updateActivity(Long id, ActivityRequest request) {
-        // Validate access to both activity and new programmatic content
         accessControlService.validateActivityAccess(id);
         accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
 
@@ -118,7 +112,6 @@ public class ActivityServiceImpl implements ActivityService {
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
 
-        // Save OLD values BEFORE modifying
         String oldTitle = activity.getTitle();
         String oldDescription = activity.getDescription();
         Integer oldDuration = activity.getDurationInMinutes();
@@ -129,14 +122,12 @@ public class ActivityServiceImpl implements ActivityService {
         Set<TeachingStrategy> oldTeachingStrategies = new HashSet<>(activity.getTeachingStrategies());
         Set<LearningResource> oldLearningResources = new HashSet<>(activity.getLearningResources());
 
-        // Now modify the entity
         activity.setDescription(request.getDescription());
         activity.setDurationInMinutes(request.getDurationInMinutes());
         activity.setLearningModality(request.getLearningModality());
         activity.setTitle(request.getTitle());
         activity.setColor(request.getColor());
 
-        // Update collections
         activity.getCognitiveProcesses().clear();
         if (request.getCognitiveProcesses() != null) {
             request.getCognitiveProcesses().forEach(cp ->
@@ -165,7 +156,6 @@ public class ActivityServiceImpl implements ActivityService {
             );
         }
 
-        // If changing programmatic content, update relationships
         if (!activity.getProgrammaticContent().getId().equals(pc.getId())) {
             activity.getProgrammaticContent().getActivities().remove(activity);
             activity.setProgrammaticContent(pc);
@@ -175,11 +165,9 @@ public class ActivityServiceImpl implements ActivityService {
         Activity updated = activityRepository.save(activity);
         log.info("Updated activity with id={}", updated.getId());
 
-        // Log modification using saved old values
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
             Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
-            // Create temporary old activity with saved values
             Activity oldActivitySnapshot = new Activity(oldDescription, oldDuration, oldModality, activity.getProgrammaticContent());
             oldActivitySnapshot.setTitle(oldTitle);
             oldActivitySnapshot.setColor(oldColor);
@@ -196,13 +184,11 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public void deleteActivity(Long id) {
-        // Validate access to activity
         accessControlService.validateActivityAccess(id);
 
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
 
-        // Log modification before deletion
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
             Course course = modificationService.getCourseByWeeklyPlanningId(

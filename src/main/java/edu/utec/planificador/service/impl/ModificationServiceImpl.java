@@ -179,10 +179,7 @@ public class ModificationServiceImpl implements ModificationService {
         }
         return a.equals(b);
     }
-
-    /**
-     * Gets the current authenticated teacher
-     */
+    
     public Teacher getCurrentTeacher() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
@@ -197,9 +194,6 @@ public class ModificationServiceImpl implements ModificationService {
             .orElse(null);
     }
 
-    /**
-     * Gets the course from a weekly planning ID
-     */
     public Course getCourseByWeeklyPlanningId(Long weeklyPlanningId) {
         return courseRepository.findAll().stream()
             .filter(course -> course.getWeeklyPlannings().stream()
