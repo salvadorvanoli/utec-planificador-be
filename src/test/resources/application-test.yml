@@ -1,55 +1,40 @@
-# Spring Boot Test Configuration
-spring:
-  application:
-    name: utec-planificador-test
+# Configuración para tests
+# Usa H2 en memoria para evitar dependencias de PostgreSQL
 
+spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
     driver-class-name: org.h2.Driver
     username: sa
     password:
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        use_sql_comments: false
+    show-sql: false
 
   h2:
     console:
-      enabled: false
+      enabled: true
 
-  security:
-    user:
-      name: test
-      password: test
+  # Desactivar cache para tests
+  cache:
+    type: none
 
-# JWT Configuration for tests
-security:
-  jwt:
-    secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
-    expiration: 3600000
-  cookie:
-    secure: false
-    domain: ""
-  auth:
-    default-provider: LOCAL
+# JWT configuration para tests
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-in-tests-only-not-for-production
+  expiration: 3600000  # 1 hora
 
-# Logging Configuration for tests
+# Logging
 logging:
   level:
-    root: INFO
+    root: WARN
     edu.utec.planificador: DEBUG
-    org.springframework.web: INFO
     org.springframework.security: DEBUG
-    org.hibernate: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-
-# Disable unnecessary features in tests
-spring.main.banner-mode: off
+    org.hibernate.SQL: DEBUG
 

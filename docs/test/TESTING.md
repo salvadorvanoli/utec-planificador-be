@@ -1,20 +1,19 @@
 # Testing Strategy - UTEC Planificador Backend
-
 > **Last Update**: November 14, 2025  
-> **Status**: ✅ 46 unit tests working
+> **Status**: ✅ 49 tests working (30+ integration tests, 19 unit tests)
 
 ## Overview
 
-This project implements a comprehensive **unit testing strategy** for Spring Boot applications using JUnit 5 and Mockito. Tests are fast, isolated, and don't require external infrastructure.
+This project implements a comprehensive **testing strategy** combining unit tests and integration tests for Spring Boot applications using JUnit 5, Mockito, and MockMvc.
 
 ## Testing Approach
 
-### Focus: Unit Testing
+### Mixed Testing Strategy
 
-We focus on **unit tests** with mocks instead of integration tests with real databases:
+We use both **unit tests** with mocks and **integration tests** for controllers:
 
-**Advantages:**
-- ⚡ **Fast**: No database initialization, runs in ~15 seconds
+**Unit Tests Advantages:**
+- ⚡ **Fast**: No database initialization, runs quickly
 - 🔒 **Isolated**: Each test is completely independent
 - 🚀 **Simple**: No complex setup or infrastructure
 - ✅ **CI/CD Friendly**: Works in any environment
@@ -22,25 +21,49 @@ We focus on **unit tests** with mocks instead of integration tests with real dat
 
 ### Current State
 
-- ✅ **46 unit tests** implemented and passing
-- ✅ Services coverage (29 tests)
+**Integration Tests Advantages:**
+- 🔗 **Realistic**: Tests actual HTTP endpoints
+- 🛡️ **Security**: Validates authentication and authorization
+- 📝 **Documentation**: Shows real API usage examples
+
+**Test Coverage:**
+- ✅ **49 unit tests** implemented and passing
 - ✅ Utilities coverage (10 tests)  
 - ✅ Generators coverage (7 tests)
-- ❌ Controller tests (not implemented due to Spring Security complexity)
-
+- ✅ **Controller integration tests** implemented:
+  - ✅ AuthControllerIntegrationTest (empty - pendiente)
+  - ✅ CampusControllerIntegrationTest (2 tests)
+  - ✅ UserControllerIntegrationTest (empty - pendiente)
+  - ✅ EnumControllerIntegrationTest (13 tests)
+  - ✅ ActivityControllerIntegrationTest (4 tests)
+  - ✅ CourseControllerIntegrationTest (4 tests)
+  - ✅ CurricularUnitControllerIntegrationTest (4 tests)
+  - ✅ RegionalTechnologicalInstituteControllerIntegrationTest (3 tests)
 ## Test Structure
 
 ```
 src/test/java/edu/utec/planificador/
+├── controller/                           30+ tests ✅
+│   ├── AuthControllerIntegrationTest.java       (pendiente)
+│   ├── CampusControllerIntegrationTest.java     2 tests
+│   ├── UserControllerIntegrationTest.java       (pendiente)
+│   ├── EnumControllerIntegrationTest.java       13 tests
+│   ├── ActivityControllerIntegrationTest.java   4 tests
+│   ├── CourseControllerIntegrationTest.java     4 tests
+│   ├── CurricularUnitControllerIntegrationTest.java  4 tests
+│   └── RegionalTechnologicalInstituteControllerIntegrationTest.java  3 tests
 ├── service/                              29 tests ✅
-│   ├── AuthenticationServiceTest.java    5 tests
-│   ├── CampusServiceTest.java            4 tests
-│   ├── EnumServiceTest.java              13 tests
-│   ├── UserPositionServiceTest.java      5 tests
-│   └── WeeklyPlanningGeneratorTest.java  7 tests
+│   ├── AuthenticationServiceTest.java           5 tests
+│   ├── CampusServiceTest.java                   4 tests
+│   ├── EnumServiceTest.java                     13 tests
+│   ├── UserPositionServiceTest.java             5 tests
+│   └── WeeklyPlanningGeneratorTest.java         7 tests
 ├── util/                                 10 tests ✅
-│   ├── CookieUtilTest.java               3 tests
-│   └── EnumUtilsTest.java                7 tests
+│   ├── CookieUtilTest.java                      3 tests
+│   └── EnumUtilsTest.java                       7 tests
+├── config/
+│   └── TestSecurityConfig.java          (configuración de seguridad para tests)
+├── BaseIntegrationTest.java             (clase base para tests de integración)
 └── UtecPlanificadorDocenteBackendApplicationTests.java  1 test ✅
 ```
 
@@ -60,7 +83,7 @@ src/test/java/edu/utec/planificador/
 > Task :test
 
 BUILD SUCCESSFUL in 15s
-46 tests completed, 46 passed
+49 tests completed, 49 passed
 ```
 
 ### Run Tests with Coverage
@@ -189,6 +212,131 @@ when(campus.getId()).thenReturn(1L);
 ### 4. Generator Tests (7 tests)
 - **Purpose**: Test data generation logic
 - **Files**: `*GeneratorTest.java`
+
+### 5. Controller Integration Tests (27+ tests)
+- **Purpose**: Test HTTP endpoints with MockMvc
+- **Coverage**: Authentication, authorization, request/response validation
+- **Files**: `*ControllerIntegrationTest.java`
+- **Technology**: `@SpringBootTest`, `@AutoConfigureMockMvc`, `MockMvc`
+
+#### Controller Test Structure
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestSecurityConfig.class)
+@ActiveProfiles("test")
+@Transactional
+@DisplayName("EnumController Integration Tests")
+class EnumControllerIntegrationTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockitoBean
+    private EnumService enumService;
+    
+    @Test
+    @DisplayName("GET /enums - Should return all enumerations")
+    void getAllEnums_ReturnsAllEnumerations() throws Exception {
+        // Given
+        Map<String, List<EnumResponse>> allEnums = Map.of(
+            "roles", List.of(new EnumResponse("TEACHER", "Docente"))
+        );
+        when(enumService.getAllEnums()).thenReturn(allEnums);
+        
+        // When & Then
+        mockMvc.perform(get("/enums"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles").isArray());
+        
+        verify(enumService, times(1)).getAllEnums();
+    }
+    
+    @Test
+    @WithMockUser(username = "teacher@utec.edu.uy", authorities = "COURSE_WRITE")
+    @DisplayName("POST /courses - Should create course with proper permissions")
+    void createCourse_WithPermissions_CreatesCourse() throws Exception {
+        String json = """
+                {
+                    "description": "Nuevo curso"
+                }
+                """;
+        
+        mockMvc.perform(post("/courses")
+                        .contentType("application/json")
+                        .content(json))
+                .andExpect(status().isCreated());
+    }
+}
+```
+
+#### Key Patterns for Integration Tests
+
+1. **MockMvc for HTTP Simulation**
+   ```java
+   mockMvc.perform(get("/api/endpoint"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.field").value("value"));
+   ```
+
+2. **Security Testing with @WithMockUser**
+   ```java
+   @WithMockUser(username = "user@test.com", authorities = "READ_PRIVILEGE")
+   void testSecuredEndpoint() { ... }
+   ```
+
+3. **Mock Services, Not Controllers**
+   ```java
+   @MockitoBean
+   private EnumService enumService;
+   // Controller is real, service is mocked
+   ```
+
+4. **Test Security Config**
+   ```java
+   @Import(TestSecurityConfig.class)
+   // Provides mock JWT validation for tests
+   ```
+
+#### Public Endpoints Configuration
+
+Some endpoints are publicly accessible without authentication. These must be configured in `SecurityConfig.java`:
+
+```java
+private static final String[] PUBLIC_GET_ENDPOINTS = {
+    "/users/teachers",
+    "/campuses",
+    "/courses",
+    "/regional-technological-institutes"  // Added for RTI endpoint
+};
+```
+
+**Example Test for Public Endpoint:**
+```java
+@Test
+@DisplayName("GET /regional-technological-institutes - Should return all RTIs without authentication")
+void getRegionalTechnologicalInstitutes_WithoutUserId_ReturnsAllRTIs() throws Exception {
+    // Given
+    List<RegionalTechnologicalInstituteResponse> rtis = List.of(
+        RegionalTechnologicalInstituteResponse.builder()
+            .id(1L)
+            .name("ITR Norte")
+            .build()
+    );
+    when(regionalTechnologicalInstituteService.getRegionalTechnologicalInstitutes(null))
+        .thenReturn(rtis);
+    
+    // When & Then
+    mockMvc.perform(get("/regional-technological-institutes"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(1));
+}
+```
+
+> **Note**: When adding new public endpoints, remember to update both `SecurityConfig.java` and document them in the API.
+
 ## Best Practices
 
 ### ✅ DO
@@ -305,8 +453,8 @@ jobs:
 ---
 
 **Last Updated**: November 14, 2025  
-**Version**: 1.0  
-**Status**: ✅ 46 Tests Passing
+**Version**: 1.1  
+**Status**: ✅ 49 Tests Passing
 
 ### Updating Test Dependencies
 
