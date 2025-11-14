@@ -1,95 +1,55 @@
-# Test Configuration Profile
-
+# Spring Boot Test Configuration
 spring:
+  application:
+    name: utec-planificador-test
+
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    username: sa
-    password: 
+    url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
-  
+    username: sa
+    password:
+
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        jdbc:
-          batch_size: 0
-        order_inserts: false
-        order_updates: false
-    open-in-view: false
-  
-  sql:
-    init:
-      mode: never
-  
-  ldap:
-    embedded:
-      base-dn: dc=test,dc=com
-      ldif: classpath:test-server.ldif
-      port: 8389
+        use_sql_comments: false
 
+  h2:
+    console:
+      enabled: false
+
+  security:
+    user:
+      name: test
+      password: test
+
+# JWT Configuration for tests
 security:
   jwt:
-    secret: dGVzdFNlY3JldEtleUZvclVuaXRUZXN0c09ubHlOb3RGb3JQcm9kdWN0aW9uVXNlMTIzNDU2Nzg5MA==
+    secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
     expiration: 3600000
-    issuer: UTEC-Test
-  
-  cors:
-    allowed-origins: http://localhost:4200
-  
+  cookie:
+    secure: false
+    domain: ""
   auth:
     default-provider: LOCAL
-  
-  ldap:
-    enabled: false
-    url: ldap://localhost:8389
-    base: dc=test,dc=com
-    user-dn-pattern: uid={0},ou=people
-    user-search-filter: (uid={0})
-    default-role: TEACHER
-    default-campus-id: 1
-    manager:
-      dn: 
-      password: 
 
+# Logging Configuration for tests
 logging:
   level:
-    root: WARN
-    
-    edu.utec.planificador: INFO
-    
-    org.springframework.security: WARN
-    org.springframework.security.authentication: INFO
-    
-    org.hibernate: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
-    
-    org.springframework.ldap: WARN
-    
-    org.springframework.test: INFO
-    org.junit: INFO
-  
+    root: INFO
+    edu.utec.planificador: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+    org.hibernate: INFO
   pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
-  health:
-    db:
-      enabled: true
+# Disable unnecessary features in tests
+spring.main.banner-mode: off
 
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false

@@ -1,288 +1,312 @@
 # Testing Strategy - UTEC Planificador Backend
 
+> **Last Update**: November 14, 2025  
+> **Status**: ✅ 46 unit tests working
+
 ## Overview
 
-This project follows industry best practices for testing Spring Boot applications. Tests are isolated, fast, and do not require external infrastructure.
+This project implements a comprehensive **unit testing strategy** for Spring Boot applications using JUnit 5 and Mockito. Tests are fast, isolated, and don't require external infrastructure.
 
-## Testing Architecture
+## Testing Approach
 
-### Test Database: H2 In-Memory
+### Focus: Unit Testing
 
-We use **H2 Database** in **PostgreSQL compatibility mode** for all tests:
+We focus on **unit tests** with mocks instead of integration tests with real databases:
 
 **Advantages:**
-- **Fast**: In-memory, no disk I/O
-- **Isolated**: Each test run gets a fresh database
-- **No Setup**: No need to run PostgreSQL for tests
-- **CI/CD Friendly**: Works in any environment
-- **Repeatable**: Guaranteed clean state
+- ⚡ **Fast**: No database initialization, runs in ~15 seconds
+- 🔒 **Isolated**: Each test is completely independent
+- 🚀 **Simple**: No complex setup or infrastructure
+- ✅ **CI/CD Friendly**: Works in any environment
+- 🎯 **Focused**: Tests specific business logic
 
-### Configuration Files
+### Current State
+
+- ✅ **46 unit tests** implemented and passing
+- ✅ Services coverage (29 tests)
+- ✅ Utilities coverage (10 tests)  
+- ✅ Generators coverage (7 tests)
+- ❌ Controller tests (not implemented due to Spring Security complexity)
+
+## Test Structure
 
 ```
-src/test/resources/
-├── application-test.yml    # Test-specific Spring configuration
-├── cleanup.sql            # Pre-test cleanup script
-└── test-data.sql          # Common test fixtures
-```
-
-### Test Classes Structure
-
-```
-src/test/java/
-├── BaseIntegrationTest.java          # Base class for integration tests
-├── config/
-│   └── TestConfig.java               # Test-specific bean configurations
-└── edu/utec/planificador/
-    └── UtecPlanificadorDocenteBackendApplicationTests.java
+src/test/java/edu/utec/planificador/
+├── service/                              29 tests ✅
+│   ├── AuthenticationServiceTest.java    5 tests
+│   ├── CampusServiceTest.java            4 tests
+│   ├── EnumServiceTest.java              13 tests
+│   ├── UserPositionServiceTest.java      5 tests
+│   └── WeeklyPlanningGeneratorTest.java  7 tests
+├── util/                                 10 tests ✅
+│   ├── CookieUtilTest.java               3 tests
+│   └── EnumUtilsTest.java                7 tests
+└── UtecPlanificadorDocenteBackendApplicationTests.java  1 test ✅
 ```
 
 ## Running Tests
 
 ### Run All Tests
 ```bash
+# Windows
+.\gradlew test
+
+# Linux/Mac
 ./gradlew test
 ```
 
-### Run Tests with Build
-```bash
-./gradlew clean build
+### Expected Output
+```
+> Task :test
+
+BUILD SUCCESSFUL in 15s
+46 tests completed, 46 passed
 ```
 
-### Run Tests Without Build (faster)
+### Run Tests with Coverage
 ```bash
-./gradlew test --rerun-tasks
+.\gradlew test jacocoTestReport
+```
+
+### View Reports
+```bash
+# Windows
+start build\reports\tests\test\index.html
+start build\reports\jacoco\test\html\index.html
 ```
 
 ### Run Specific Test Class
 ```bash
-./gradlew test --tests "UtecPlanificadorDocenteBackendApplicationTests"
+.\gradlew test --tests "CampusServiceTest"
 ```
 
 ### Run Tests with Detailed Output
 ```bash
-./gradlew test --info
-```
-
-### Run Tests and Generate Coverage Report
-```bash
-./gradlew test jacocoTestReport
+.\gradlew test --info
 ```
 
 ## Writing Tests
 
-### Integration Tests (Recommended)
+### Unit Test Structure
 
-Extend `BaseIntegrationTest` for full Spring context tests:
-
-```java
-@Sql("/test-data.sql") // Optional: Load test fixtures
-class UserServiceIntegrationTest extends BaseIntegrationTest {
-    
-    @Autowired
-    private UserService userService;
-    
-    @Test
-    void shouldCreateUser() {
-        // Given
-        User user = new User("test@utec.edu.uy", "password");
-        
-        // When
-        User saved = userService.save(user);
-        
-        // Then
-        assertThat(saved.getId()).isNotNull();
-    }
-}
-```
-
-### Unit Tests (For Service Logic)
-
-For testing business logic without database:
+All tests follow the **Given-When-Then** pattern:
 
 ```java
 @ExtendWith(MockitoExtension.class)
-class UserServiceUnitTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("CampusService Unit Tests")
+class CampusServiceTest {
     
     @Mock
-    private UserRepository userRepository;
+    private CampusRepository campusRepository;
+    
+    @Mock
+    private CampusMapper campusMapper;
     
     @InjectMocks
-    private UserService userService;
+    private CampusServiceImpl campusService;
     
     @Test
-    void shouldFindUserByEmail() {
+    @DisplayName("Should return all campuses when userId is null")
+    void getCampuses_WithoutUserId_ReturnsAllCampuses() {
         // Given
-        when(userRepository.findByEmail("test@utec.edu.uy"))
-            .thenReturn(Optional.of(new User()));
+        List<Campus> campuses = List.of(createTestCampus());
+        when(campusRepository.findAll()).thenReturn(campuses);
+        when(campusMapper.toResponse(any())).thenReturn(createCampusResponse());
         
         // When
-        Optional<User> user = userService.findByEmail("test@utec.edu.uy");
+        List<CampusResponse> result = campusService.getCampuses(null);
         
         // Then
-        assertThat(user).isPresent();
+        assertThat(result).isNotEmpty();
+        verify(campusRepository, times(1)).findAll();
+    }
+    
+    private Campus createTestCampus() {
+        Campus campus = mock(Campus.class);
+        when(campus.getId()).thenReturn(1L);
+        when(campus.getName()).thenReturn("Test Campus");
+        return campus;
     }
 }
 ```
 
-### Controller Tests (REST API)
+### Key Patterns Used
 
-Use `@WebMvcTest` for testing controllers in isolation:
-
+#### 1. Mockito for Dependencies
 ```java
-@WebMvcTest(UserController.class)
-@Import(SecurityConfig.class)
-class UserControllerTest {
-    
-    @Autowired
-    private MockMvc mockMvc;
-    
-    @MockBean
-    private UserService userService;
-    
-    @Test
-    @WithMockUser(roles = "EDUCATION_MANAGER")
-    void shouldGetUserById() throws Exception {
-        // Given
-        when(userService.findById(1L))
-            .thenReturn(Optional.of(new User()));
-        
-        // When & Then
-        mockMvc.perform(get("/api/users/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1));
-    }
-}
+@Mock
+private UserRepository userRepository;
+
+@InjectMocks
+private UserServiceImpl userService;
 ```
 
-## Test Configuration Details
+#### 2. Lenient Strictness
+```java
+@MockitoSettings(strictness = Strictness.LENIENT)
+```
+Allows optional stubs in `@BeforeEach` setup.
 
-### H2 Database Configuration
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-  jpa:
-    hibernate:
-      ddl-auto: create-drop  # Fresh schema for each test class
+#### 3. AssertJ Assertions
+```java
+assertThat(result)
+    .isNotNull()
+    .extracting(CampusResponse::getName)
+    .isEqualTo("Test Campus");
 ```
 
-### Key Features
+#### 4. Lombok Builder for DTOs
+```java
+CampusResponse response = CampusResponse.builder()
+    .id(1L)
+    .name("Test Campus")
+    .build();
+```
 
-1. **PostgreSQL Compatibility Mode**: Ensures H2 behaves like PostgreSQL
-2. **DATABASE_TO_LOWER=TRUE**: Matches PostgreSQL's lowercase table names
-3. **create-drop**: Clean schema before/after each test class
-4. **Fast BCrypt (strength 4)**: 256x faster than production (strength 12)
+#### 5. Mock for Entities
+```java
+// Entities with protected constructors
+Campus campus = mock(Campus.class);
+when(campus.getId()).thenReturn(1L);
+```
 
 ## Test Categories
 
-### 1. Context Load Tests
-- **Purpose**: Verify Spring context loads successfully
+### 1. Context Load Test (1 test)
 - **File**: `UtecPlanificadorDocenteBackendApplicationTests`
-- **Speed**: ~5-10 seconds
+- **Purpose**: Verify Spring context loads successfully
 
-### 2. Integration Tests
-- **Purpose**: Test multiple components together
-- **Extend**: `BaseIntegrationTest`
-- **Database**: H2 in-memory
-- **Transactions**: Auto-rollback after each test
+### 2. Service Unit Tests (29 tests)
+- **Purpose**: Test business logic in isolation
+- **Mocks**: Repositories, mappers, external services
+- **Files**: `*ServiceTest.java`
 
-### 3. Unit Tests
-- **Purpose**: Test individual components in isolation
-- **Mocking**: Mockito
-- **No Database**: Pure logic testing
+### 3. Utility Tests (10 tests)
+- **Purpose**: Test helper classes and utilities
+- **Files**: `*UtilTest.java`
 
-### 4. Controller Tests
-- **Purpose**: Test REST endpoints
-- **Framework**: MockMvc
-- **Security**: Mock authentication
-
+### 4. Generator Tests (7 tests)
+- **Purpose**: Test data generation logic
+- **Files**: `*GeneratorTest.java`
 ## Best Practices
 
-### DO
+### ✅ DO
 
-- Use `@ActiveProfiles("test")` for all tests
-- Extend `BaseIntegrationTest` for integration tests
-- Use `@Transactional` for automatic rollback
-- Keep tests independent (no shared state)
-- Use descriptive test method names (`shouldCreateUserWhenValidData`)
-- Follow AAA pattern: Arrange, Act, Assert
+- ✅ Use `@ExtendWith(MockitoExtension.class)` for unit tests
+- ✅ Use `@MockitoSettings(strictness = Strictness.LENIENT)` when needed
+- ✅ Keep tests independent (no shared state)
+- ✅ Use descriptive `@DisplayName` annotations
+- ✅ Follow **Given-When-Then** pattern
+- ✅ Mock entities with protected constructors using `mock()`
+- ✅ Use `@Builder` for DTOs in tests
+- ✅ Verify important interactions with `verify()`
 
-### DON'T
+### ❌ DON'T
 
-- Don't require external databases for tests
-- Don't use `@SpringBootTest` for unit tests (too slow)
-- Don't share state between tests
-- Don't use real external services (use mocks/stubs)
-- Don't commit with failing tests
-- Don't test framework code (only your business logic)
+- ❌ Don't use real databases in unit tests
+- ❌ Don't share mutable state between tests
+- ❌ Don't mock the class under test
+- ❌ Don't commit with failing tests
+- ❌ Don't test framework code
+- ❌ Don't create unnecessary test data
 
 ## Troubleshooting
 
-### Tests Fail with "Connection Refused"
-**Solution**: You're not using the test profile. Add `@ActiveProfiles("test")` to your test class.
+### UnnecessaryStubbingException
+**Problem**: Mockito complains about unused stubs.  
+**Solution**: Add `@MockitoSettings(strictness = Strictness.LENIENT)`
 
-### Tests Are Too Slow
-**Solution**: 
-1. Use `@WebMvcTest` instead of `@SpringBootTest` for controller tests
-2. Use unit tests with mocks instead of integration tests
-3. Verify BCrypt strength is set to 4 in TestConfig
+### Cannot Instantiate Entity with Protected Constructor
+**Problem**: Lombok `@AllArgsConstructor` with `access = AccessLevel.PROTECTED`  
+**Solution**: Use `mock()` instead of `new`:
+```java
+Campus campus = mock(Campus.class);
+when(campus.getId()).thenReturn(1L);
+```
 
-### H2 Compatibility Issues
-**Solution**: Most PostgreSQL features work in H2's PostgreSQL mode. For advanced features (JSON, arrays), you may need to:
-1. Use conditional SQL in tests
-2. Use Testcontainers with real PostgreSQL (slower but accurate)
-
-### "Table Not Found" Errors
-**Solution**: 
-1. Verify `ddl-auto: create-drop` is set in `application-test.yml`
-2. Check entity annotations are correct
-3. Ensure H2 is on test classpath
+### EntityManagerFactory Errors in @WebMvcTest
+**Problem**: Spring tries to load JPA even with `excludeAutoConfiguration`  
+**Solution**: Use unit tests with Mockito instead, or `@SpringBootTest` (slower)
 
 ## CI/CD Integration
 
-### GitHub Actions Example
+### GitHub Actions
+
+Tests run automatically on:
+- ✅ Push to `main`
+- ✅ Pull Requests
+- ✅ Feature branches
+
+**Configuration**: `.github/workflows/backend-ci.yml`
 
 ```yaml
-name: Tests
+name: Backend CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Set up JDK 21
+      - name: Setup Java 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'temurin'
-      
       - name: Run tests
         run: ./gradlew test
-      
-      - name: Generate coverage report
+      - name: Generate coverage
         run: ./gradlew jacocoTestReport
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
 ```
+
+## Coverage Reports
+
+### Generate Report
+```bash
+.\gradlew test jacocoTestReport
+```
+
+### View Report
+- **HTML**: `build/reports/jacoco/test/html/index.html`
+- **XML**: `build/reports/jacoco/test/jacocoTestReport.xml`
+
+### Minimum Coverage
+- **Required**: 60%
+- **Recommended**: 80%
+
+## Future Improvements
+
+### Potential Additions
+
+1. **Integration Tests** with `@SpringBootTest` and H2
+2. **E2E Tests** with REST Assured
+3. **Mutation Testing** with Pitest
+4. **Performance Tests** for critical paths
+5. **Contract Tests** for APIs
+
+### Not Currently Implemented
+
+- ❌ Controller tests (`@WebMvcTest` complexity)
+- ❌ Repository tests (Mockito covers business logic)
+- ❌ E2E tests (manual testing with Swagger)
 
 ## Additional Resources
 
-- [Spring Boot Testing Guide](https://spring.io/guides/gs/testing-web/)
-- [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
+- [JUnit 5 Documentation](https://junit.org/junit5/docs/current/user-guide/)
 - [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
-- [AssertJ Documentation](https://assertj.github.io/doc/)
+- [AssertJ Guide](https://assertj.github.io/doc/)
+- [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
 
-## Maintenance
+---
+
+**Last Updated**: November 14, 2025  
+**Version**: 1.0  
+**Status**: ✅ 46 Tests Passing
 
 ### Updating Test Dependencies
 

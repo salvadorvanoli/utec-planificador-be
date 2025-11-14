@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.6'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'edu.utec'
@@ -53,4 +54,64 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+
+	// Configuración de reportes de tests
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+		showStandardStreams = false
+	}
+
+	// Generar reporte HTML de tests
+	reports {
+		html.required = true
+		junitXml.required = true
+	}
+
+	// Finalizar con JaCoCo
+	finalizedBy jacocoTestReport
+}
+
+// Configuración de JaCoCo para cobertura de código
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	dependsOn test
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+				'**/config/**',
+				'**/dto/**',
+				'**/entity/**',
+				'**/enumeration/**',
+				'**/UtecPlanificadorDocenteBackendApplication.class'
+			])
+		}))
+	}
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.60 // 60% de cobertura mínima
+			}
+		}
+	}
+}
+
+// Tarea para verificar la calidad del código
+tasks.register('checkCodeQuality') {
+	dependsOn test, jacocoTestReport, jacocoTestCoverageVerification
+	description = 'Runs all code quality checks'
+	group = 'verification'
 }
