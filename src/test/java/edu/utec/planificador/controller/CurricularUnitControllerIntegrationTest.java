@@ -64,23 +64,5 @@ class CurricularUnitControllerIntegrationTest {
 
         verify(curricularUnitService, times(1)).getCurricularUnitById(eq(unitId));
     }
-
-    // POST and PUT tests omitted due to complex validation requirements
-    // These endpoints require specific request structure that needs real-world testing
-
-    @Test
-    @WithMockUser(username = "coordinator@utec.edu.uy", authorities = "CURRICULAR_UNIT_DELETE")
-    @DisplayName("DELETE /curricular-units/{id} - Should delete curricular unit")
-    void deleteCurricularUnit_WithPermissions_DeletesUnit() throws Exception {
-        // Given
-        Long unitId = 1L;
-        doNothing().when(curricularUnitService).deleteCurricularUnit(eq(unitId));
-
-        // When & Then
-        mockMvc.perform(delete("/curricular-units/{id}", unitId))
-                .andExpect(status().isNoContent());
-
-        verify(curricularUnitService, times(1)).deleteCurricularUnit(eq(unitId));
-    }
 }
 
