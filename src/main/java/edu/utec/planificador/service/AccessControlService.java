@@ -1,17 +1,16 @@
 package edu.utec.planificador.service;
 
-import edu.utec.planificador.entity.*;
-import edu.utec.planificador.enumeration.Role;
-
 /**
  * Service for validating user access to resources based on their positions.
  * Ensures that users can only access resources within their assigned RTIs and Campuses.
+ * For TEACHER role, also validates ownership of courses.
  */
 public interface AccessControlService {
 
     /**
      * Validates if the current user has access to a specific course.
-     * A user has access if they have a position in the campus/RTI where the course belongs.
+     * - Administrative roles: Access if they have position in the campus/RTI where the course belongs
+     * - TEACHER: Access only if they are assigned as teacher to this course AND it's in their campus
      *
      * @param courseId Course ID to validate access
      * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have access
@@ -20,7 +19,8 @@ public interface AccessControlService {
 
     /**
      * Validates if the current user has access to a specific curricular unit.
-     * A user has access if they have a position in the campus/RTI where the curricular unit belongs.
+     * - Administrative roles: Access if they have position in the campus/RTI where the curricular unit belongs
+     * - TEACHER: Access only if they have at least one course in this curricular unit AND it's in their campus
      *
      * @param curricularUnitId Curricular Unit ID to validate access
      * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have access
@@ -72,7 +72,8 @@ public interface AccessControlService {
 
     /**
      * Validates if the current user has access to a specific program.
-     * Access is determined by the campuses where the program is offered.
+     * - Administrative roles: Access if they have position in the campuses where the program is offered
+     * - TEACHER: Access only if they have at least one course in this program AND it's in their campus
      *
      * @param programId Program ID to validate access
      * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have access
@@ -81,7 +82,8 @@ public interface AccessControlService {
 
     /**
      * Validates if the current user has access to a specific term.
-     * Access is determined by the program's campuses.
+     * - Administrative roles: Access if they have position in the campuses where the term's program is offered
+     * - TEACHER: Access only if they have at least one course in this specific term AND it's in their campus
      *
      * @param termId Term ID to validate access
      * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have access
@@ -103,5 +105,21 @@ public interface AccessControlService {
      * @return true if user has access, false otherwise
      */
     boolean hasAccessToRti(Long rtiId);
+
+    /**
+     * Validates if the current user can modify (write) a specific course and its planning hierarchy.
+     * If user has TEACHER role (regardless of other roles), validates ownership.
+     * This ensures that even users with administrative roles can only modify courses they teach.
+     * 
+     * This validation should be used for write operations on:
+     * - Course itself
+     * - Weekly Planning (children of Course)
+     * - Programmatic Content (children of Weekly Planning)
+     * - Activity (children of Programmatic Content)
+     *
+     * @param courseId Course ID to validate write access
+     * @throws edu.utec.planificador.exception.ForbiddenException if user cannot modify the course
+     */
+    void validateCourseWriteAccess(Long courseId);
 }
 

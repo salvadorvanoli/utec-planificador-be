@@ -36,10 +36,10 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateCourseAccess(Long courseId) {
-
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
 
+        User currentUser = getCurrentUser();
         CurricularUnit curricularUnit = course.getCurricularUnit();
         Term term = curricularUnit.getTerm();
         Program program = term.getProgram();
@@ -51,7 +51,6 @@ public class AccessControlServiceImpl implements AccessControlService {
             throw new ForbiddenException("No campuses found for this course's program");
         }
 
-        // Check if user has access to any of these campuses
         Set<Long> programCampusIds = programCampuses.stream()
             .map(Campus::getId)
             .collect(Collectors.toSet());
@@ -59,23 +58,36 @@ public class AccessControlServiceImpl implements AccessControlService {
         Set<Long> userCampusIds = getUserCampusIds();
         Set<Long> userRtiIds = getUserRtiIds();
 
-        // User has access if they have position in any campus that offers the program
-        // OR if they have position in the RTI that owns any of those campuses
-        boolean hasAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
-                           programCampuses.stream()
-                               .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
+        // First check: User must have access to the campus/RTI where the course belongs
+        boolean hasCampusAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
+                                  programCampuses.stream()
+                                      .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
 
-        if (!hasAccess) {
-            log.warn("User {} attempted to access course {} without proper permissions",
-                getCurrentUser().getUtecEmail(), courseId);
+        if (!hasCampusAccess) {
+            log.warn("User {} attempted to access course {} without campus access",
+                currentUser.getUtecEmail(), courseId);
             throw new ForbiddenException("You don't have access to this course");
         }
+
+        // Second check: If user has ONLY TEACHER role, validate ownership
+        if (hasOnlyTeacherRole()) {
+            boolean isTeacherOfCourse = course.getTeachers().stream()
+                .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+
+            if (!isTeacherOfCourse) {
+                log.warn("User {} attempted to access course {} without being assigned as teacher",
+                    currentUser.getUtecEmail(), courseId);
+                throw new ForbiddenException("You are not assigned as teacher to this course");
+            }
+        }
+
+        // Administrative roles (EDUCATION_MANAGER, COORDINATOR, ANALYST) pass with just campus access
     }
 
     @Override
     @Transactional(readOnly = true)
     public void validateCurricularUnitAccess(Long curricularUnitId) {
-
+        User currentUser = getCurrentUser();
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
 
@@ -96,31 +108,44 @@ public class AccessControlServiceImpl implements AccessControlService {
         Set<Long> userCampusIds = getUserCampusIds();
         Set<Long> userRtiIds = getUserRtiIds();
 
-        boolean hasAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
-                           programCampuses.stream()
-                               .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
+        // First check: User must have access to the campus/RTI where the curricular unit belongs
+        boolean hasCampusAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
+                                  programCampuses.stream()
+                                      .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
 
-        if (!hasAccess) {
-            log.warn("User {} attempted to access curricular unit {} without proper permissions",
-                getCurrentUser().getUtecEmail(), curricularUnitId);
+        if (!hasCampusAccess) {
+            log.warn("User {} attempted to access curricular unit {} without campus access",
+                currentUser.getUtecEmail(), curricularUnitId);
             throw new ForbiddenException("You don't have access to this curricular unit");
         }
+
+        // Second check: If user has ONLY TEACHER role, validate they have at least one course in this CU
+        if (hasOnlyTeacherRole()) {
+            boolean hasAssociatedCourse = courseRepository.existsByCurricularUnitIdAndUserId(
+                curricularUnitId, 
+                currentUser.getId()
+            );
+
+            if (!hasAssociatedCourse) {
+                log.warn("User {} attempted to access curricular unit {} without having any associated course",
+                    currentUser.getUtecEmail(), curricularUnitId);
+                throw new ForbiddenException("You don't have any course associated with this curricular unit");
+            }
+        }
+
+        // Administrative roles pass with just campus access
     }
 
     @Override
     @Transactional(readOnly = true)
     public void validateWeeklyPlanningAccess(Long weeklyPlanningId) {
-
-        // Verify weekly planning exists
+        // Verify weekly planning exists and get its course
         if (!weeklyPlanningRepository.existsById(weeklyPlanningId)) {
             throw new ResourceNotFoundException("Weekly planning not found with id: " + weeklyPlanningId);
         }
 
-        // Find the course that owns this weekly planning
-        Course course = courseRepository.findAll().stream()
-            .filter(c -> c.getWeeklyPlannings().stream()
-                .anyMatch(wp -> wp.getId().equals(weeklyPlanningId)))
-            .findFirst()
+        // Optimized: use direct query instead of loading all courses
+        Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning: " + weeklyPlanningId));
 
         validateCourseAccess(course.getId());
@@ -129,7 +154,6 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateProgrammaticContentAccess(Long programmaticContentId) {
-
         ProgrammaticContent programmaticContent = programmaticContentRepository.findById(programmaticContentId)
             .orElseThrow(() -> new ResourceNotFoundException("Programmatic content not found with id: " + programmaticContentId));
 
@@ -140,7 +164,6 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateActivityAccess(Long activityId) {
-
         Activity activity = activityRepository.findById(activityId)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + activityId));
 
@@ -151,7 +174,6 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateCampusAccess(Long campusId) {
-
         Campus campus = campusRepository.findById(campusId)
             .orElseThrow(() -> new ResourceNotFoundException("Campus not found with id: " + campusId));
 
@@ -171,7 +193,6 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateRtiAccess(Long rtiId) {
-
         if (!rtiRepository.existsById(rtiId)) {
             throw new ResourceNotFoundException("RTI not found with id: " + rtiId);
         }
@@ -188,7 +209,8 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Override
     @Transactional(readOnly = true)
     public void validateProgramAccess(Long programId) {
-
+        User currentUser = getCurrentUser();
+        
         // Verify program exists
         if (!programRepository.existsById(programId)) {
             throw new ResourceNotFoundException("Program not found with id: " + programId);
@@ -208,31 +230,65 @@ public class AccessControlServiceImpl implements AccessControlService {
         Set<Long> userCampusIds = getUserCampusIds();
         Set<Long> userRtiIds = getUserRtiIds();
 
-        boolean hasAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
-                           programCampuses.stream()
-                               .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
+        // First check: User must have access to the campus/RTI where the program is offered
+        boolean hasCampusAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
+                                  programCampuses.stream()
+                                      .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
 
-        if (!hasAccess) {
-            log.warn("User {} attempted to access program {} without proper permissions",
-                getCurrentUser().getUtecEmail(), programId);
+        if (!hasCampusAccess) {
+            log.warn("User {} attempted to access program {} without campus access",
+                currentUser.getUtecEmail(), programId);
             throw new ForbiddenException("You don't have access to this program");
         }
+
+        // Second check: If user has ONLY TEACHER role, validate they have at least one course in this program
+        if (hasOnlyTeacherRole()) {
+            boolean hasAssociatedCourse = courseRepository.existsByProgramIdAndUserId(
+                programId, 
+                currentUser.getId()
+            );
+
+            if (!hasAssociatedCourse) {
+                log.warn("User {} attempted to access program {} without having any associated course",
+                    currentUser.getUtecEmail(), programId);
+                throw new ForbiddenException("You don't have any course associated with this program");
+            }
+        }
+
+        // Administrative roles pass with just campus access
     }
 
     @Override
     @Transactional(readOnly = true)
     public void validateTermAccess(Long termId) {
-
+        User currentUser = getCurrentUser();
         Term term = termRepository.findById(termId)
             .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + termId));
 
         Program program = term.getProgram();
+        
+        // First, validate program access (which already includes campus check and teacher ownership validation)
         validateProgramAccess(program.getId());
+
+        // Additional check: If user has ONLY TEACHER role, validate they have at least one course in this specific term
+        // Note: validateProgramAccess already validated they have courses in the program,
+        // but we need to ensure they have courses in THIS specific term
+        if (hasOnlyTeacherRole()) {
+            boolean hasAssociatedCourse = courseRepository.existsByTermIdAndUserId(
+                termId, 
+                currentUser.getId()
+            );
+
+            if (!hasAssociatedCourse) {
+                log.warn("User {} attempted to access term {} without having any associated course in this term",
+                    currentUser.getUtecEmail(), termId);
+                throw new ForbiddenException("You don't have any course associated with this term");
+            }
+        }
     }
 
     @Override
     public boolean hasAccessToCampus(Long campusId) {
-
         Campus campus = campusRepository.findById(campusId).orElse(null);
         if (campus == null) {
             return false;
@@ -247,7 +303,6 @@ public class AccessControlServiceImpl implements AccessControlService {
 
     @Override
     public boolean hasAccessToRti(Long rtiId) {
-
         Set<Long> userRtiIds = getUserRtiIds();
         return userRtiIds.contains(rtiId);
     }
@@ -281,5 +336,70 @@ public class AccessControlServiceImpl implements AccessControlService {
             .map(RegionalTechnologicalInstitute::getId)
             .collect(Collectors.toSet());
     }
-}
 
+    /**
+     * Checks if the current user has ONLY the TEACHER role in all their active positions.
+     * Returns true if ALL active positions are TEACHER role.
+     * Returns false if user has any administrative role (EDUCATION_MANAGER, COORDINATOR, ANALYST).
+     *
+     * @return true if user has only TEACHER role in all active positions
+     */
+    private boolean hasOnlyTeacherRole() {
+        User user = getCurrentUser();
+        User fullUser = userRepository.findByIdWithPositions(user.getId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Position> activePositions = fullUser.getPositions().stream()
+            .filter(Position::getIsActive)
+            .toList();
+
+        if (activePositions.isEmpty()) {
+            return false;
+        }
+
+        // Check if ALL active positions are TEACHER role
+        return activePositions.stream()
+            .allMatch(position -> position.getRole() == Role.TEACHER);
+    }
+
+    /**
+     * Checks if the current user has AT LEAST one TEACHER role in their active positions.
+     * Used for write access validation - even if user has administrative roles,
+     * if they also have TEACHER role, ownership must be validated for write operations.
+     *
+     * @return true if user has at least one active TEACHER position
+     */
+    private boolean hasTeacherRole() {
+        User user = getCurrentUser();
+        User fullUser = userRepository.findByIdWithPositions(user.getId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return fullUser.getPositions().stream()
+            .filter(Position::getIsActive)
+            .anyMatch(position -> position.getRole() == Role.TEACHER);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void validateCourseWriteAccess(Long courseId) {
+        // First, validate basic course access (campus/RTI check)
+        validateCourseAccess(courseId);
+
+        // If user has TEACHER role (regardless of other roles), validate ownership for write operations
+        // This applies to Course and all its planning hierarchy (WeeklyPlanning, ProgrammaticContent, Activity)
+        if (hasTeacherRole()) {
+            User currentUser = getCurrentUser();
+            Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+
+            boolean isTeacherOfCourse = course.getTeachers().stream()
+                .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+
+            if (!isTeacherOfCourse) {
+                log.warn("User {} with TEACHER role attempted to modify course {} without being assigned",
+                    currentUser.getUtecEmail(), courseId);
+                throw new ForbiddenException("You cannot modify this course because you are not assigned as teacher");
+            }
+        }
+    }
+}

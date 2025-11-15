@@ -60,4 +60,43 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
         }
         return courseOpt;
     }
+
+    // Query optimizada para encontrar curso por weekly planning ID
+    @Query("""
+        SELECT c FROM Course c
+        JOIN c.weeklyPlannings wp
+        WHERE wp.id = :weeklyPlanningId
+        """)
+    Optional<Course> findByWeeklyPlanningId(@Param("weeklyPlanningId") Long weeklyPlanningId);
+
+    // Teacher ownership validation queries
+    @Query("""
+        SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
+        FROM Course c
+        JOIN c.teachers t
+        JOIN c.curricularUnit cu
+        JOIN cu.term term
+        WHERE term.program.id = :programId
+        AND t.user.id = :userId
+        """)
+    boolean existsByProgramIdAndUserId(@Param("programId") Long programId, @Param("userId") Long userId);
+
+    @Query("""
+        SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
+        FROM Course c
+        JOIN c.teachers t
+        JOIN c.curricularUnit cu
+        WHERE cu.term.id = :termId
+        AND t.user.id = :userId
+        """)
+    boolean existsByTermIdAndUserId(@Param("termId") Long termId, @Param("userId") Long userId);
+
+    @Query("""
+        SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
+        FROM Course c
+        JOIN c.teachers t
+        WHERE c.curricularUnit.id = :curricularUnitId
+        AND t.user.id = :userId
+        """)
+    boolean existsByCurricularUnitIdAndUserId(@Param("curricularUnitId") Long curricularUnitId, @Param("userId") Long userId);
 }
