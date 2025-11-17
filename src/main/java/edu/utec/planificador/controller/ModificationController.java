@@ -27,10 +27,9 @@ import org.springframework.web.bind.annotation.*;
 public class ModificationController {
 
     private final ModificationService modificationService;
-    private final AccessControlService accessControlService;
 
     @GetMapping("/courses/{courseId}")
-    @PreAuthorize("hasAnyAuthority('COURSE_READ', 'COURSE_WRITE')")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     @Operation(
         summary = "Get modifications by course",
         description = "Retrieves a paginated list of modifications for a specific course, ordered by date (most recent first)"
@@ -55,8 +54,6 @@ public class ModificationController {
         @RequestParam(defaultValue = "20") int size
     ) {
         log.info("GET /api/v1/modifications/courses/{} - page={}, size={}", courseId, page, size);
-
-        accessControlService.validateCourseAccess(courseId);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<ModificationResponse> modifications = modificationService.getModificationsByCourse(courseId, pageable);

@@ -10,6 +10,7 @@ import edu.utec.planificador.entity.User;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ModificationRepository;
 import edu.utec.planificador.repository.UserRepository;
+import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.ModificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +31,15 @@ public class ModificationServiceImpl implements ModificationService {
     private final ModificationRepository modificationRepository;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
+    private final AccessControlService accessControlService;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ModificationResponse> getModificationsByCourse(Long courseId, Pageable pageable) {
         log.debug("Getting modifications for courseId={}, page={}, size={}", 
             courseId, pageable.getPageNumber(), pageable.getPageSize());
+
+        accessControlService.validateCourseAccess(courseId);
 
         Page<Modification> modifications = modificationRepository.findByCourseId(courseId, pageable);
 
