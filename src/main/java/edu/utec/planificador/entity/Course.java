@@ -26,7 +26,6 @@ import jakarta.persistence.MapKeyEnumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -57,6 +56,25 @@ public class Course {
     @EqualsAndHashCode.Include
     private Long id;
 
+    // Constructor con campos obligatorios: shift, startDate, endDate, curricularUnit
+    public Course(Shift shift, LocalDate startDate, LocalDate endDate, CurricularUnit curricularUnit) {
+        this.shift = shift;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.curricularUnit = curricularUnit;
+        // Initialize collections to avoid null
+        this.hoursPerDeliveryFormat = new HashMap<>();
+        this.sustainableDevelopmentGoals = new HashSet<>();
+        this.universalDesignLearningPrinciples = new HashSet<>();
+        this.teachers = new ArrayList<>();
+        this.weeklyPlannings = new ArrayList<>();
+        this.modifications = new ArrayList<>();
+        // Initialize booleans to false
+        this.isRelatedToInvestigation = false;
+        this.involvesActivitiesWithProductiveSector = false;
+    }
+
+    // Constructor completo (mantener para compatibilidad con DataSeeder)
     public Course(Shift shift, String description, LocalDate startDate, LocalDate endDate, 
                   PartialGradingSystem partialGradingSystem, CurricularUnit curricularUnit) {
         this.shift = shift;
@@ -65,6 +83,16 @@ public class Course {
         this.endDate = endDate;
         this.partialGradingSystem = partialGradingSystem;
         this.curricularUnit = curricularUnit;
+        // Initialize collections to avoid null
+        this.hoursPerDeliveryFormat = new HashMap<>();
+        this.sustainableDevelopmentGoals = new HashSet<>();
+        this.universalDesignLearningPrinciples = new HashSet<>();
+        this.teachers = new ArrayList<>();
+        this.weeklyPlannings = new ArrayList<>();
+        this.modifications = new ArrayList<>();
+        // Initialize booleans to false
+        this.isRelatedToInvestigation = false;
+        this.involvesActivitiesWithProductiveSector = false;
     }
 
     @Setter
@@ -74,8 +102,7 @@ public class Course {
     private Shift shift;
 
     @Setter
-    @Column(length = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
-    @NotBlank
+    @Column(length = Constants.MAX_COURSE_DESCRIPTION_LENGTH, nullable = true)
     @Size(max = Constants.MAX_COURSE_DESCRIPTION_LENGTH)
     private String description;
 
@@ -90,9 +117,8 @@ public class Course {
     private LocalDate endDate;
 
     @Setter
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Enumerated(EnumType.STRING)
-    @NotNull
     private PartialGradingSystem partialGradingSystem;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -149,14 +175,15 @@ public class Course {
     private List<Modification> modifications = new ArrayList<>();
 
     public String getPeriod() {
-        if (startDate == null || curricularUnit == null || curricularUnit.getTerm() == null) {
+        if (startDate == null) {
             return null;
         }
         
         int year = startDate.getYear();
-        int semester = curricularUnit.getTerm().getNumber();
-        int periodSemester = (semester % 2 == 0) ? 2 : 1;
+        int month = startDate.getMonthValue();
         
-        return String.format("%d-%dS", year, periodSemester);
+        int semester = (month <= 7) ? 1 : 2;
+        
+        return String.format("%d-%dS", year, semester);
     }
 }

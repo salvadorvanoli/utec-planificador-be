@@ -1,6 +1,7 @@
 package edu.utec.planificador.controller;
 
 import edu.utec.planificador.dto.request.CourseRequest;
+import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +48,7 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('COURSE_WRITE')")
     @Operation(
         summary = "Create course",
         description = "Creates a new course with a default weekly planning (week 1) starting on the course start date"
@@ -102,23 +105,25 @@ public class CourseController {
             content = @Content
         )
     })
-    public ResponseEntity<Page<CourseResponse>> getCourses(
+    public ResponseEntity<Page<CourseBasicResponse>> getCourses(
         @Parameter(description = "User ID to filter courses by teacher", example = "1")
         @RequestParam(required = false) Long userId,
         @Parameter(description = "Campus ID to filter courses", example = "1")
         @RequestParam(required = false) Long campusId,
         @Parameter(description = "Period to filter courses (format: YYYY-1S or YYYY-2S)", example = "2024-1S")
         @RequestParam(required = false) String period,
+        @Parameter(description = "Text to search in curricular unit name or program name", example = "Programación")
+        @RequestParam(required = false) String searchText,
         @Parameter(description = "Page number (0-indexed)", example = "0")
         @RequestParam(defaultValue = "0") int page,
         @Parameter(description = "Page size (number of items per page)", example = "10")
         @RequestParam(defaultValue = "10") int size
     ) {
-        log.info("GET /courses - userId: {}, campusId: {}, period: {}, page: {}, size: {}", 
-                 userId, campusId, period, page, size);
+        log.info("GET /courses - userId: {}, campusId: {}, period: {}, searchText: {}, page: {}, size: {}", 
+                 userId, campusId, period, searchText, page, size);
         
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startDate"));
-        Page<CourseResponse> response = courseService.getCourses(userId, campusId, period, pageable);
+        Page<CourseBasicResponse> response = courseService.getCourses(userId, campusId, period, searchText, pageable);
         
         log.info("Returning {} courses (page {} of {}, total: {})", 
             response.getNumberOfElements(), 
@@ -127,6 +132,53 @@ public class CourseController {
             response.getTotalElements()
         );
         
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/latest")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
+    @Operation(
+        summary = "Get latest course for autocomplete",
+        description = "Returns the most recent course for a given curricular unit and teacher to autocomplete form fields. " +
+                      "Returns null if no previous course is found.",
+        security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Latest course retrieved successfully (or null if not found)",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CourseResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Not authenticated",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "User does not have access to the specified curricular unit",
+            content = @Content
+        )
+    })
+    public ResponseEntity<CourseResponse> getLatestCourse(
+        @Parameter(description = "Curricular Unit ID", required = true, example = "1")
+        @RequestParam Long curricularUnitId,
+        @Parameter(description = "User (Teacher) ID", required = true, example = "1")
+        @RequestParam Long userId
+    ) {
+        log.info("GET /courses/latest - curricularUnitId: {}, userId: {}", curricularUnitId, userId);
+        
+        CourseResponse response = courseService.getLatestCourseByCurricularUnitAndUser(curricularUnitId, userId);
+        
+        if (response == null) {
+            log.info("No previous course found");
+            return ResponseEntity.ok(null);
+        }
+        
+        log.info("Returning course with id: {}", response.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -203,6 +255,7 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Update course",
         description = "Updates an existing course by its ID"
@@ -239,6 +292,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('COURSE_DELETE')")
     @Operation(
         summary = "Delete course",
         description = "Deletes a course by its ID"

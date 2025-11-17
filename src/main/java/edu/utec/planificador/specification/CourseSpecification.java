@@ -24,9 +24,10 @@ public class CourseSpecification {
      * @param userId Optional user ID to filter courses by teacher
      * @param campusId Optional campus ID to filter courses where teachers have positions in that campus
      * @param period Optional period to filter courses (format: "YYYY-1S" or "YYYY-2S")
+     * @param searchText Optional text to search in curricular unit name or program name
      * @return Specification that can be used with CourseRepository
      */
-    public static Specification<Course> withFilters(Long userId, Long campusId, String period) {
+    public static Specification<Course> withFilters(Long userId, Long campusId, String period, String searchText) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -54,31 +55,47 @@ public class CourseSpecification {
                         int semester = Integer.parseInt(parts[1].replace("S", ""));
                         
                         predicates.add(criteriaBuilder.equal(
-                            criteriaBuilder.function("YEAR", Integer.class, root.get("startDate")),
+                            criteriaBuilder.function("date_part", Integer.class, 
+                                criteriaBuilder.literal("year"), 
+                                root.get("startDate")),
                             year
                         ));
                         
                         if (semester == 1) {
-                            predicates.add(criteriaBuilder.equal(
-                                criteriaBuilder.mod(
-                                    root.get("curricularUnit").get("term").get("number"),
-                                    2
-                                ),
-                                1
+                            predicates.add(criteriaBuilder.between(
+                                criteriaBuilder.function("date_part", Integer.class,
+                                    criteriaBuilder.literal("month"), 
+                                    root.get("startDate")),
+                                1, 7
                             ));
                         } else if (semester == 2) {
-                            predicates.add(criteriaBuilder.equal(
-                                criteriaBuilder.mod(
-                                    root.get("curricularUnit").get("term").get("number"),
-                                    2
-                                ),
-                                0
+                            predicates.add(criteriaBuilder.between(
+                                criteriaBuilder.function("date_part", Integer.class,
+                                    criteriaBuilder.literal("month"), 
+                                    root.get("startDate")),
+                                8, 12
                             ));
                         }
                     }
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     // Invalid period format, ignore the filter
                 }
+            }
+
+            if (searchText != null && !searchText.isBlank()) {
+                String searchPattern = "%" + searchText.toLowerCase() + "%";
+                
+                Predicate curricularUnitNamePredicate = criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("curricularUnit").get("name")),
+                    searchPattern
+                );
+                
+                Predicate programNamePredicate = criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("curricularUnit").get("term").get("program").get("name")),
+                    searchPattern
+                );
+                
+                predicates.add(criteriaBuilder.or(curricularUnitNamePredicate, programNamePredicate));
             }
 
             if (query != null) {

@@ -1,17 +1,25 @@
 package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.dto.request.CourseRequest;
+import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
+import edu.utec.planificador.enumeration.DeliveryFormat;
+import edu.utec.planificador.enumeration.PartialGradingSystem;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.exception.ResourceNotFoundException;
+import edu.utec.planificador.mapper.CourseMapper;
+import edu.utec.planificador.repository.CampusRepository;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
+import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CourseService;
 import edu.utec.planificador.specification.CourseSpecification;
@@ -25,6 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -35,42 +44,108 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final CurricularUnitRepository curricularUnitRepository;
+    private final UserRepository userRepository;
+    private final CampusRepository campusRepository;
+    private final CourseMapper courseMapper;
     private final AccessControlService accessControlService;
 
     @Override
     @Transactional
     public CourseResponse createCourse(CourseRequest request) {
-        log.debug("Creating course with description: {}", request.getDescription());
+        log.debug("Creating course for curricular unit: {}", request.getCurricularUnitId());
         
-        // Validate access to curricular unit before creating course
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
         
+        Long programId = curricularUnit.getTerm().getProgram().getId();
+        List<Campus> programCampuses = campusRepository.findByProgram(programId);
+        
+        if (programCampuses.isEmpty()) {
+            throw new IllegalStateException("Program with id " + programId + " is not offered at any campus");
+        }
+        
+        List<Long> programCampusIds = programCampuses.stream()
+            .map(Campus::getId)
+            .toList();
+        
+        log.debug("Curricular unit's program is offered at {} campus(es): {}", programCampuses.size(), programCampusIds);
+        
+        List<Teacher> teachers = new ArrayList<>();
+        for (Long userId : request.getUserIds()) {
+            User user = userRepository.findByIdWithPositions(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            
+            Teacher teacher = user.getPositions().stream()
+                .filter(pos -> pos instanceof Teacher)
+                .map(pos -> (Teacher) pos)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " does not have a teacher position"));
+            
+            boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
+                .anyMatch(campus -> programCampusIds.contains(campus.getId()));
+            
+            if (!teacherBelongsToValidCampus) {
+                throw new IllegalArgumentException(
+                    String.format("Teacher with id %d does not belong to any campus where this program is offered. Required campuses: %s", 
+                    userId, programCampusIds)
+                );
+            }
+            
+            teachers.add(teacher);
+        }
+        
+        log.debug("Validated {} teacher(s) for course", teachers.size());
+        
         Course course = new Course(
             request.getShift(),
-            request.getDescription(),
             request.getStartDate(),
             request.getEndDate(),
-            request.getPartialGradingSystem(),
             curricularUnit
         );
         
-        // Set optional fields
-        course.setIsRelatedToInvestigation(request.getIsRelatedToInvestigation());
-        course.setInvolvesActivitiesWithProductiveSector(request.getInvolvesActivitiesWithProductiveSector());
-        
-        // Set collections
-        if (request.getHoursPerDeliveryFormat() != null) {
-            course.getHoursPerDeliveryFormat().putAll(request.getHoursPerDeliveryFormat());
+        if (request.getDescription() != null && !request.getDescription().isBlank()) {
+            course.setDescription(request.getDescription());
+        } else {
+            String defaultDescription = "Curso de " + curricularUnit.getName();
+            course.setDescription(defaultDescription);
+            log.debug("Using default description: {}", defaultDescription);
         }
         
-        if (request.getSustainableDevelopmentGoals() != null) {
+        if (request.getPartialGradingSystem() != null) {
+            course.setPartialGradingSystem(request.getPartialGradingSystem());
+        } else {
+            course.setPartialGradingSystem(PartialGradingSystem.PGS_1);
+            log.debug("Using default partial grading system: PGS_1");
+        }
+        
+        course.getTeachers().addAll(teachers);
+        
+        curricularUnit.getCourses().add(course);
+        
+        if (request.getIsRelatedToInvestigation() != null) {
+            course.setIsRelatedToInvestigation(request.getIsRelatedToInvestigation());
+        }
+        
+        if (request.getInvolvesActivitiesWithProductiveSector() != null) {
+            course.setInvolvesActivitiesWithProductiveSector(request.getInvolvesActivitiesWithProductiveSector());
+        }
+        
+        if (request.getHoursPerDeliveryFormat() != null && !request.getHoursPerDeliveryFormat().isEmpty()) {
+            course.getHoursPerDeliveryFormat().putAll(request.getHoursPerDeliveryFormat());
+        } else {
+            for (DeliveryFormat format : DeliveryFormat.values()) {
+                course.getHoursPerDeliveryFormat().put(format, 0);
+            }
+            log.debug("Using default hours per delivery format: all formats set to 0");
+        }
+        
+        if (request.getSustainableDevelopmentGoals() != null && !request.getSustainableDevelopmentGoals().isEmpty()) {
             course.getSustainableDevelopmentGoals().addAll(request.getSustainableDevelopmentGoals());
         }
         
-        if (request.getUniversalDesignLearningPrinciples() != null) {
+        if (request.getUniversalDesignLearningPrinciples() != null && !request.getUniversalDesignLearningPrinciples().isEmpty()) {
             course.getUniversalDesignLearningPrinciples().addAll(request.getUniversalDesignLearningPrinciples());
         }
         
@@ -89,9 +164,9 @@ public class CourseServiceImpl implements CourseService {
         
         Course savedCourse = courseRepository.save(course);
         
-        log.info("Course created successfully with id: {}", savedCourse.getId());
+        log.info("Course created successfully with id: {} and {} teacher(s)", savedCourse.getId(), teachers.size());
         
-        return mapToResponse(savedCourse);
+        return courseMapper.toResponse(savedCourse);
     }
 
     @Override
@@ -106,7 +181,27 @@ public class CourseServiceImpl implements CourseService {
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
         // Mapear dentro de la transacción para acceder a colecciones LAZY
-        return mapToResponse(course);
+        return courseMapper.toResponse(course);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CourseResponse getLatestCourseByCurricularUnitAndUser(Long curricularUnitId, Long userId) {
+        log.debug("Getting latest course for curricular unit: {} and user: {}", curricularUnitId, userId);
+        
+        // Validate access to curricular unit
+        accessControlService.validateCurricularUnitAccess(curricularUnitId);
+        
+        Course course = courseRepository.findLatestByCurricularUnitAndUser(curricularUnitId, userId)
+            .orElse(null);
+        
+        if (course == null) {
+            log.debug("No previous course found for curricular unit: {} and user: {}", curricularUnitId, userId);
+            return null;
+        }
+        
+        log.debug("Found previous course with id: {}", course.getId());
+        return courseMapper.toResponse(course);
     }
 
     @Override
@@ -152,9 +247,9 @@ public class CourseServiceImpl implements CourseService {
         
         Course updatedCourse = courseRepository.save(course);
         
-        log.info("Course updated successfully with id: {}", updatedCourse.getId());
+        log.info("Course updated successfully with id: {}", id);
         
-        return mapToResponse(updatedCourse);
+        return courseMapper.toResponse(updatedCourse);
     }
 
     @Override
@@ -176,13 +271,13 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CourseResponse> getCourses(Long userId, Long campusId, String period, Pageable pageable) {
-        log.debug("Getting courses - userId: {}, campusId: {}, period: {}, page: {}, size: {}", 
-            userId, campusId, period, pageable.getPageNumber(), pageable.getPageSize()
+    public Page<CourseBasicResponse> getCourses(Long userId, Long campusId, String period, String searchText, Pageable pageable) {
+        log.debug("Getting courses - userId: {}, campusId: {}, period: {}, searchText: {}, page: {}, size: {}", 
+            userId, campusId, period, searchText, pageable.getPageNumber(), pageable.getPageSize()
         );
 
         Page<Course> coursesPage = courseRepository.findAll(
-            CourseSpecification.withFilters(userId, campusId, period),
+            CourseSpecification.withFilters(userId, campusId, period, searchText),
             pageable
         );
 
@@ -191,7 +286,7 @@ public class CourseServiceImpl implements CourseService {
             coursesPage.getNumber() + 1, 
             coursesPage.getTotalPages());
 
-        return coursesPage.map(this::mapToResponse);
+        return coursesPage.map(courseMapper::toBasicResponse);
     }
 
     @Override
@@ -205,7 +300,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Getting periods for user: {} in campus: {}", currentUser.getUtecEmail(), campusId);
 
         List<Course> courses = courseRepository.findAll(
-            CourseSpecification.withFilters(currentUser.getId(), campusId, null)
+            CourseSpecification.withFilters(currentUser.getId(), campusId, null, null)
         );
 
         List<PeriodResponse> periods = courses.stream()
@@ -219,23 +314,6 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
 
         return periods;
-    }
-
-    private CourseResponse mapToResponse(Course course) {
-        return CourseResponse.builder()
-            .id(course.getId())
-            .shift(course.getShift())
-            .description(course.getDescription())
-            .startDate(course.getStartDate())
-            .endDate(course.getEndDate())
-            .partialGradingSystem(course.getPartialGradingSystem())
-            .hoursPerDeliveryFormat(course.getHoursPerDeliveryFormat())
-            .isRelatedToInvestigation(course.getIsRelatedToInvestigation())
-            .involvesActivitiesWithProductiveSector(course.getInvolvesActivitiesWithProductiveSector())
-            .sustainableDevelopmentGoals(course.getSustainableDevelopmentGoals())
-            .universalDesignLearningPrinciples(course.getUniversalDesignLearningPrinciples())
-            .curricularUnitId(course.getCurricularUnit().getId())
-            .build();
     }
 
     // ==================== Sustainable Development Goals (ODS) ====================
@@ -256,7 +334,7 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Sustainable Development Goal {} added to course {}", goal, courseId);
         
-        return mapToResponse(updatedCourse);
+        return courseMapper.toResponse(updatedCourse);
     }
 
     @Override
@@ -280,7 +358,7 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Sustainable Development Goal {} removed from course {}", goal, courseId);
         
-        return mapToResponse(updatedCourse);
+        return courseMapper.toResponse(updatedCourse);
     }
 
     // ==================== Universal Design Learning Principles ====================
@@ -301,7 +379,7 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Universal Design Learning Principle {} added to course {}", principle, courseId);
         
-        return mapToResponse(updatedCourse);
+        return courseMapper.toResponse(updatedCourse);
     }
 
     @Override
@@ -325,6 +403,6 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Universal Design Learning Principle {} removed from course {}", principle, courseId);
         
-        return mapToResponse(updatedCourse);
+        return courseMapper.toResponse(updatedCourse);
     }
 }

@@ -55,6 +55,8 @@ public class SecurityConfig {
         "/webjars/**",
         "/actuator/health",
         "/actuator/info",
+        "/campuses/**",
+        "/regional-technological-institutes/**",
         "/enums/**",
         "/courses/**",                  // ⚠️ Temporalmente sin seguridad para desarrollo
         "/curricular-units/**",         // ⚠️ Temporalmente sin seguridad para desarrollo

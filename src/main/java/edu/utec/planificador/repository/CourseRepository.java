@@ -26,6 +26,21 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
         """)
     Optional<Course> findByIdWithWeeklyPlannings(@Param("courseId") Long courseId);
 
+    // Query para buscar el último curso de una unidad curricular con un docente específico
+    @Query("""
+        SELECT c FROM Course c
+        JOIN c.teachers t
+        JOIN c.curricularUnit cu
+        WHERE cu.id = :curricularUnitId
+        AND t.user.id = :userId
+        ORDER BY c.startDate DESC
+        LIMIT 1
+        """)
+    Optional<Course> findLatestByCurricularUnitAndUser(
+        @Param("curricularUnitId") Long curricularUnitId,
+        @Param("userId") Long userId
+    );
+
     // Segunda query: cargar programmatic contents
     @Query("""
         SELECT DISTINCT wp FROM WeeklyPlanning wp

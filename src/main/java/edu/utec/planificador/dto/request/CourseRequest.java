@@ -6,7 +6,6 @@ import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -17,6 +16,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,25 +27,23 @@ import java.util.Set;
 @Schema(description = "Course creation/update request")
 public class CourseRequest {
 
-    @Schema(description = "Course shift", example = "MORNING")
+    @Schema(description = "Course shift", example = "MORNING", required = true)
     @NotNull(message = "{validation.course.shift.required}")
     private Shift shift;
 
     @Schema(description = "Course description", example = "Introduction to programming course")
-    @NotBlank(message = "{validation.course.description.required}")
     @Size(max = 2000, message = "{validation.course.description.size}")
     private String description;
 
-    @Schema(description = "Course start date", example = "2025-03-01")
+    @Schema(description = "Course start date", example = "2025-03-01", required = true)
     @NotNull(message = "{validation.course.startDate.required}")
     private LocalDate startDate;
 
-    @Schema(description = "Course end date", example = "2025-07-15")
+    @Schema(description = "Course end date", example = "2025-07-15", required = true)
     @NotNull(message = "{validation.course.endDate.required}")
     private LocalDate endDate;
 
     @Schema(description = "Partial grading system", example = "TWO_PARTIALS")
-    @NotNull(message = "{validation.course.partialGradingSystem.required}")
     private PartialGradingSystem partialGradingSystem;
 
     @Schema(description = "Hours per delivery format")
@@ -68,7 +66,12 @@ public class CourseRequest {
     @Builder.Default
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
-    @Schema(description = "Curricular unit ID", example = "1")
+    @Schema(description = "Curricular unit ID", example = "1", required = true)
     @NotNull(message = "{validation.course.curricularUnitId.required}")
     private Long curricularUnitId;
+
+    @Schema(description = "User (teacher) IDs", example = "[1, 2]", required = true)
+    @NotNull(message = "{validation.course.userIds.required}")
+    @Size(min = 1, message = "{validation.course.userIds.notEmpty}")
+    private List<Long> userIds;
 }

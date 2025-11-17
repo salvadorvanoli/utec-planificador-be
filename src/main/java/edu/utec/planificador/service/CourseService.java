@@ -1,6 +1,7 @@
 package edu.utec.planificador.service;
 
 import edu.utec.planificador.dto.request.CourseRequest;
+import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
@@ -20,7 +21,7 @@ public interface CourseService {
 
     void deleteCourse(Long id);
 
-    Page<CourseResponse> getCourses(Long userId, Long campusId, String period, Pageable pageable);
+    Page<CourseBasicResponse> getCourses(Long userId, Long campusId, String period, String searchText, Pageable pageable);
 
     List<PeriodResponse> getPeriodsByCampus(Long campusId);
 
@@ -33,4 +34,7 @@ public interface CourseService {
     CourseResponse addUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle);
 
     CourseResponse removeUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle);
+
+    // Get latest course for autocomplete
+    CourseResponse getLatestCourseByCurricularUnitAndUser(Long curricularUnitId, Long userId);
 }
