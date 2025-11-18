@@ -66,7 +66,8 @@ public class SecurityConfig {
     private static final String[] PUBLIC_GET_ENDPOINTS = {
         "/users/teachers",
         "/campuses",
-        "/courses"
+        "/courses",
+        "/regional-technological-institutes"
     };
 
     @Bean

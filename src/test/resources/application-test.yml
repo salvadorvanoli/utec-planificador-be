@@ -1,95 +1,40 @@
-# Test Configuration Profile
+# Configuración para tests
+# Usa H2 en memoria para evitar dependencias de PostgreSQL
 
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    username: sa
-    password: 
     driver-class-name: org.h2.Driver
-  
+    username: sa
+    password:
+
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        jdbc:
-          batch_size: 0
-        order_inserts: false
-        order_updates: false
-    open-in-view: false
-  
-  sql:
-    init:
-      mode: never
-  
-  ldap:
-    embedded:
-      base-dn: dc=test,dc=com
-      ldif: classpath:test-server.ldif
-      port: 8389
+    show-sql: false
 
-security:
-  jwt:
-    secret: dGVzdFNlY3JldEtleUZvclVuaXRUZXN0c09ubHlOb3RGb3JQcm9kdWN0aW9uVXNlMTIzNDU2Nzg5MA==
-    expiration: 3600000
-    issuer: UTEC-Test
-  
-  cors:
-    allowed-origins: http://localhost:4200
-  
-  auth:
-    default-provider: LOCAL
-  
-  ldap:
-    enabled: false
-    url: ldap://localhost:8389
-    base: dc=test,dc=com
-    user-dn-pattern: uid={0},ou=people
-    user-search-filter: (uid={0})
-    default-role: TEACHER
-    default-campus-id: 1
-    manager:
-      dn: 
-      password: 
+  h2:
+    console:
+      enabled: true
 
+  # Desactivar cache para tests
+  cache:
+    type: none
+
+# JWT configuration para tests
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-in-tests-only-not-for-production
+  expiration: 3600000  # 1 hora
+
+# Logging
 logging:
   level:
     root: WARN
-    
-    edu.utec.planificador: INFO
-    
-    org.springframework.security: WARN
-    org.springframework.security.authentication: INFO
-    
-    org.hibernate: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
-    
-    org.springframework.ldap: WARN
-    
-    org.springframework.test: INFO
-    org.junit: INFO
-  
-  pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    edu.utec.planificador: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
-  health:
-    db:
-      enabled: true
-
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
