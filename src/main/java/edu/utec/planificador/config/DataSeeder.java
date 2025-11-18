@@ -210,8 +210,8 @@ public class DataSeeder implements CommandLineRunner {
         Course course = new Course(
             Shift.MORNING,
             "Curso de Programación Avanzada - Grupo 1",
-            LocalDate.of(2025, 3, 1),
-            LocalDate.of(2025, 7, 15),
+            LocalDate.of(2025, 2, 24),
+            LocalDate.of(2025, 6, 27),
             PartialGradingSystem.PGS_1,
             curricularUnit
         );
@@ -337,6 +337,34 @@ public class DataSeeder implements CommandLineRunner {
         courseNorte = courseRepository.save(courseNorte);
         log.info("✓ Created course for ITR Norte: {} (ID: {})", courseNorte.getDescription(), courseNorte.getId());
 
+        // ========================================
+        // TERCER USUARIO: SOLO ANALYST
+        // ========================================
+        log.info("Creating third user (Analyst only) for testing...");
+        PersonalData personalData3 = new PersonalData();
+        personalData3.setName("Carlos");
+        personalData3.setLastName("Rodríguez");
+        personalData3.setIdentityDocument("11223344");
+        personalData3.setPhoneNumber("099112233");
+        personalData3.setCountry("Uruguay");
+        personalData3.setCity("Montevideo");
+
+        User user3 = new User(
+            "carlos.rodriguez@utec.edu.uy",
+            passwordEncoder.encode("password"),
+            personalData3
+        );
+        user3 = userRepository.save(user3);
+        log.info("✓ Created third user: {} (ID: {})", user3.getUtecEmail(), user3.getId());
+
+        // Carlos solo tiene rol de Analyst en ITR Montevideo (Campus Centro)
+        Analyst analystCentro = new Analyst(user3);
+        analystCentro.addCampus(campusCentro);
+        user3.addPosition(analystCentro);
+
+        user3 = userRepository.save(user3);
+        log.info("✓ User 3 has ONLY Analyst position at ITR Montevideo (Campus: Centro)");
+
         // RESUMEN FINAL
         log.info("");
         log.info("==================================================");
@@ -352,6 +380,15 @@ public class DataSeeder implements CommandLineRunner {
         log.info("⛔ NO ACCESS to: ITR Montevideo, ITR Sur");
         log.info("✅ Can access Course ID: {} (ITR Norte)", courseNorte.getId());
         log.info("⛔ CANNOT access Course ID: {} (ITR Montevideo)", course.getId());
+        log.info("");
+        log.info("👤 USER 3: carlos.rodriguez@utec.edu.uy");
+        log.info("Password: password");
+        log.info("Positions:");
+        log.info("  - Analyst at ITR Montevideo (Campus: Centro)");
+        log.info("✅ HAS ACCESS to: ITR Montevideo ONLY");
+        log.info("⛔ NO ACCESS to: ITR Norte, ITR Sur");
+        log.info("✅ Can access Course ID: {} (ITR Montevideo)", course.getId());
+        log.info("⛔ CANNOT access Course ID: {} (ITR Norte)", courseNorte.getId());
         log.info("");
         log.info("==================================================");
         log.info("🧪 TEST SCENARIOS TO VERIFY ACCESS CONTROL:");
@@ -369,6 +406,10 @@ public class DataSeeder implements CommandLineRunner {
         log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", course.getId());
         log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", courseNorte.getId());
         log.info("");
+        log.info("3️⃣  Login as User 3 (carlos.rodriguez@utec.edu.uy):");
+        log.info("   ✅ GET /api/v1/courses/{} → 200 OK (as Analyst)", course.getId());
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseNorte.getId());
+        log.info("");
         log.info("==================================================");
         log.info("Course {} belongs to ITR Montevideo (Campus Centro)", course.getId());
         log.info("Course {} belongs to ITR Norte (Campus Rivera)", courseNorte.getId());
@@ -378,104 +419,106 @@ public class DataSeeder implements CommandLineRunner {
     private void createWeeklyPlanningsWithContent(Course course) {
         log.info("Creating WeeklyPlannings with content for course: {}", course.getDescription());
 
-        // Semana 1: 2025-03-03 al 2025-03-09
+        // =============== SEMANA 1 ===============
         WeeklyPlanning week1 = new WeeklyPlanning(
             1,
-            LocalDate.of(2025, 3, 3),
-            LocalDate.of(2025, 3, 9)
+            LocalDate.of(2025, 2, 24),
+            LocalDate.of(2025, 3, 2)
         );
 
-        // Contenidos para semana 1
+        // Contenido 1 - Semana 1
         ProgrammaticContent content1Week1 = new ProgrammaticContent(
             "Introducción a POO",
-            "Introducción a Programación Orientada a Objetos - Conceptos fundamentales de POO: clases, objetos, encapsulación",
+            "Conceptos fundamentales de Programación Orientada a Objetos: clases, objetos, encapsulación y abstracción",
             week1
         );
-        content1Week1.setColor("#4A90E2");
+        content1Week1.setColor("#F8BBD0"); // Rosa suave
 
-        Activity activity1Content1 = new Activity(
-            "Clase magistral sobre POO - Presentación de conceptos con ejemplos en Java",
+        Activity activity1Content1Week1 = new Activity(
+            "Clase magistral sobre los pilares de POO con ejemplos en Java",
             120,
             LearningModality.IN_PERSON,
             content1Week1
         );
-        activity1Content1.setTitle("Clase Magistral POO");
-        activity1Content1.setColor("#2ECC71");
-        activity1Content1.getCognitiveProcesses().addAll(Arrays.asList(
+        activity1Content1Week1.setTitle("Clase Magistral POO");
+        activity1Content1Week1.setColor("#E53935"); // Rojo intenso
+        activity1Content1Week1.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.REMEMBER,
             CognitiveProcess.UNDERSTAND
         ));
-        activity1Content1.getLearningResources().add(LearningResource.DEMONSTRATION);
-        activity1Content1.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
-        activity1Content1.getTeachingStrategies().add(TeachingStrategy.LECTURE);
-        
-        Activity activity2Content1 = new Activity(
-            "Ejercicios prácticos - Implementación de clases simples",
+        activity1Content1Week1.getLearningResources().add(LearningResource.DEMONSTRATION);
+        activity1Content1Week1.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
+        activity1Content1Week1.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+
+        Activity activity2Content1Week1 = new Activity(
+            "Ejercicios prácticos de creación de clases y objetos simples",
             180,
             LearningModality.IN_PERSON,
             content1Week1
         );
-        activity2Content1.setTitle("Práctica de Clases");
-        activity2Content1.setColor("#E67E22");
-        activity2Content1.getCognitiveProcesses().addAll(Arrays.asList(
+        activity2Content1Week1.setTitle("Práctica de Clases");
+        activity2Content1Week1.setColor("#2979FF"); // Azul eléctrico
+        activity2Content1Week1.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.APPLY,
             CognitiveProcess.ANALYZE
         ));
-        activity2Content1.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity2Content1.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
-        activity2Content1.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
-        
-        content1Week1.getActivities().add(activity1Content1);
-        content1Week1.getActivities().add(activity2Content1);
-        
+        activity2Content1Week1.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
+        activity2Content1Week1.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
+        activity2Content1Week1.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+
+        content1Week1.getActivities().add(activity1Content1Week1);
+        content1Week1.getActivities().add(activity2Content1Week1);
+
+        // Contenido 2 - Semana 1
         ProgrammaticContent content2Week1 = new ProgrammaticContent(
             "Herencia y Polimorfismo",
-            "Herencia y Polimorfismo - Reutilización de código mediante herencia",
+            "Reutilización de código mediante herencia y comportamiento polimórfico en Java",
             week1
         );
-        content2Week1.setColor("#9B59B6");
-        
-        Activity activity1Content2 = new Activity(
-            "Laboratorio de herencia - Crear jerarquías de clases",
+        content2Week1.setColor("#B3E5FC"); // Celeste pastel
+
+        Activity activity1Content2Week1 = new Activity(
+            "Laboratorio práctico: crear jerarquías de clases con herencia",
             150,
             LearningModality.IN_PERSON,
             content2Week1
         );
-        activity1Content2.setTitle("Lab Herencia");
-        activity1Content2.setColor("#1ABC9C");
-        activity1Content2.getCognitiveProcesses().add(CognitiveProcess.CREATE);
-        activity1Content2.getLearningResources().add(LearningResource.DEMONSTRATION);
-        activity1Content2.getTransversalCompetencies().add(TransversalCompetency.TEAMWORK);
-        activity1Content2.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
-        
-        content2Week1.getActivities().add(activity1Content2);
-        
+        activity1Content2Week1.setTitle("Lab Herencia");
+        activity1Content2Week1.setColor("#76FF03"); // Verde lima
+        activity1Content2Week1.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        activity1Content2Week1.getLearningResources().add(LearningResource.DEMONSTRATION);
+        activity1Content2Week1.getTransversalCompetencies().add(TransversalCompetency.TEAMWORK);
+        activity1Content2Week1.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+
+        content2Week1.getActivities().add(activity1Content2Week1);
+
         week1.getProgrammaticContents().add(content1Week1);
         week1.getProgrammaticContents().add(content2Week1);
         course.getWeeklyPlannings().add(week1);
-        
-        // Semana 2: 2025-03-10 al 2025-03-16
+
+        // =============== SEMANA 2 ===============
         WeeklyPlanning week2 = new WeeklyPlanning(
             2,
-            LocalDate.of(2025, 3, 10),
-            LocalDate.of(2025, 3, 16)
+            LocalDate.of(2025, 3, 3),
+            LocalDate.of(2025, 3, 9)
         );
-        
+
+        // Contenido 1 - Semana 2
         ProgrammaticContent content1Week2 = new ProgrammaticContent(
             "Interfaces y Clases Abstractas",
-            "Interfaces y Clases Abstractas - Contratos y abstracción en Java",
+            "Contratos y abstracción en Java: diferencias entre interfaces y clases abstractas",
             week2
         );
-        content1Week2.setColor("#F39C12");
-        
+        content1Week2.setColor("#C8E6C9"); // Verde menta
+
         Activity activity1Week2 = new Activity(
-            "Análisis de casos de uso - Identificar cuándo usar interfaces vs clases abstractas",
+            "Análisis de casos de uso para identificar cuándo usar interfaces vs clases abstractas",
             120,
             LearningModality.IN_PERSON,
             content1Week2
         );
         activity1Week2.setTitle("Análisis Interfaces");
-        activity1Week2.setColor("#3498DB");
+        activity1Week2.setColor("#D81B60"); // Fucsia
         activity1Week2.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.ANALYZE,
             CognitiveProcess.EVALUATE
@@ -486,71 +529,73 @@ public class DataSeeder implements CommandLineRunner {
         ));
         activity1Week2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
         activity1Week2.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
-        
+
         Activity activity2Week2 = new Activity(
-            "Implementación práctica - Crear interfaces y clases abstractas",
+            "Implementación práctica de interfaces y clases abstractas en proyectos",
             180,
             LearningModality.IN_PERSON,
             content1Week2
         );
         activity2Week2.setTitle("Implementación Interfaces");
-        activity2Week2.setColor("#E74C3C");
+        activity2Week2.setColor("#FF9100"); // Naranja vibrante
         activity2Week2.getCognitiveProcesses().add(CognitiveProcess.CREATE);
         activity2Week2.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
         activity2Week2.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
         activity2Week2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
-        
+
         content1Week2.getActivities().add(activity1Week2);
         content1Week2.getActivities().add(activity2Week2);
-        
+
+        // Contenido 2 - Semana 2
         ProgrammaticContent content2Week2 = new ProgrammaticContent(
             "Excepciones y Manejo de Errores",
-            "Excepciones y Manejo de Errores - Técnicas para manejo robusto de errores",
+            "Técnicas para manejo robusto de errores y excepciones en aplicaciones Java",
             week2
         );
-        content2Week2.setColor("#16A085");
-        
+        content2Week2.setColor("#FFDAB9"); // Durazno claro
+
         Activity activity3Week2 = new Activity(
-            "Práctica de try-catch - Implementar manejo de excepciones",
+            "Práctica de try-catch y manejo de excepciones personalizadas",
             120,
             LearningModality.IN_PERSON,
             content2Week2
         );
         activity3Week2.setTitle("Práctica Excepciones");
-        activity3Week2.setColor("#8E44AD");
+        activity3Week2.setColor("#FFEB3B"); // Amarillo brillante
         activity3Week2.getCognitiveProcesses().add(CognitiveProcess.APPLY);
         activity3Week2.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
         activity3Week2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
         activity3Week2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
-        
+
         content2Week2.getActivities().add(activity3Week2);
-        
+
         week2.getProgrammaticContents().add(content1Week2);
         week2.getProgrammaticContents().add(content2Week2);
         course.getWeeklyPlannings().add(week2);
-        
-        // Semana 3: 2025-03-17 al 2025-03-23
+
+        // =============== SEMANA 3 ===============
         WeeklyPlanning week3 = new WeeklyPlanning(
             3,
-            LocalDate.of(2025, 3, 17),
-            LocalDate.of(2025, 3, 23)
+            LocalDate.of(2025, 3, 10),
+            LocalDate.of(2025, 3, 16)
         );
-        
+
+        // Contenido 1 - Semana 3
         ProgrammaticContent content1Week3 = new ProgrammaticContent(
             "Colecciones y Genéricos",
-            "Colecciones y Genéricos - ArrayList, HashMap, Sets y uso de genéricos",
+            "API de colecciones en Java: ArrayList, HashMap, Sets y uso de tipos genéricos",
             week3
         );
-        content1Week3.setColor("#D35400");
-        
+        content1Week3.setColor("#FFF9C4"); // Amarillo crema
+
         Activity activity1Week3 = new Activity(
-            "Presentación de Collections Framework - API de colecciones en Java",
+            "Presentación del Collections Framework y sus principales estructuras de datos",
             90,
             LearningModality.IN_PERSON,
             content1Week3
         );
         activity1Week3.setTitle("Intro Collections");
-        activity1Week3.setColor("#27AE60");
+        activity1Week3.setColor("#00B8D4"); // Turquesa fuerte
         activity1Week3.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.REMEMBER,
             CognitiveProcess.UNDERSTAND
@@ -558,15 +603,15 @@ public class DataSeeder implements CommandLineRunner {
         activity1Week3.getLearningResources().add(LearningResource.DEMONSTRATION);
         activity1Week3.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
         activity1Week3.getTeachingStrategies().add(TeachingStrategy.LECTURE);
-        
+
         Activity activity2Week3 = new Activity(
-            "Laboratorio de colecciones - Implementar estructuras de datos con colecciones",
+            "Laboratorio: implementar estructuras de datos usando colecciones de Java",
             210,
             LearningModality.IN_PERSON,
             content1Week3
         );
         activity2Week3.setTitle("Lab Colecciones");
-        activity2Week3.setColor("#C0392B");
+        activity2Week3.setColor("#8E24AA"); // Violeta intenso
         activity2Week3.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.APPLY,
             CognitiveProcess.CREATE
@@ -577,15 +622,15 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.TEAMWORK
         ));
         activity2Week3.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
-        
+
         Activity activity3Week3 = new Activity(
-            "Tarea asincrónica - Ejercicios de genéricos para entregar",
+            "Tarea asincrónica: ejercicios de programación con genéricos para entregar",
             240,
             LearningModality.AUTONOMOUS,
             content1Week3
         );
         activity3Week3.setTitle("Tarea Genéricos");
-        activity3Week3.setColor("#2980B9");
+        activity3Week3.setColor("#E53935"); // Rojo intenso
         activity3Week3.getCognitiveProcesses().add(CognitiveProcess.CREATE);
         activity3Week3.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
         activity3Week3.getTransversalCompetencies().addAll(Arrays.asList(
@@ -593,36 +638,37 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.COMMUNICATION
         ));
         activity3Week3.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
-        
+
         content1Week3.getActivities().add(activity1Week3);
         content1Week3.getActivities().add(activity2Week3);
         content1Week3.getActivities().add(activity3Week3);
-        
+
         week3.getProgrammaticContents().add(content1Week3);
         course.getWeeklyPlannings().add(week3);
-        
-        // Semana 4: 2025-03-24 al 2025-03-30
+
+        // =============== SEMANA 4 ===============
         WeeklyPlanning week4 = new WeeklyPlanning(
             4,
-            LocalDate.of(2025, 3, 24),
-            LocalDate.of(2025, 3, 30)
+            LocalDate.of(2025, 3, 17),
+            LocalDate.of(2025, 3, 23)
         );
-        
+
+        // Contenido 1 - Semana 4
         ProgrammaticContent content1Week4 = new ProgrammaticContent(
             "Patrones de Diseño",
-            "Patrones de Diseño - Singleton, Factory, Observer y otros patrones",
+            "Patrones de diseño GOF: Singleton, Factory, Observer y otros patrones fundamentales",
             week4
         );
-        content1Week4.setColor("#8E44AD");
-        
+        content1Week4.setColor("#E1BEE7"); // Lavanda suave
+
         Activity activity1Week4 = new Activity(
-            "Estudio de patrones - Análisis de patrones GOF",
+            "Estudio y análisis de los principales patrones de diseño Gang of Four",
             120,
             LearningModality.IN_PERSON,
             content1Week4
         );
         activity1Week4.setTitle("Análisis Patrones");
-        activity1Week4.setColor("#F39C12");
+        activity1Week4.setColor("#2979FF"); // Azul eléctrico
         activity1Week4.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.UNDERSTAND,
             CognitiveProcess.ANALYZE
@@ -636,15 +682,15 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.COMMUNICATION
         ));
         activity1Week4.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
-        
+
         Activity activity2Week4 = new Activity(
-            "Trabajo en equipo - Implementar patrones en proyecto grupal",
+            "Trabajo en equipo: implementar patrones de diseño en un proyecto grupal",
             180,
             LearningModality.IN_PERSON,
             content1Week4
         );
         activity2Week4.setTitle("Proyecto Patrones");
-        activity2Week4.setColor("#16A085");
+        activity2Week4.setColor("#76FF03"); // Verde lima
         activity2Week4.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.APPLY,
             CognitiveProcess.CREATE
@@ -655,25 +701,26 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.COMMUNICATION
         ));
         activity2Week4.getTeachingStrategies().add(TeachingStrategy.TEAMWORK);
-        
+
         content1Week4.getActivities().add(activity1Week4);
         content1Week4.getActivities().add(activity2Week4);
-        
+
+        // Contenido 2 - Semana 4
         ProgrammaticContent content2Week4 = new ProgrammaticContent(
             "Testing y JUnit",
-            "Testing y JUnit - Pruebas unitarias y TDD",
+            "Pruebas unitarias y desarrollo guiado por tests (TDD) con JUnit 5",
             week4
         );
-        content2Week4.setColor("#E74C3C");
-        
+        content2Week4.setColor("#B2EBF2"); // Turquesa claro
+
         Activity activity3Week4 = new Activity(
-            "Introducción a testing - Escribir tests con JUnit",
+            "Introducción a testing: escribir tests unitarios efectivos con JUnit",
             150,
             LearningModality.IN_PERSON,
             content2Week4
         );
         activity3Week4.setTitle("Intro Testing");
-        activity3Week4.setColor("#3498DB");
+        activity3Week4.setColor("#D81B60"); // Fucsia
         activity3Week4.getCognitiveProcesses().addAll(Arrays.asList(
             CognitiveProcess.APPLY,
             CognitiveProcess.EVALUATE
@@ -684,15 +731,15 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.LEARNING_SELF_REGULATION
         ));
         activity3Week4.getTeachingStrategies().add(TeachingStrategy.TESTS);
-        
+
         Activity activity4Week4 = new Activity(
-            "Práctica autónoma de TDD - Desarrollar con Test-Driven Development",
+            "Práctica autónoma de Test-Driven Development aplicado a un proyecto real",
             300,
             LearningModality.AUTONOMOUS,
             content2Week4
         );
         activity4Week4.setTitle("Práctica TDD");
-        activity4Week4.setColor("#27AE60");
+        activity4Week4.setColor("#FF9100"); // Naranja vibrante
         activity4Week4.getCognitiveProcesses().add(CognitiveProcess.CREATE);
         activity4Week4.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
         activity4Week4.getTransversalCompetencies().addAll(Arrays.asList(
@@ -700,16 +747,39 @@ public class DataSeeder implements CommandLineRunner {
             TransversalCompetency.CRITICAL_THINKING
         ));
         activity4Week4.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
-        
+
         content2Week4.getActivities().add(activity3Week4);
         content2Week4.getActivities().add(activity4Week4);
-        
+
         week4.getProgrammaticContents().add(content1Week4);
         week4.getProgrammaticContents().add(content2Week4);
         course.getWeeklyPlannings().add(week4);
-        
+
+        // =============== SEMANAS 5-18: VACÍAS ===============
+        // Calcular cuántas semanas hay entre el inicio y fin del curso
+        LocalDate startDate = course.getStartDate();
+        LocalDate endDate = course.getEndDate();
+        long totalWeeks = java.time.temporal.ChronoUnit.WEEKS.between(startDate, endDate) + 1;
+
+        for (int weekNum = 5; weekNum <= totalWeeks; weekNum++) {
+            LocalDate weekStart = startDate.plusWeeks(weekNum - 1);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            
+            // Asegurarse de que no exceda la fecha de fin
+            if (weekEnd.isAfter(endDate)) {
+                weekEnd = endDate;
+            }
+            
+            WeeklyPlanning emptyWeek = new WeeklyPlanning(
+                weekNum,
+                weekStart,
+                weekEnd
+            );
+            course.getWeeklyPlannings().add(emptyWeek);
+        }
+
         // Guardar el curso con todas las planificaciones
         courseRepository.save(course);
-        log.info("Created 4 weekly plannings with programmatic contents and activities");
+        log.info("Created {} weekly plannings (4 with content, {} empty)", totalWeeks, totalWeeks - 4);
     }
 }

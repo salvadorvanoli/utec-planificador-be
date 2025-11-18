@@ -1,5 +1,6 @@
 package edu.utec.planificador.controller;
 
+import edu.utec.planificador.dto.request.BibliographicReferenceRequest;
 import edu.utec.planificador.dto.request.WeeklyPlanningRequest;
 import edu.utec.planificador.dto.response.WeeklyPlanningResponse;
 import edu.utec.planificador.service.WeeklyPlanningService;
@@ -257,6 +258,104 @@ public class WeeklyPlanningController {
         log.info("DELETE /weekly-plannings/{} - Deleting weekly planning", id);
         
         weeklyPlanningService.deleteWeeklyPlanning(id);
+        
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============================================
+    // Bibliographic References Management
+    // ============================================
+
+    @PostMapping("/{id}/bibliographic-references")
+    @Operation(
+        summary = "Add bibliographic reference",
+        description = "Adds a new bibliographic reference to a weekly planning"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Bibliographic reference added successfully",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Weekly planning not found",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid reference data",
+            content = @Content
+        )
+    })
+    public ResponseEntity<Void> addBibliographicReference(
+        @PathVariable Long id,
+        @Valid @RequestBody BibliographicReferenceRequest request
+    ) {
+        log.info("POST /weekly-plannings/{}/bibliographic-references - Adding bibliographic reference", id);
+        
+        weeklyPlanningService.addBibliographicReference(id, request.getReference());
+        
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @GetMapping("/{id}/bibliographic-references")
+    @Operation(
+        summary = "Get bibliographic references",
+        description = "Retrieves all bibliographic references for a weekly planning"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Bibliographic references retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Weekly planning not found",
+            content = @Content
+        )
+    })
+    public ResponseEntity<List<String>> getBibliographicReferences(@PathVariable Long id) {
+        log.info("GET /weekly-plannings/{}/bibliographic-references - Retrieving bibliographic references", id);
+        
+        List<String> references = weeklyPlanningService.getBibliographicReferences(id);
+        
+        return ResponseEntity.ok(references);
+    }
+
+    @DeleteMapping("/{id}/bibliographic-references")
+    @Operation(
+        summary = "Remove bibliographic reference",
+        description = "Removes a bibliographic reference from a weekly planning"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Bibliographic reference removed successfully",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Weekly planning not found",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid reference data",
+            content = @Content
+        )
+    })
+    public ResponseEntity<Void> removeBibliographicReference(
+        @PathVariable Long id,
+        @Valid @RequestBody BibliographicReferenceRequest request
+    ) {
+        log.info("DELETE /weekly-plannings/{}/bibliographic-references - Removing bibliographic reference", id);
+        
+        weeklyPlanningService.removeBibliographicReference(id, request.getReference());
         
         return ResponseEntity.noContent().build();
     }

@@ -7,6 +7,7 @@ import edu.utec.planificador.entity.Modification;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
+import edu.utec.planificador.enumeration.ModificationType;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ModificationRepository;
 import edu.utec.planificador.repository.UserRepository;
@@ -49,7 +50,7 @@ public class ModificationServiceImpl implements ModificationService {
         String description = String.format("Se creó el contenido programático '%s'", title);
         
         log.debug("Logging content creation - title: {}, description: {}", title, description);
-        saveModification(description, teacher, course);
+        saveModification(description, ModificationType.CREATE, teacher, course);
     }
 
     @Override
@@ -74,7 +75,7 @@ public class ModificationServiceImpl implements ModificationService {
                 newContent.getColor() != null ? newContent.getColor() : "Sin color"));
         }
 
-        saveModification(changes.toString(), teacher, course);
+        saveModification(changes.toString(), ModificationType.UPDATE, teacher, course);
     }
 
     @Override
@@ -83,7 +84,7 @@ public class ModificationServiceImpl implements ModificationService {
         String title = content.getTitle() != null ? content.getTitle() : "Sin título";
         String description = String.format("Se eliminó el contenido programático '%s'", title);
 
-        saveModification(description, teacher, course);
+        saveModification(description, ModificationType.DELETE, teacher, course);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class ModificationServiceImpl implements ModificationService {
         String description = String.format("Se creó la actividad '%s'", title);
         
         log.debug("Logging activity creation - title: {}, description: {}", title, description);
-        saveModification(description, teacher, course);
+        saveModification(description, ModificationType.CREATE, teacher, course);
     }
 
     @Override
@@ -152,7 +153,7 @@ public class ModificationServiceImpl implements ModificationService {
                 newActivity.getColor() != null ? newActivity.getColor() : "Sin color"));
         }
 
-        saveModification(changes.toString(), teacher, course);
+        saveModification(changes.toString(), ModificationType.UPDATE, teacher, course);
     }
 
     @Override
@@ -161,11 +162,11 @@ public class ModificationServiceImpl implements ModificationService {
         String title = activity.getTitle() != null ? activity.getTitle() : "Sin título";
         String description = String.format("Se eliminó la actividad '%s'", title);
 
-        saveModification(description, teacher, course);
+        saveModification(description, ModificationType.DELETE, teacher, course);
     }
 
-    private void saveModification(String description, Teacher teacher, Course course) {
-        Modification modification = new Modification(description, teacher, course);
+    private void saveModification(String description, ModificationType type, Teacher teacher, Course course) {
+        Modification modification = new Modification(description, type, teacher, course);
         modificationRepository.save(modification);
         log.info("Created modification: {}", description);
     }
@@ -179,7 +180,7 @@ public class ModificationServiceImpl implements ModificationService {
         }
         return a.equals(b);
     }
-    
+
     public Teacher getCurrentTeacher() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
@@ -211,6 +212,7 @@ public class ModificationServiceImpl implements ModificationService {
             .id(modification.getId())
             .modificationDate(modification.getModificationDate())
             .description(modification.getDescription())
+            .type(modification.getType())
             .teacherId(modification.getTeacher().getId())
             .teacherName(fullName.trim())
             .courseId(modification.getCourse().getId())

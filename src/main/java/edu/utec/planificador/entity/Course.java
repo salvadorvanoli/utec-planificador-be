@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Getter
-@ToString(exclude = {"curricularUnit", "teachers", "weeklyPlannings", "modifications"})
+@ToString(exclude = {"curricularUnit", "teachers", "weeklyPlannings", "modifications", "officeHours"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -147,6 +147,11 @@ public class Course {
     @JoinColumn(name = "course_id")
     @OrderBy("id DESC")
     private List<Modification> modifications = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "course_id")
+    @OrderBy("date ASC, startHour ASC")
+    private List<OfficeHours> officeHours = new ArrayList<>();
 
     public String getPeriod() {
         if (startDate == null || curricularUnit == null || curricularUnit.getTerm() == null) {
