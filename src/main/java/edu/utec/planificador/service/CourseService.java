@@ -3,6 +3,7 @@ package edu.utec.planificador.service;
 import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
+import edu.utec.planificador.dto.response.CoursePdfDataResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
@@ -35,6 +36,9 @@ public interface CourseService {
     CourseResponse addUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle);
 
     CourseResponse removeUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle);
+
+    // PDF Data Export
+    CoursePdfDataResponse getCoursePdfData(Long courseId);
 
     // Get latest course for autocomplete
     CourseResponse getLatestCourseByCurricularUnitAndUser(Long curricularUnitId, Long userId);

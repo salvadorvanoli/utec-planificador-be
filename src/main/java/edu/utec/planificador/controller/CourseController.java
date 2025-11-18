@@ -3,6 +3,7 @@ package edu.utec.planificador.controller;
 import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
+import edu.utec.planificador.dto.response.CoursePdfDataResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
@@ -442,6 +443,36 @@ public class CourseController {
         log.info("DELETE /courses/{}/universal-design-learning-principles/{} - Removing principle", id, principle);
         
         CourseResponse response = courseService.removeUniversalDesignLearningPrinciple(id, principle);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/pdf-data")
+    @Operation(
+        summary = "Get course data for PDF generation",
+        description = "Returns all course data needed for PDF generation in the frontend. " +
+                      "Includes: course description, dates, shift, investigation flags, hours per delivery format, " +
+                      "teachers information, program name, and curricular unit details (name and credits)."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "PDF data retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CoursePdfDataResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Course not found",
+            content = @Content
+        )
+    })
+    public ResponseEntity<CoursePdfDataResponse> getCoursePdfData(@PathVariable Long id) {
+        log.info("GET /courses/{}/pdf-data - Getting PDF data", id);
+        
+        CoursePdfDataResponse response = courseService.getCoursePdfData(id);
         
         return ResponseEntity.ok(response);
     }

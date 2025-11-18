@@ -1,5 +1,6 @@
 package edu.utec.planificador.dto.response;
 
+import edu.utec.planificador.enumeration.ModificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,9 @@ public class ModificationResponse {
 
     @Schema(description = "Description of the modification", example = "Se modificó el contenido programático; el título era: 'Introducción'; ahora es: 'Introducción a Java'")
     private String description;
+
+    @Schema(description = "Type of modification: CREATE (1), UPDATE (2), DELETE (0)", example = "UPDATE")
+    private ModificationType type;
 
     @Schema(description = "Teacher ID who made the modification", example = "5")
     private Long teacherId;

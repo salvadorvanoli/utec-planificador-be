@@ -3,6 +3,7 @@ package edu.utec.planificador.service.impl;
 import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
+import edu.utec.planificador.dto.response.CoursePdfDataResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
 import edu.utec.planificador.entity.Campus;
@@ -407,6 +408,63 @@ public class CourseServiceImpl implements CourseService {
         log.info("Universal Design Learning Principle {} removed from course {}", principle, courseId);
         
         return courseMapper.toResponse(updatedCourse);
+    }
+
+    // ==================== PDF Data Export ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public CoursePdfDataResponse getCoursePdfData(Long courseId) {
+        log.debug("Getting PDF data for course {}", courseId);
+
+        // Validate access to course
+        accessControlService.validateCourseAccess(courseId);
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+
+        // Build teacher info list
+        List<CoursePdfDataResponse.TeacherInfo> teacherInfoList = course.getTeachers().stream()
+            .map(teacher -> {
+                User user = teacher.getUser();
+                return CoursePdfDataResponse.TeacherInfo.builder()
+                    .name(user.getPersonalData() != null ? user.getPersonalData().getName() : null)
+                    .lastName(user.getPersonalData() != null ? user.getPersonalData().getLastName() : null)
+                    .email(user.getUtecEmail())
+                    .build();
+            })
+            .toList();
+
+        // Build curricular unit info
+        CurricularUnit curricularUnit = course.getCurricularUnit();
+        CoursePdfDataResponse.CurricularUnitInfo curricularUnitInfo = CoursePdfDataResponse.CurricularUnitInfo.builder()
+            .name(curricularUnit.getName())
+            .credits(curricularUnit.getCredits())
+            .build();
+
+        // Get program name through curricular unit -> term -> program
+        String programName = curricularUnit.getTerm() != null && curricularUnit.getTerm().getProgram() != null
+            ? curricularUnit.getTerm().getProgram().getName()
+            : null;
+
+        // Build response
+        CoursePdfDataResponse response = CoursePdfDataResponse.builder()
+            .description(course.getDescription())
+            .startDate(course.getStartDate())
+            .endDate(course.getEndDate())
+            .shift(course.getShift())
+            .involvesActivitiesWithProductiveSector(course.getInvolvesActivitiesWithProductiveSector())
+            .partialGradingSystem(course.getPartialGradingSystem())
+            .isRelatedToInvestigation(course.getIsRelatedToInvestigation())
+            .hoursPerDeliveryFormat(course.getHoursPerDeliveryFormat())
+            .teachers(teacherInfoList)
+            .programName(programName)
+            .curricularUnit(curricularUnitInfo)
+            .build();
+
+        log.info("PDF data retrieved successfully for course {}", courseId);
+
+        return response;
     }
 
     @Override

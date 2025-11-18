@@ -158,6 +158,59 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         log.info("Deleted weekly planning with id={}", id);
     }
 
+    @Override
+    @Transactional
+    public void addBibliographicReference(Long weeklyPlanningId, String reference) {
+        log.debug("Adding bibliographic reference to weeklyPlanningId={}", weeklyPlanningId);
+
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(weeklyPlanningId);
+
+        WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
+            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+
+        if (!weeklyPlanning.getBibliographicReferences().contains(reference)) {
+            weeklyPlanning.getBibliographicReferences().add(reference);
+            weeklyPlanningRepository.save(weeklyPlanning);
+            log.info("Added bibliographic reference to weekly planning with id={}", weeklyPlanningId);
+        } else {
+            log.debug("Bibliographic reference already exists in weekly planning with id={}", weeklyPlanningId);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getBibliographicReferences(Long weeklyPlanningId) {
+        log.debug("Getting bibliographic references for weeklyPlanningId={}", weeklyPlanningId);
+
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(weeklyPlanningId);
+
+        WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
+            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+
+        return weeklyPlanning.getBibliographicReferences();
+    }
+
+    @Override
+    @Transactional
+    public void removeBibliographicReference(Long weeklyPlanningId, String reference) {
+        log.debug("Removing bibliographic reference from weeklyPlanningId={}", weeklyPlanningId);
+
+        // Validate access to weekly planning
+        accessControlService.validateWeeklyPlanningAccess(weeklyPlanningId);
+
+        WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
+            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+
+        if (weeklyPlanning.getBibliographicReferences().remove(reference)) {
+            weeklyPlanningRepository.save(weeklyPlanning);
+            log.info("Removed bibliographic reference from weekly planning with id={}", weeklyPlanningId);
+        } else {
+            log.debug("Bibliographic reference not found in weekly planning with id={}", weeklyPlanningId);
+        }
+    }
+
     private WeeklyPlanningResponse mapToResponse(WeeklyPlanning weeklyPlanning) {
         return WeeklyPlanningResponse.builder()
             .id(weeklyPlanning.getId())

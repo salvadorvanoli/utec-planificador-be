@@ -21,4 +21,11 @@ public interface WeeklyPlanningService {
     WeeklyPlanningResponse updateWeeklyPlanning(Long id, WeeklyPlanningRequest request);
 
     void deleteWeeklyPlanning(Long id);
+
+    // Bibliographic references management
+    void addBibliographicReference(Long weeklyPlanningId, String reference);
+
+    List<String> getBibliographicReferences(Long weeklyPlanningId);
+
+    void removeBibliographicReference(Long weeklyPlanningId, String reference);
 }
