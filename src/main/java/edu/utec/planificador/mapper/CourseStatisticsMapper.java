@@ -58,7 +58,7 @@ public class CourseStatisticsMapper {
         activities.forEach(activity -> {
             if (activity.getCognitiveProcesses() != null) {
                 activity.getCognitiveProcesses().forEach(cp -> {
-                    String key = cp.name();
+                    String key = cp.getDisplayValue();
                     counts.put(key, counts.getOrDefault(key, 0) + 1);
                 });
             }
@@ -73,7 +73,7 @@ public class CourseStatisticsMapper {
         activities.forEach(activity -> {
             if (activity.getTransversalCompetencies() != null) {
                 activity.getTransversalCompetencies().forEach(tc -> {
-                    String key = tc.name();
+                    String key = tc.getDisplayValue();
                     counts.put(key, counts.getOrDefault(key, 0) + 1);
                 });
             }
@@ -87,7 +87,7 @@ public class CourseStatisticsMapper {
 
         activities.forEach(activity -> {
             if (activity.getLearningModality() != null) {
-                String key = activity.getLearningModality().name();
+                String key = activity.getLearningModality().getDisplayValue();
                 counts.put(key, counts.getOrDefault(key, 0) + 1);
             }
         });
@@ -101,7 +101,7 @@ public class CourseStatisticsMapper {
         activities.forEach(activity -> {
             if (activity.getTeachingStrategies() != null) {
                 activity.getTeachingStrategies().forEach(ts -> {
-                    String key = ts.name();
+                    String key = ts.getDisplayValue();
                     counts.put(key, counts.getOrDefault(key, 0) + 1);
                 });
             }
@@ -116,7 +116,7 @@ public class CourseStatisticsMapper {
         activities.forEach(activity -> {
             if (activity.getLearningResources() != null) {
                 activity.getLearningResources().forEach(lr -> {
-                    String key = lr.name();
+                    String key = lr.getDisplayValue();
                     counts.put(key, counts.getOrDefault(key, 0) + 1);
                 });
             }
@@ -140,7 +140,7 @@ public class CourseStatisticsMapper {
         int percentagePerSDG = 100 / totalSDGs;
 
         course.getSustainableDevelopmentGoals().forEach(sdg -> {
-            sdgs.put(sdg.name(), percentagePerSDG);
+            sdgs.put(sdg.getDisplayValue(), percentagePerSDG);
         });
 
         return sdgs;

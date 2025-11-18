@@ -1,5 +1,6 @@
 package edu.utec.planificador.service;
 
+import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
@@ -37,4 +38,7 @@ public interface CourseService {
 
     // Get latest course for autocomplete
     CourseResponse getLatestCourseByCurricularUnitAndUser(Long curricularUnitId, Long userId);
+
+    // Course statistics
+    CourseStatisticsDto getCourseStatistics(Long courseId);
 }

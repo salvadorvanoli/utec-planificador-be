@@ -1,5 +1,6 @@
 package edu.utec.planificador.service.impl;
 
+import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
@@ -16,6 +17,7 @@ import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.mapper.CourseMapper;
+import edu.utec.planificador.mapper.CourseStatisticsMapper;
 import edu.utec.planificador.repository.CampusRepository;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
@@ -47,6 +49,7 @@ public class CourseServiceImpl implements CourseService {
     private final UserRepository userRepository;
     private final CampusRepository campusRepository;
     private final CourseMapper courseMapper;
+    private final CourseStatisticsMapper courseStatisticsMapper;
     private final AccessControlService accessControlService;
 
     @Override
@@ -404,5 +407,22 @@ public class CourseServiceImpl implements CourseService {
         log.info("Universal Design Learning Principle {} removed from course {}", principle, courseId);
         
         return courseMapper.toResponse(updatedCourse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CourseStatisticsDto getCourseStatistics(Long courseId) {
+        log.debug("Retrieving statistics for course {}", courseId);
+
+        accessControlService.validateCourseAccess(courseId);
+        
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+        
+        CourseStatisticsDto statistics = courseStatisticsMapper.calculateStatistics(course);
+        
+        log.info("Statistics retrieved for course {}", courseId);
+        
+        return statistics;
     }
 }
