@@ -131,6 +131,32 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/campus/{campusId}/my-courses")
+    @Operation(
+        summary = "Get brief courses for current user in a campus",
+        description = "Returns all courses for the authenticated user in the specified campus with only the fields: id, curricularUnitName, startDate and shift. " +
+                      "If query parameter 'courseId' is provided, validates that the course belongs to the current user in that campus and returns only that course. " +
+                      "If the course does not belong to the user's courses in that campus, returns 403 Forbidden."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Brief courses retrieved successfully", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "Access denied to this campus or course", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Campus or course not found", content = @Content)
+    })
+    public ResponseEntity<java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse>> getBriefCoursesForCurrentUser(
+        @Parameter(description = "Campus ID", required = true, example = "1")
+        @PathVariable Long campusId,
+        @Parameter(description = "Optional course ID to validate ownership and return only that course", example = "10")
+        @RequestParam(required = false) Long courseId
+    ) {
+        log.info("GET /courses/campus/{}/my-courses - courseId={}", campusId, courseId);
+
+        java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> response =
+            courseService.getCoursesForCurrentUserInCampus(campusId, courseId);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/periods")
     @Operation(
         summary = "Get course periods by campus",

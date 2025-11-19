@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -211,7 +213,7 @@ public class CourseServiceImpl implements CourseService {
 
         List<PeriodResponse> periods = courses.stream()
             .map(Course::getPeriod)
-            .filter(period -> period != null)
+            .filter(Objects::nonNull)
             .distinct()
             .sorted(Comparator.reverseOrder())
             .map(period -> PeriodResponse.builder().period(period).build())
@@ -220,6 +222,50 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
 
         return periods;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> getCoursesForCurrentUserInCampus(Long campusId, Long courseId) {
+
+        accessControlService.validateCampusAccess(campusId);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        List<Course> courses = courseRepository.findAll(
+            CourseSpecification.withFilters(currentUser.getId(), campusId, null)
+        );
+
+        // Exclude courses whose endDate is after today
+        LocalDate today = LocalDate.now();
+        List<Course> visibleCourses = courses.stream()
+            .filter(c -> c.getEndDate() == null || !c.getEndDate().isAfter(today))
+            .toList();
+
+        java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> brief = visibleCourses.stream()
+            .map(course -> edu.utec.planificador.dto.response.CourseBriefResponse.builder()
+                .id(course.getId())
+                .curricularUnitName(course.getCurricularUnit() != null ? course.getCurricularUnit().getName() : null)
+                .startDate(course.getStartDate())
+                .shift(course.getShift())
+                .build())
+            .toList();
+
+        if (courseId != null) {
+            boolean found = brief.stream().anyMatch(b -> b.getId().equals(courseId));
+            if (!found) {
+                log.warn("Requested course {} is not accessible by current user in campus {}", courseId, campusId);
+                boolean exists = courseRepository.existsById(courseId);
+                if (!exists) {
+                    throw new edu.utec.planificador.exception.ResourceNotFoundException("Course not found with id: " + courseId);
+                }
+                throw new edu.utec.planificador.exception.ForbiddenException("You don't have access to the specified course in this campus");
+            }
+            return brief.stream().filter(b -> b.getId().equals(courseId)).toList();
+        }
+
+        return brief;
     }
 
     private CourseResponse mapToResponse(Course course) {

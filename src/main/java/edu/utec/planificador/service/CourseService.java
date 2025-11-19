@@ -23,6 +23,11 @@ public interface CourseService {
 
     Page<CourseResponse> getCourses(Long userId, Long campusId, String period, Pageable pageable);
 
+    // Returns brief course info (id, curricular unit name, start date, shift) for the current user in a campus
+    // If courseId is provided, validates that the course belongs to the current user's courses in that campus,
+    // otherwise throws a ForbiddenException or ResourceNotFoundException as appropriate.
+    java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> getCoursesForCurrentUserInCampus(Long campusId, Long courseId);
+
     List<PeriodResponse> getPeriodsByCampus(Long campusId);
 
     // Sustainable Development Goals (ODS)
