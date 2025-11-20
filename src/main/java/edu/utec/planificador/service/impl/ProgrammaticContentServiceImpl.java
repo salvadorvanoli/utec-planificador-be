@@ -7,9 +7,11 @@ import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.exception.ResourceNotFoundException;
+import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
 import edu.utec.planificador.repository.WeeklyPlanningRepository;
 import edu.utec.planificador.service.AccessControlService;
+import edu.utec.planificador.service.ModificationService;
 import edu.utec.planificador.service.ProgrammaticContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,16 +27,21 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
 
     private final ProgrammaticContentRepository programmaticContentRepository;
     private final WeeklyPlanningRepository weeklyPlanningRepository;
+    private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
-    private final ModificationServiceImpl modificationService;
+    private final ModificationService modificationService;
 
     @Override
     @Transactional
     public ProgrammaticContentResponse createProgrammaticContent(ProgrammaticContentRequest request) {
         log.debug("Creating programmatic content for weeklyPlanningId={}", request.getWeeklyPlanningId());
 
-        // Validate access to weekly planning
-        accessControlService.validateWeeklyPlanningAccess(request.getWeeklyPlanningId());
+        // Find the course associated with this weekly planning
+        Course course = courseRepository.findByWeeklyPlanningId(request.getWeeklyPlanningId())
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + request.getWeeklyPlanningId()));
+
+        // Validate write access to the course (ensures teachers can only modify their own courses)
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
             .orElseThrow(() -> new ResourceNotFoundException("Weekly planning not found with id: " + request.getWeeklyPlanningId()));
@@ -49,7 +56,6 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         // Log modification
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(request.getWeeklyPlanningId());
             modificationService.logProgrammaticContentCreation(saved, teacher, course);
         }
 
@@ -71,9 +77,10 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Override
     @Transactional
     public ProgrammaticContentResponse updateProgrammaticContent(Long id, ProgrammaticContentRequest request) {
-        // Validate access to both programmatic content and new weekly planning
-        accessControlService.validateProgrammaticContentAccess(id);
-        accessControlService.validateWeeklyPlanningAccess(request.getWeeklyPlanningId());
+        Course course = courseRepository.findByProgrammaticContentId(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + id));
+
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
@@ -104,7 +111,6 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         // Log modification using saved old values
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
             // Create temporary old content with saved values
             ProgrammaticContent oldContentSnapshot = new ProgrammaticContent(oldTitle, oldContent, pc.getWeeklyPlanning());
             oldContentSnapshot.setColor(oldColor);
@@ -117,8 +123,10 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Override
     @Transactional
     public void deleteProgrammaticContent(Long id) {
-        // Validate access to programmatic content
-        accessControlService.validateProgrammaticContentAccess(id);
+        Course course = courseRepository.findByProgrammaticContentId(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + id));
+
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
@@ -126,7 +134,6 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         // Log modification before deletion
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
             modificationService.logProgrammaticContentDeletion(pc, teacher, course);
         }
 

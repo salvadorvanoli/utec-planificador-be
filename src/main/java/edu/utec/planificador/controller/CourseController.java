@@ -186,6 +186,7 @@ public class CourseController {
     }
 
     @GetMapping("/campus/{campusId}/my-courses")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     @Operation(
         summary = "Get brief courses for current user in a campus",
         description = "Returns all courses for the authenticated user in the specified campus with only the fields: id, curricularUnitName, startDate and shift. " +
@@ -256,6 +257,7 @@ public class CourseController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     @Operation(
         summary = "Get course by ID",
         description = "Retrieves a course by its ID"
@@ -349,6 +351,7 @@ public class CourseController {
     // ==================== Sustainable Development Goals (ODS) ====================
 
     @PostMapping("/{id}/sustainable-development-goals/{goal}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Add Sustainable Development Goal",
         description = "Adds a Sustainable Development Goal (ODS) to a course"
@@ -380,6 +383,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}/sustainable-development-goals/{goal}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Remove Sustainable Development Goal",
         description = "Removes a Sustainable Development Goal (ODS) from a course"
@@ -413,6 +417,7 @@ public class CourseController {
     // ==================== Universal Design Learning Principles ====================
 
     @PostMapping("/{id}/universal-design-learning-principles/{principle}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Add Universal Design Learning Principle",
         description = "Adds a Universal Design Learning Principle to a course"

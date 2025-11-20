@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,7 @@ public class OfficeHoursController {
     private final OfficeHoursService officeHoursService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Create office hours",
         description = "Creates new office hours for a course. End hour must be after start hour."
@@ -70,6 +72,7 @@ public class OfficeHoursController {
     }
 
     @GetMapping("/course/{courseId}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get office hours by course",
         description = "Returns all office hours for a specific course, ordered by date and start hour"
@@ -98,6 +101,7 @@ public class OfficeHoursController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_DELETE')")
     @Operation(
         summary = "Delete office hours",
         description = "Deletes office hours by ID"

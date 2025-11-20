@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class ProgrammaticContentController {
     private final ProgrammaticContentService programmaticContentService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Create programmatic content",
         description = "Creates a new programmatic content and associates it with a weekly planning"
@@ -66,6 +68,7 @@ public class ProgrammaticContentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get programmatic content by ID",
         description = "Retrieves a programmatic content by its ID"
@@ -94,6 +97,7 @@ public class ProgrammaticContentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Update programmatic content",
         description = "Updates an existing programmatic content by its ID"
@@ -130,6 +134,7 @@ public class ProgrammaticContentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_DELETE')")
     @Operation(
         summary = "Delete programmatic content",
         description = "Deletes a programmatic content by its ID (cascades to activities)"

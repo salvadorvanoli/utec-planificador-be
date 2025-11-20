@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +41,7 @@ public class WeeklyPlanningController {
     private final WeeklyPlanningService weeklyPlanningService;
 
     @PostMapping("/course/{courseId}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Create weekly planning",
         description = "Creates a new weekly planning for a specific course"
@@ -76,6 +78,7 @@ public class WeeklyPlanningController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get weekly planning by ID",
         description = "Retrieves a weekly planning by its ID"
@@ -104,6 +107,7 @@ public class WeeklyPlanningController {
     }
 
     @GetMapping("/course/{courseId}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get all weekly plannings by course",
         description = "Retrieves all weekly plannings for a specific course"
@@ -134,6 +138,7 @@ public class WeeklyPlanningController {
     }
 
     @GetMapping("/course/{courseId}/week/{weekNumber}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get weekly planning by course and week number",
         description = "Retrieves a weekly planning for a specific course and week number"
@@ -165,6 +170,7 @@ public class WeeklyPlanningController {
     }
 
     @GetMapping("/course/{courseId}/date")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get weekly planning by course and date",
         description = "Retrieves a weekly planning for a specific course that contains the given date"
@@ -202,6 +208,7 @@ public class WeeklyPlanningController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Update weekly planning",
         description = "Updates an existing weekly planning by its ID"
@@ -238,6 +245,7 @@ public class WeeklyPlanningController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_DELETE')")
     @Operation(
         summary = "Delete weekly planning",
         description = "Deletes a weekly planning by its ID (cascades to programmatic contents and activities)"
@@ -267,6 +275,7 @@ public class WeeklyPlanningController {
     // ============================================
 
     @PostMapping("/{id}/bibliographic-references")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Add bibliographic reference",
         description = "Adds a new bibliographic reference to a weekly planning"
@@ -300,6 +309,7 @@ public class WeeklyPlanningController {
     }
 
     @GetMapping("/{id}/bibliographic-references")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get bibliographic references",
         description = "Retrieves all bibliographic references for a weekly planning"
@@ -328,6 +338,7 @@ public class WeeklyPlanningController {
     }
 
     @DeleteMapping("/{id}/bibliographic-references")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Remove bibliographic reference",
         description = "Removes a bibliographic reference from a weekly planning"

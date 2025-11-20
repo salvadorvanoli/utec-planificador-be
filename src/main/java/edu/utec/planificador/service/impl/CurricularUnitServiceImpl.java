@@ -5,7 +5,6 @@ import edu.utec.planificador.entity.CurricularUnit;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.mapper.CurricularUnitMapper;
 import edu.utec.planificador.repository.CurricularUnitRepository;
-import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CurricularUnitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,6 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
 
     private final CurricularUnitRepository curricularUnitRepository;
     private final CurricularUnitMapper curricularUnitMapper;
-    private final AccessControlService accessControlService;
 
     @Override
     @Transactional(readOnly = true)
@@ -42,9 +40,6 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
     @Transactional(readOnly = true)
     public CurricularUnitResponse getCurricularUnitById(Long id) {
         log.debug("Getting curricular unit by id: {}", id);
-
-        // Validate access to curricular unit
-        accessControlService.validateCurricularUnitAccess(id);
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + id));

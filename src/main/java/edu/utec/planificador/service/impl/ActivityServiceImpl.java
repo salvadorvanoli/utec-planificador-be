@@ -13,9 +13,11 @@ import edu.utec.planificador.enumeration.TeachingStrategy;
 import edu.utec.planificador.enumeration.TransversalCompetency;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.ActivityRepository;
+import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.ActivityService;
+import edu.utec.planificador.service.ModificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,15 +34,21 @@ public class ActivityServiceImpl implements ActivityService {
 
     private final ActivityRepository activityRepository;
     private final ProgrammaticContentRepository programmaticContentRepository;
+    private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
-    private final ModificationServiceImpl modificationService;
+    private final ModificationService modificationService;
 
     @Override
     @Transactional
     public ActivityResponse createActivity(ActivityRequest request) {
         log.debug("Creating activity for programmaticContentId={}", request.getProgrammaticContentId());
 
-        accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
+        // Find the course associated with this programmatic content
+        Course course = courseRepository.findByProgrammaticContentId(request.getProgrammaticContentId())
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + request.getProgrammaticContentId()));
+
+        // Validate write access to the course (ensures teachers can only modify their own courses)
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
@@ -82,7 +90,7 @@ public class ActivityServiceImpl implements ActivityService {
         log.info("Created activity with id={}", saved.getId());
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
+            // Reutilizar la variable course ya obtenida al inicio
             modificationService.logActivityCreation(saved, teacher, course);
         }
 
@@ -103,8 +111,10 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public ActivityResponse updateActivity(Long id, ActivityRequest request) {
-        accessControlService.validateActivityAccess(id);
-        accessControlService.validateProgrammaticContentAccess(request.getProgrammaticContentId());
+        Course course = courseRepository.findByActivityId(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
+
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
@@ -167,7 +177,6 @@ public class ActivityServiceImpl implements ActivityService {
 
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(pc.getWeeklyPlanning().getId());
             Activity oldActivitySnapshot = new Activity(oldDescription, oldDuration, oldModality, activity.getProgrammaticContent());
             oldActivitySnapshot.setTitle(oldTitle);
             oldActivitySnapshot.setColor(oldColor);
@@ -184,15 +193,16 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public void deleteActivity(Long id) {
-        accessControlService.validateActivityAccess(id);
+        Course course = courseRepository.findByActivityId(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
+
+        accessControlService.validateCourseWriteAccess(course.getId());
 
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
 
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {
-            Course course = modificationService.getCourseByWeeklyPlanningId(
-                activity.getProgrammaticContent().getWeeklyPlanning().getId());
             modificationService.logActivityDeletion(activity, teacher, course);
         }
 

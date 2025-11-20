@@ -41,6 +41,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 
 @Slf4j
@@ -104,6 +106,32 @@ public class CourseServiceImpl implements CourseService {
         }
         
         log.debug("Validated {} teacher(s) for course", teachers.size());
+        
+        // If multiple teachers, validate they share at least one common campus within the program's campuses
+        if (teachers.size() > 1) {
+            Set<Long> commonCampusIds = teachers.get(0).getCampuses().stream()
+                .map(Campus::getId)
+                .filter(programCampusIds::contains)
+                .collect(Collectors.toSet());
+            
+            for (int i = 1; i < teachers.size(); i++) {
+                Set<Long> teacherCampusIds = teachers.get(i).getCampuses().stream()
+                    .map(Campus::getId)
+                    .filter(programCampusIds::contains)
+                    .collect(Collectors.toSet());
+                
+                commonCampusIds.retainAll(teacherCampusIds);
+            }
+            
+            if (commonCampusIds.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "All teachers must share at least one common campus where the program is offered. " +
+                    "Teachers provided do not have any campus in common."
+                );
+            }
+            
+            log.debug("Teachers share {} common campus(es): {}", commonCampusIds.size(), commonCampusIds);
+        }
         
         Course course = new Course(
             request.getShift(),
@@ -216,8 +244,8 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse updateCourse(Long id, CourseRequest request) {
         log.debug("Updating course with id: {}", id);
         
-        // Validate access to both course and new curricular unit
-        accessControlService.validateCourseAccess(id);
+        // Validate write access (ensures teachers can only modify their own courses)
+        accessControlService.validateCourseWriteAccess(id);
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         Course course = courseRepository.findById(id)
@@ -225,6 +253,77 @@ public class CourseServiceImpl implements CourseService {
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
+        
+        // Validate dates
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new IllegalArgumentException("Start date must be before or equal to end date");
+        }
+        
+        // Validate and update teachers
+        Long programId = curricularUnit.getTerm().getProgram().getId();
+        List<Campus> programCampuses = campusRepository.findByProgram(programId);
+        
+        if (programCampuses.isEmpty()) {
+            throw new IllegalStateException("Program with id " + programId + " is not offered at any campus");
+        }
+        
+        List<Long> programCampusIds = programCampuses.stream()
+            .map(Campus::getId)
+            .toList();
+        
+        log.debug("Validating teachers for program offered at {} campus(es): {}", programCampuses.size(), programCampusIds);
+        
+        List<Teacher> teachers = new ArrayList<>();
+        for (Long userId : request.getUserIds()) {
+            User user = userRepository.findByIdWithPositions(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            
+            Teacher teacher = user.getPositions().stream()
+                .filter(pos -> pos instanceof Teacher)
+                .map(pos -> (Teacher) pos)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " does not have a teacher position"));
+            
+            boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
+                .anyMatch(campus -> programCampusIds.contains(campus.getId()));
+            
+            if (!teacherBelongsToValidCampus) {
+                throw new IllegalArgumentException(
+                    String.format("Teacher with id %d does not belong to any campus where this program is offered. Required campuses: %s", 
+                    userId, programCampusIds)
+                );
+            }
+            
+            teachers.add(teacher);
+        }
+        
+        log.debug("Validated {} teacher(s) for course update", teachers.size());
+        
+        // If multiple teachers, validate they share at least one common campus within the program's campuses
+        if (teachers.size() > 1) {
+            Set<Long> commonCampusIds = teachers.get(0).getCampuses().stream()
+                .map(Campus::getId)
+                .filter(programCampusIds::contains)
+                .collect(Collectors.toSet());
+            
+            for (int i = 1; i < teachers.size(); i++) {
+                Set<Long> teacherCampusIds = teachers.get(i).getCampuses().stream()
+                    .map(Campus::getId)
+                    .filter(programCampusIds::contains)
+                    .collect(Collectors.toSet());
+                
+                commonCampusIds.retainAll(teacherCampusIds);
+            }
+            
+            if (commonCampusIds.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "All teachers must share at least one common campus where the program is offered. " +
+                    "Teachers provided do not have any campus in common."
+                );
+            }
+            
+            log.debug("Teachers share {} common campus(es): {}", commonCampusIds.size(), commonCampusIds);
+        }
         
         // Update fields
         course.setShift(request.getShift());
@@ -235,6 +334,10 @@ public class CourseServiceImpl implements CourseService {
         course.setIsRelatedToInvestigation(request.getIsRelatedToInvestigation());
         course.setInvolvesActivitiesWithProductiveSector(request.getInvolvesActivitiesWithProductiveSector());
         course.setCurricularUnit(curricularUnit);
+        
+        // Update teachers
+        course.getTeachers().clear();
+        course.getTeachers().addAll(teachers);
         
         // Update collections
         course.getHoursPerDeliveryFormat().clear();
@@ -254,7 +357,7 @@ public class CourseServiceImpl implements CourseService {
         
         Course updatedCourse = courseRepository.save(course);
         
-        log.info("Course updated successfully with id: {}", id);
+        log.info("Course updated successfully with id: {} and {} teacher(s)", id, teachers.size());
         
         return courseMapper.toResponse(updatedCourse);
     }
@@ -299,15 +402,8 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional(readOnly = true)
     public List<PeriodResponse> getPeriodsByCampus(Long campusId) {
-        accessControlService.validateCampusAccess(campusId);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-
-        log.debug("Getting periods for user: {} in campus: {}", currentUser.getUtecEmail(), campusId);
-
         List<Course> courses = courseRepository.findAll(
-            CourseSpecification.withFilters(currentUser.getId(), campusId, null, null)
+            CourseSpecification.withFilters(null, campusId, null, null)
         );
 
         List<PeriodResponse> periods = courses.stream()
@@ -318,7 +414,7 @@ public class CourseServiceImpl implements CourseService {
             .map(period -> PeriodResponse.builder().period(period).build())
             .toList();
 
-        log.debug("Found {} unique periods for user in campus {}", periods.size(), campusId);
+        log.debug("Found {} unique periods for campus {}", periods.size(), campusId);
 
         return periods;
     }
@@ -375,7 +471,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Adding Sustainable Development Goal {} to course {}", goal, courseId);
         
         // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
+        accessControlService.validateCourseWriteAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -394,7 +490,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Removing Sustainable Development Goal {} from course {}", goal, courseId);
         
         // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
+        accessControlService.validateCourseWriteAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -420,7 +516,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Adding Universal Design Learning Principle {} to course {}", principle, courseId);
         
         // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
+        accessControlService.validateCourseWriteAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -439,7 +535,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Removing Universal Design Learning Principle {} from course {}", principle, courseId);
         
         // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
+        accessControlService.validateCourseWriteAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -463,9 +559,6 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public CoursePdfDataResponse getCoursePdfData(Long courseId) {
         log.debug("Getting PDF data for course {}", courseId);
-
-        // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));

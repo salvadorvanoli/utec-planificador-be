@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class ActivityController {
     private final ActivityService activityService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Create activity",
         description = "Creates a new activity and associates it with programmatic content"
@@ -66,6 +68,7 @@ public class ActivityController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get activity by ID",
         description = "Retrieves an activity by its ID"
@@ -94,6 +97,7 @@ public class ActivityController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Update activity",
         description = "Updates an existing activity by its ID"
@@ -130,6 +134,7 @@ public class ActivityController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PLANNING_DELETE')")
     @Operation(
         summary = "Delete activity",
         description = "Deletes an activity by its ID"
