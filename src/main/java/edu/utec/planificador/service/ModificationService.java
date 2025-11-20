@@ -23,4 +23,8 @@ public interface ModificationService {
     void logActivityUpdate(Activity oldActivity, Activity newActivity, Teacher teacher, Course course);
 
     void logActivityDeletion(Activity activity, Teacher teacher, Course course);
+
+    Teacher getCurrentTeacher();
+
+    Course getCourseByWeeklyPlanningId(Long weeklyPlanningId);
 }

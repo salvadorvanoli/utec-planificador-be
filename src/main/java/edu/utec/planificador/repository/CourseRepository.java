@@ -84,6 +84,25 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
         """)
     Optional<Course> findByWeeklyPlanningId(@Param("weeklyPlanningId") Long weeklyPlanningId);
 
+    // Query para encontrar curso por programmatic content ID
+    @Query("""
+        SELECT c FROM Course c
+        JOIN c.weeklyPlannings wp
+        JOIN wp.programmaticContents pc
+        WHERE pc.id = :programmaticContentId
+        """)
+    Optional<Course> findByProgrammaticContentId(@Param("programmaticContentId") Long programmaticContentId);
+
+    // Query para encontrar curso por activity ID
+    @Query("""
+        SELECT c FROM Course c
+        JOIN c.weeklyPlannings wp
+        JOIN wp.programmaticContents pc
+        JOIN pc.activities a
+        WHERE a.id = :activityId
+        """)
+    Optional<Course> findByActivityId(@Param("activityId") Long activityId);
+
     // Teacher ownership validation queries
     @Query("""
         SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
