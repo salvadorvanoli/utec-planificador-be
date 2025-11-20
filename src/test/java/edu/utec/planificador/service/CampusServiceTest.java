@@ -2,7 +2,6 @@ package edu.utec.planificador.service;
 
 import edu.utec.planificador.dto.response.CampusResponse;
 import edu.utec.planificador.entity.Campus;
-import edu.utec.planificador.entity.RegionalTechnologicalInstitute;
 import edu.utec.planificador.mapper.CampusMapper;
 import edu.utec.planificador.repository.CampusRepository;
 import edu.utec.planificador.service.impl.CampusServiceImpl;

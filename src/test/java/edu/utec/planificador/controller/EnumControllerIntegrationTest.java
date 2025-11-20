@@ -1,6 +1,5 @@
 package edu.utec.planificador.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utec.planificador.config.TestSecurityConfig;
 import edu.utec.planificador.dto.response.EnumResponse;
 import edu.utec.planificador.service.EnumService;
@@ -41,9 +40,6 @@ class EnumControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private EnumService enumService;

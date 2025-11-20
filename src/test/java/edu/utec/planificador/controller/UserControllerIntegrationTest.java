@@ -1,6 +1,5 @@
 package edu.utec.planificador.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utec.planificador.config.TestSecurityConfig;
 import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.dto.response.UserPositionsResponse;
@@ -44,9 +43,6 @@ class UserControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private UserPositionService userPositionService;

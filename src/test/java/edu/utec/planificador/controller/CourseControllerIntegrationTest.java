@@ -1,6 +1,5 @@
 package edu.utec.planificador.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utec.planificador.config.TestSecurityConfig;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.service.CourseService;
@@ -15,8 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

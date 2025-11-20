@@ -80,7 +80,6 @@ public abstract class BaseSecurityTest {
     /**
      * Autentica un usuario con rol personalizado.
      */
-    @SuppressWarnings("unchecked")
     protected void authenticateAs(String email, Long userId, String... roles) {
         mockUser = mock(User.class);
         when(mockUser.getId()).thenReturn(userId);

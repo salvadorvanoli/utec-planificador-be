@@ -1,6 +1,5 @@
 package edu.utec.planificador.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utec.planificador.config.TestSecurityConfig;
 import edu.utec.planificador.dto.response.CampusResponse;
 import edu.utec.planificador.service.CampusService;
@@ -41,9 +40,6 @@ class CampusControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private CampusService campusService;

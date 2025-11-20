@@ -1,7 +1,5 @@
 package edu.utec.planificador.config;
 
-import edu.utec.planificador.entity.User;
-import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.security.JwtTokenProvider;
 import edu.utec.planificador.util.CookieUtil;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -12,8 +10,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-
-import java.util.List;
 
 import static org.mockito.Mockito.mock;
 

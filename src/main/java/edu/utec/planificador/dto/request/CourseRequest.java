@@ -27,7 +27,7 @@ import java.util.Set;
 @Schema(description = "Course creation/update request")
 public class CourseRequest {
 
-    @Schema(description = "Course shift", example = "MORNING", required = true)
+    @Schema(description = "Course shift", example = "MORNING", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.shift.required}")
     private Shift shift;
 
@@ -35,11 +35,11 @@ public class CourseRequest {
     @Size(max = 2000, message = "{validation.course.description.size}")
     private String description;
 
-    @Schema(description = "Course start date", example = "2025-03-01", required = true)
+    @Schema(description = "Course start date", example = "2025-03-01", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.startDate.required}")
     private LocalDate startDate;
 
-    @Schema(description = "Course end date", example = "2025-07-15", required = true)
+    @Schema(description = "Course end date", example = "2025-07-15", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.endDate.required}")
     private LocalDate endDate;
 
@@ -66,11 +66,11 @@ public class CourseRequest {
     @Builder.Default
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
-    @Schema(description = "Curricular unit ID", example = "1", required = true)
+    @Schema(description = "Curricular unit ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.curricularUnitId.required}")
     private Long curricularUnitId;
 
-    @Schema(description = "User (teacher) IDs", example = "[1, 2]", required = true)
+    @Schema(description = "User (teacher) IDs", example = "[1, 2]", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.userIds.required}")
     @Size(min = 1, message = "{validation.course.userIds.notEmpty}")
     private List<Long> userIds;

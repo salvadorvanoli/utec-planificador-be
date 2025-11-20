@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request for course planning suggestions")
 public class SuggestionsRequest {
 
-    @Schema(description = "Course ID to analyze", example = "1", required = true)
+    @Schema(description = "Course ID to analyze", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "El ID del curso es obligatorio")
     private Long courseId;
 }
