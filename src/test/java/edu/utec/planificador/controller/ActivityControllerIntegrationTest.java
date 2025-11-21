@@ -37,6 +37,7 @@ class ActivityControllerIntegrationTest {
     private ActivityService activityService;
 
     @Test
+    @WithMockUser(username = "teacher@utec.edu.uy", authorities = "PLANNING_READ")
     @DisplayName("GET /activities/{id} - Should return activity by ID")
     void getActivityById_ValidId_ReturnsActivity() throws Exception {
         // Given
@@ -61,7 +62,7 @@ class ActivityControllerIntegrationTest {
     // These endpoints require specific request structure that needs real-world testing
 
     @Test
-    @WithMockUser(username = "teacher@utec.edu.uy", authorities = "ACTIVITY_DELETE")
+    @WithMockUser(username = "teacher@utec.edu.uy", authorities = "PLANNING_DELETE")
     @DisplayName("DELETE /activities/{id} - Should delete activity")
     void deleteActivity_WithPermissions_DeletesActivity() throws Exception {
         // Given

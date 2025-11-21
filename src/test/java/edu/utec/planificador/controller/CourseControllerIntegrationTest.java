@@ -40,6 +40,7 @@ class CourseControllerIntegrationTest {
     private CourseService courseService;
 
     @Test
+    @WithMockUser(username = "teacher@utec.edu.uy", authorities = "COURSE_READ")
     @DisplayName("GET /courses/{id} - Should return course by ID")
     void getCourseById_ValidId_ReturnsCourse() throws Exception {
         // Given
