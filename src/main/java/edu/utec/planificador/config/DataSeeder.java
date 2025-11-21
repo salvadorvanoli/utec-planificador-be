@@ -81,148 +81,313 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedData() {
+        // ========================================
+        // CREACIÓN DE ITRs Y SEDES (CAMPUS)
+        // ========================================
         log.info("Creating Regional Technological Institutes (RTI)...");
-        RegionalTechnologicalInstitute rtiMontevideo = new RegionalTechnologicalInstitute();
-        rtiMontevideo.setName("ITR Montevideo");
-        rtiMontevideo = rtiRepository.save(rtiMontevideo);
-        log.info("✓ Created RTI: {} (ID: {})", rtiMontevideo.getName(), rtiMontevideo.getId());
 
+        // ITR SUROESTE
+        RegionalTechnologicalInstitute rtiSuroeste = new RegionalTechnologicalInstitute();
+        rtiSuroeste.setName("ITR Suroeste");
+        rtiSuroeste = rtiRepository.save(rtiSuroeste);
+        log.info("✓ Created RTI: {} (ID: {})", rtiSuroeste.getName(), rtiSuroeste.getId());
+
+        // ITR CENTRO-SUR
+        RegionalTechnologicalInstitute rtiCentroSur = new RegionalTechnologicalInstitute();
+        rtiCentroSur.setName("ITR Centro-Sur");
+        rtiCentroSur = rtiRepository.save(rtiCentroSur);
+        log.info("✓ Created RTI: {} (ID: {})", rtiCentroSur.getName(), rtiCentroSur.getId());
+
+        // ITR NORTE
         RegionalTechnologicalInstitute rtiNorte = new RegionalTechnologicalInstitute();
         rtiNorte.setName("ITR Norte");
         rtiNorte = rtiRepository.save(rtiNorte);
         log.info("✓ Created RTI: {} (ID: {})", rtiNorte.getName(), rtiNorte.getId());
 
-        RegionalTechnologicalInstitute rtiSur = new RegionalTechnologicalInstitute();
-        rtiSur.setName("ITR Sur");
-        rtiSur = rtiRepository.save(rtiSur);
-        log.info("✓ Created RTI: {} (ID: {})", rtiSur.getName(), rtiSur.getId());
+        // ITR ESTE
+        RegionalTechnologicalInstitute rtiEste = new RegionalTechnologicalInstitute();
+        rtiEste.setName("ITR Este");
+        rtiEste = rtiRepository.save(rtiEste);
+        log.info("✓ Created RTI: {} (ID: {})", rtiEste.getName(), rtiEste.getId());
 
-        log.info("Creating Campuses...");
-        Campus campusCentro = new Campus();
-        campusCentro.setName("Campus Centro");
-        campusCentro.setRegionalTechnologicalInstitute(rtiMontevideo);
-        campusCentro = campusRepository.save(campusCentro);
-        log.info("✓ Created Campus: {} - {} (ID: {})", campusCentro.getName(), rtiMontevideo.getName(), campusCentro.getId());
+        log.info("Creating Campuses for each ITR...");
 
-        Campus campusPocitos = new Campus();
-        campusPocitos.setName("Campus Pocitos");
-        campusPocitos.setRegionalTechnologicalInstitute(rtiMontevideo);
-        campusPocitos = campusRepository.save(campusPocitos);
-        log.info("✓ Created Campus: {} - {} (ID: {})", campusPocitos.getName(), rtiMontevideo.getName(), campusPocitos.getId());
+        // ========== CAMPUS ITR SUROESTE ==========
+        Campus campusFrayBentos = new Campus();
+        campusFrayBentos.setName("Fray Bentos");
+        campusFrayBentos.setRegionalTechnologicalInstitute(rtiSuroeste);
+        campusFrayBentos = campusRepository.save(campusFrayBentos);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusFrayBentos.getName(), rtiSuroeste.getName(), campusFrayBentos.getId());
 
+        Campus campusMercedes = new Campus();
+        campusMercedes.setName("Mercedes");
+        campusMercedes.setRegionalTechnologicalInstitute(rtiSuroeste);
+        campusMercedes = campusRepository.save(campusMercedes);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusMercedes.getName(), rtiSuroeste.getName(), campusMercedes.getId());
+
+        Campus campusPaysandu = new Campus();
+        campusPaysandu.setName("Paysandú");
+        campusPaysandu.setRegionalTechnologicalInstitute(rtiSuroeste);
+        campusPaysandu = campusRepository.save(campusPaysandu);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusPaysandu.getName(), rtiSuroeste.getName(), campusPaysandu.getId());
+
+        Campus campusColoniaPaz = new Campus();
+        campusColoniaPaz.setName("Colonia La Paz");
+        campusColoniaPaz.setRegionalTechnologicalInstitute(rtiSuroeste);
+        campusColoniaPaz = campusRepository.save(campusColoniaPaz);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusColoniaPaz.getName(), rtiSuroeste.getName(), campusColoniaPaz.getId());
+
+        Campus campusNuevaHelvecia = new Campus();
+        campusNuevaHelvecia.setName("Nueva Helvecia");
+        campusNuevaHelvecia.setRegionalTechnologicalInstitute(rtiSuroeste);
+        campusNuevaHelvecia = campusRepository.save(campusNuevaHelvecia);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusNuevaHelvecia.getName(), rtiSuroeste.getName(), campusNuevaHelvecia.getId());
+
+        // ========== CAMPUS ITR CENTRO-SUR ==========
+        Campus campusDurazno = new Campus();
+        campusDurazno.setName("Durazno");
+        campusDurazno.setRegionalTechnologicalInstitute(rtiCentroSur);
+        campusDurazno = campusRepository.save(campusDurazno);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusDurazno.getName(), rtiCentroSur.getName(), campusDurazno.getId());
+
+        Campus campusSanJose = new Campus();
+        campusSanJose.setName("San José");
+        campusSanJose.setRegionalTechnologicalInstitute(rtiCentroSur);
+        campusSanJose = campusRepository.save(campusSanJose);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusSanJose.getName(), rtiCentroSur.getName(), campusSanJose.getId());
+
+        // ========== CAMPUS ITR NORTE ==========
         Campus campusRivera = new Campus();
-        campusRivera.setName("Campus Rivera");
+        campusRivera.setName("Rivera");
         campusRivera.setRegionalTechnologicalInstitute(rtiNorte);
         campusRivera = campusRepository.save(campusRivera);
         log.info("✓ Created Campus: {} - {} (ID: {})", campusRivera.getName(), rtiNorte.getName(), campusRivera.getId());
 
+        Campus campusMelo = new Campus();
+        campusMelo.setName("Melo");
+        campusMelo.setRegionalTechnologicalInstitute(rtiNorte);
+        campusMelo = campusRepository.save(campusMelo);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusMelo.getName(), rtiNorte.getName(), campusMelo.getId());
+
+        // ========== CAMPUS ITR ESTE ==========
+        Campus campusMinas = new Campus();
+        campusMinas.setName("Minas");
+        campusMinas.setRegionalTechnologicalInstitute(rtiEste);
+        campusMinas = campusRepository.save(campusMinas);
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusMinas.getName(), rtiEste.getName(), campusMinas.getId());
+
         Campus campusMaldonado = new Campus();
-        campusMaldonado.setName("Campus Maldonado");
-        campusMaldonado.setRegionalTechnologicalInstitute(rtiSur);
+        campusMaldonado.setName("Maldonado");
+        campusMaldonado.setRegionalTechnologicalInstitute(rtiEste);
         campusMaldonado = campusRepository.save(campusMaldonado);
-        log.info("✓ Created Campus: {} - {} (ID: {})", campusMaldonado.getName(), rtiSur.getName(), campusMaldonado.getId());
+        log.info("✓ Created Campus: {} - {} (ID: {})", campusMaldonado.getName(), rtiEste.getName(), campusMaldonado.getId());
 
-        log.info("Creating user...");
-        PersonalData personalData = new PersonalData();
-        personalData.setName("Juan");
-        personalData.setLastName("Pérez");
-        personalData.setIdentityDocument("12345678");
-        personalData.setPhoneNumber("099123456");
-        personalData.setCountry("Uruguay");
-        personalData.setCity("Montevideo");
+        // ========================================
+        // CREACIÓN DE PROGRAMAS (CARRERAS)
+        // ========================================
+        log.info("Creating Programs (Carreras)...");
 
-        User user = new User(
+        // Programas ITR Suroeste
+        Program progIngMecatronica = new Program("Ingeniería en Mecatrónica", 8, 240);
+        progIngMecatronica = programRepository.save(progIngMecatronica);
+        campusFrayBentos.getPrograms().add(progIngMecatronica);
+
+        Program progIngLogistica = new Program("Ingeniería en Logística", 8, 240);
+        progIngLogistica = programRepository.save(progIngLogistica);
+        campusFrayBentos.getPrograms().add(progIngLogistica);
+
+        Program progTecBiomedica = new Program("Tecnólogo en Ingeniería Biomédica", 6, 180);
+        progTecBiomedica = programRepository.save(progTecBiomedica);
+        campusFrayBentos.getPrograms().add(progTecBiomedica);
+
+        Program progLicAnalisisAlimentario = new Program("Licenciatura en Análisis Alimentario", 7, 210);
+        progLicAnalisisAlimentario = programRepository.save(progLicAnalisisAlimentario);
+        campusFrayBentos.getPrograms().add(progLicAnalisisAlimentario);
+
+        Program progLicTI = new Program("Licenciatura en Tecnologías de la Información", 7, 210);
+        progLicTI = programRepository.save(progLicTI);
+        campusFrayBentos.getPrograms().add(progLicTI);
+
+        Program progLicJazz = new Program("Licenciatura en Jazz y Música Creativa", 7, 210);
+        progLicJazz = programRepository.save(progLicJazz);
+        campusFrayBentos.getPrograms().add(progLicJazz);
+
+        Program progLicLacteos = new Program("Licenciatura en Ciencia y Tecnología de Lácteos", 7, 210);
+        progLicLacteos = programRepository.save(progLicLacteos);
+        campusFrayBentos.getPrograms().add(progLicLacteos);
+
+        Program progTecLechera = new Program("Tecnólogo en Manejo de Sistemas de Producción Lechera", 6, 180);
+        progTecLechera = programRepository.save(progTecLechera);
+        campusFrayBentos.getPrograms().add(progTecLechera);
+
+        campusFrayBentos = campusRepository.save(campusFrayBentos);
+        log.info("✓ Created and associated {} programs to {}", 8, campusFrayBentos.getName());
+
+        // Programas ITR Centro-Sur
+        Program progTecInformatica = new Program("Tecnólogo en Informática", 6, 180);
+        progTecInformatica = programRepository.save(progTecInformatica);
+        campusDurazno.getPrograms().add(progTecInformatica);
+        campusSanJose.getPrograms().add(progTecInformatica);
+
+        campusDurazno.getPrograms().add(progLicTI); // LTI también en Centro-Sur
+        campusSanJose.getPrograms().add(progLicTI);
+
+        Program progIngAgua = new Program("Ingeniería en Agua y Desarrollo Sostenible", 8, 240);
+        progIngAgua = programRepository.save(progIngAgua);
+        campusDurazno.getPrograms().add(progIngAgua);
+
+        Program progIngAgroambiental = new Program("Ingeniería Agroambiental", 8, 240);
+        progIngAgroambiental = programRepository.save(progIngAgroambiental);
+        campusDurazno.getPrograms().add(progIngAgroambiental);
+
+        Program progIngEnergias = new Program("Ingeniería en Energías Renovables", 8, 240);
+        progIngEnergias = programRepository.save(progIngEnergias);
+        campusDurazno.getPrograms().add(progIngEnergias);
+
+        campusDurazno = campusRepository.save(campusDurazno);
+        campusSanJose = campusRepository.save(campusSanJose);
+        log.info("✓ Created and associated programs to ITR Centro-Sur campuses");
+
+        // Programas ITR Norte
+        Program progLicDatosIA = new Program("Licenciatura en Ingeniería de Datos e Inteligencia Artificial", 7, 210);
+        progLicDatosIA = programRepository.save(progLicDatosIA);
+        campusRivera.getPrograms().add(progLicDatosIA);
+
+        campusRivera.getPrograms().add(progIngLogistica); // Logística también en Norte
+
+        Program progTecMecatronicaInd = new Program("Tecnólogo en Mecatrónica Industrial", 6, 180);
+        progTecMecatronicaInd = programRepository.save(progTecMecatronicaInd);
+        campusRivera.getPrograms().add(progTecMecatronicaInd);
+
+        Program progTecDatos = new Program("Tecnólogo en Análisis y Gestión de Datos", 6, 180);
+        progTecDatos = programRepository.save(progTecDatos);
+        campusRivera.getPrograms().add(progTecDatos);
+
+        Program progTecLogistica = new Program("Tecnólogo en Logística", 6, 180);
+        progTecLogistica = programRepository.save(progTecLogistica);
+        campusRivera.getPrograms().add(progTecLogistica);
+
+        campusRivera = campusRepository.save(campusRivera);
+        campusMelo.getPrograms().add(progLicDatosIA);
+        campusMelo = campusRepository.save(campusMelo);
+        log.info("✓ Created and associated programs to ITR Norte campuses");
+
+        // Programas ITR Este
+        campusMinas.getPrograms().add(progIngAgua); // Agua también en Minas
+        campusMinas.getPrograms().add(progLicTI); // LTI también en Minas
+        campusMinas = campusRepository.save(campusMinas);
+
+        campusMaldonado.getPrograms().add(progLicTI);
+        campusMaldonado = campusRepository.save(campusMaldonado);
+        log.info("✓ Associated programs to ITR Este campuses");
+
+        // ========================================
+        // CREACIÓN DE USUARIOS
+        // ========================================
+        log.info("Creating users with positions...");
+
+        // USUARIO 1: Docente y roles en ITR Suroeste (Fray Bentos)
+        PersonalData personalData1 = new PersonalData();
+        personalData1.setName("Juan");
+        personalData1.setLastName("Pérez");
+        personalData1.setIdentityDocument("12345678");
+        personalData1.setPhoneNumber("099123456");
+        personalData1.setCountry("Uruguay");
+        personalData1.setCity("Fray Bentos");
+
+        User user1 = new User(
             "juan.perez@utec.edu.uy",
             passwordEncoder.encode("password"),
-            personalData
+            personalData1
         );
-        user = userRepository.save(user);
-        log.info("✓ Created user: {} (ID: {})", user.getUtecEmail(), user.getId());
+        user1 = userRepository.save(user1);
+        log.info("✓ Created user: {} (ID: {})", user1.getUtecEmail(), user1.getId());
 
-        log.info("Creating positions for user...");
+        Teacher teacherFrayBentos = new Teacher(user1);
+        teacherFrayBentos.addCampus(campusFrayBentos);
+        teacherFrayBentos.addCampus(campusMercedes);
+        user1.addPosition(teacherFrayBentos);
 
-        Teacher teacherMontevideo = new Teacher(user);
-        teacherMontevideo.addCampus(campusCentro);
-        teacherMontevideo.addCampus(campusPocitos);
-        user.addPosition(teacherMontevideo);
-        log.info("✓ Created Teacher position for {} at ITR Montevideo (Campuses: Centro, Pocitos)", user.getUtecEmail());
+        Coordinator coordinatorFrayBentos = new Coordinator(user1);
+        coordinatorFrayBentos.addCampus(campusFrayBentos);
+        user1.addPosition(coordinatorFrayBentos);
 
-        Coordinator coordinatorMontevideo = new Coordinator(user);
-        coordinatorMontevideo.addCampus(campusCentro);
-        user.addPosition(coordinatorMontevideo);
-        log.info("✓ Created Coordinator position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+        Administrator administratorFrayBentos = new Administrator(user1);
+        administratorFrayBentos.addCampus(campusFrayBentos);
+        user1.addPosition(administratorFrayBentos);
 
-        Administrator administratorMontevideo = new Administrator(user);
-        administratorMontevideo.addCampus(campusCentro);
-        user.addPosition(administratorMontevideo);
-        log.info("✓ Created Administrator position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+        EducationManager educationManagerFrayBentos = new EducationManager(user1);
+        educationManagerFrayBentos.addCampus(campusFrayBentos);
+        user1.addPosition(educationManagerFrayBentos);
 
-        EducationManager educationManagerMontevideo = new EducationManager(user);
-        educationManagerMontevideo.addCampus(campusCentro);
-        user.addPosition(educationManagerMontevideo);
-        log.info("✓ Created Education Manager position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+        Analyst analystFrayBentos = new Analyst(user1);
+        analystFrayBentos.addCampus(campusFrayBentos);
+        user1.addPosition(analystFrayBentos);
 
-        Analyst analystMontevideo = new Analyst(user);
-        analystMontevideo.addCampus(campusCentro);
-        user.addPosition(analystMontevideo);
-        log.info("✓ Created Analyst position for {} at ITR Montevideo (Campus: Centro)", user.getUtecEmail());
+        user1 = userRepository.save(user1);
+        log.info("✓ User 1 has access to ITR Suroeste (Fray Bentos, Mercedes)");
 
-        // NO agregamos posiciones en ITR Norte ni ITR Sur para el usuario 1
-        // Esto permite que el control de acceso funcione correctamente
-        // Usuario 1 SOLO tiene acceso a ITR Montevideo (Campus Centro y Pocitos)
+        // ========================================
+        // CREACIÓN DE TÉRMINOS Y UNIDADES CURRICULARES
+        // ========================================
+        log.info("Creating Terms and Curricular Units...");
 
-        user = userRepository.save(user);
-        log.info("✓ Saved all positions for user: {}", user.getUtecEmail());
-        log.info("✓ User 1 has access ONLY to ITR Montevideo (Centro and Pocitos)");
+        // Licenciatura en Tecnologías de la Información - Semestre 1
+        Term termLTI1 = new Term(1, progLicTI);
+        termLTI1 = termRepository.save(termLTI1);
 
-        log.info("Creating program...");
-        Program program = new Program(
-            "Ingeniería en Tecnologías de la Información",
-            8,
-            240
-        );
-        program = programRepository.save(program);
-        log.info("✓ Created program: {} (ID: {})", program.getName(), program.getId());
+        CurricularUnit ucIntroTI = new CurricularUnit("Introducción a TI", 6, termLTI1);
+        ucIntroTI = curricularUnitRepository.save(ucIntroTI);
 
-        // Asociar programa con Campus Centro
-        campusCentro.getPrograms().add(program);
-        campusCentro = campusRepository.save(campusCentro);
-        log.info("✓ Associated program {} with Campus Centro", program.getName());
+        CurricularUnit ucProgramacion1 = new CurricularUnit("Programación I", 8, termLTI1);
+        ucProgramacion1 = curricularUnitRepository.save(ucProgramacion1);
 
-        log.info("Creating term...");
-        Term term = new Term(1, program);
-        term = termRepository.save(term);
-        log.info("✓ Created term: Semestre {} (ID: {})", term.getNumber(), term.getId());
+        CurricularUnit ucMatDiscreta = new CurricularUnit("Matemática Discreta", 6, termLTI1);
+        ucMatDiscreta = curricularUnitRepository.save(ucMatDiscreta);
 
-        log.info("Creating curricular unit...");
-        CurricularUnit curricularUnit = new CurricularUnit(
-            "Programación Avanzada",
-            8,
-            term
-        );
-        curricularUnit = curricularUnitRepository.save(curricularUnit);
-        log.info("✓ Created curricular unit: {} - {} créditos (ID: {})", 
-            curricularUnit.getName(), 
-            curricularUnit.getCredits(), 
-            curricularUnit.getId());
+        CurricularUnit ucFundamentosBD = new CurricularUnit("Fundamentos de Bases de Datos", 6, termLTI1);
+        ucFundamentosBD = curricularUnitRepository.save(ucFundamentosBD);
 
+        log.info("✓ Created {} curricular units for {} - Semestre 1", 4, progLicTI.getName());
+
+        // Ingeniería en Logística - Semestre 1
+        Term termLog1 = new Term(1, progIngLogistica);
+        termLog1 = termRepository.save(termLog1);
+
+        CurricularUnit ucHerramientasOp = new CurricularUnit("Herramientas Operativas I", 6, termLog1);
+        ucHerramientasOp = curricularUnitRepository.save(ucHerramientasOp);
+
+        CurricularUnit ucMatematica = new CurricularUnit("Matemática - Álgebra y Cálculo", 8, termLog1);
+        ucMatematica = curricularUnitRepository.save(ucMatematica);
+
+        CurricularUnit ucFundEconomia = new CurricularUnit("Fundamentos de Economía", 6, termLog1);
+        ucFundEconomia = curricularUnitRepository.save(ucFundEconomia);
+
+        CurricularUnit ucIntroLogistica = new CurricularUnit("Introducción a la Logística", 6, termLog1);
+        ucIntroLogistica = curricularUnitRepository.save(ucIntroLogistica);
+
+        log.info("✓ Created {} curricular units for {} - Semestre 1", 4, progIngLogistica.getName());
+
+        // ========================================
+        // CREACIÓN DE CURSO PARA USUARIO 1
+        // ========================================
         log.info("Creating course...");
         Course course = new Course(
             Shift.MORNING,
-            "Curso de Programación Avanzada - Grupo 1",
+            "Curso de Programación I - Grupo 1",
             LocalDate.of(2025, 2, 24),
             LocalDate.of(2025, 6, 27),
             PartialGradingSystem.PGS_1,
-            curricularUnit
+            ucProgramacion1
         );
         
-        final Campus finalCampusCentro = campusCentro;
-        teacherMontevideo = (Teacher) user.getPositions().stream()
-            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusCentro))
+        final Campus finalCampusFrayBentos = campusFrayBentos;
+        teacherFrayBentos = (Teacher) user1.getPositions().stream()
+            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusFrayBentos))
             .findFirst()
             .orElseThrow();
 
-        course.getTeachers().add(teacherMontevideo);
+        course.getTeachers().add(teacherFrayBentos);
 
         course.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 60);
         course.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);
@@ -244,29 +409,10 @@ public class DataSeeder implements CommandLineRunner {
         log.info("  - Shift: {}", course.getShift());
         log.info("  - Start date: {}", course.getStartDate());
         log.info("  - End date: {}", course.getEndDate());
-        log.info("  - Teacher: {}", user.getUtecEmail());
+        log.info("  - Teacher: {}", user1.getUtecEmail());
 
         createWeeklyPlanningsWithContent(course);
         
-        log.info("Data seeding completed successfully");
-        log.info("");
-        log.info("==================================================");
-        log.info("🧪 ACCESS CONTROL TEST DATA SUMMARY:");
-        log.info("==================================================");
-        log.info("");
-        log.info("👤 USER 1: juan.perez@utec.edu.uy");
-        log.info("Password: password");
-        log.info("Positions:");
-        log.info("  - Teacher at ITR Montevideo (Campuses: Centro, Pocitos)");
-        log.info("  - Coordinator at ITR Montevideo (Campus: Centro)");
-        log.info("  - Administrator at ITR Montevideo (Campus: Centro)");
-        log.info("  - Education Manager at ITR Montevideo (Campus: Centro)");
-        log.info("  - Analyst at ITR Montevideo (Campus: Centro)");
-        log.info("✅ HAS ACCESS to: ITR Montevideo ONLY");
-        log.info("⛔ NO ACCESS to: ITR Norte, ITR Sur");
-        log.info("✅ Can access Course ID: {} (ITR Montevideo)", course.getId());
-        log.info("");
-
         // ========================================
         // SEGUNDO USUARIO Y CURSO PARA TESTING DE CONTROL DE ACCESO
         // ========================================
@@ -288,54 +434,54 @@ public class DataSeeder implements CommandLineRunner {
         log.info("✓ Created second user: {} (ID: {})", user2.getUtecEmail(), user2.getId());
 
         // María solo tiene acceso al ITR Norte (Campus Rivera)
-        Coordinator coordinatorNorte = new Coordinator(user2);
-        coordinatorNorte.addCampus(campusRivera);
-        user2.addPosition(coordinatorNorte);
+        Coordinator coordinatorRivera = new Coordinator(user2);
+        coordinatorRivera.addCampus(campusRivera);
+        user2.addPosition(coordinatorRivera);
 
-        Teacher teacherNorte2 = new Teacher(user2);
-        teacherNorte2.addCampus(campusRivera);
-        user2.addPosition(teacherNorte2);
+        Teacher teacherRivera = new Teacher(user2);
+        teacherRivera.addCampus(campusRivera);
+        user2.addPosition(teacherRivera);
 
         user2 = userRepository.save(user2);
         log.info("✓ User 2 has positions ONLY at ITR Norte (Campus: Rivera)");
 
-        // Crear programa para ITR Norte
-        Program programNorte = new Program("Tecnólogo en Informática", 6, 180);
-        programNorte = programRepository.save(programNorte);
-        campusRivera.getPrograms().add(programNorte);
-        campusRivera = campusRepository.save(campusRivera);
-        log.info("✓ Created program for ITR Norte: {}", programNorte.getName());
+        // Crear término y UC para LIDIA en Rivera
+        Term termLIDIA1 = new Term(1, progLicDatosIA);
+        termLIDIA1 = termRepository.save(termLIDIA1);
 
-        // Crear término para programa Norte
-        Term termNorte = new Term(1, programNorte);
-        termNorte = termRepository.save(termNorte);
+        CurricularUnit ucIntroDatosIA = new CurricularUnit("Introducción a la Ingeniería de Datos e IA", 6, termLIDIA1);
+        ucIntroDatosIA = curricularUnitRepository.save(ucIntroDatosIA);
 
-        // Crear unidad curricular para Norte
-        CurricularUnit curricularUnitNorte = new CurricularUnit("Desarrollo Web", 6, termNorte);
-        curricularUnitNorte = curricularUnitRepository.save(curricularUnitNorte);
+        CurricularUnit ucProgramacionLIDIA = new CurricularUnit("Programación I", 8, termLIDIA1);
+        ucProgramacionLIDIA = curricularUnitRepository.save(ucProgramacionLIDIA);
+
+        log.info("✓ Created curricular units for LIDIA at ITR Norte");
 
         // Obtener el teacher guardado desde las posiciones del user2
         final Campus finalCampusRivera = campusRivera;
-        Teacher savedTeacherNorte2 = (Teacher) user2.getPositions().stream()
+        Teacher savedTeacherRivera = (Teacher) user2.getPositions().stream()
             .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusRivera))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Teacher position not found for user2"));
 
         // Crear curso para ITR Norte (solo User 2 tiene acceso)
-        Course courseNorte = new Course(
+        Course courseRivera = new Course(
             Shift.EVENING,
-            "Curso de Desarrollo Web - ITR Norte",
+            "Curso de Introducción a Datos e IA - Grupo 1",
             LocalDate.of(2025, 3, 1),
             LocalDate.of(2025, 7, 15),
             PartialGradingSystem.PGS_2,
-            curricularUnitNorte
+            ucIntroDatosIA
         );
-        courseNorte.getTeachers().add(savedTeacherNorte2);
-        courseNorte.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 50);
-        courseNorte.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
-        courseNorte.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
-        courseNorte = courseRepository.save(courseNorte);
-        log.info("✓ Created course for ITR Norte: {} (ID: {})", courseNorte.getDescription(), courseNorte.getId());
+        courseRivera.getTeachers().add(savedTeacherRivera);
+        courseRivera.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 50);
+        courseRivera.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 15);
+        courseRivera.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
+        courseRivera.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
+        courseRivera.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
+        courseRivera.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);
+        courseRivera = courseRepository.save(courseRivera);
+        log.info("✓ Created course for ITR Norte: {} (ID: {})", courseRivera.getDescription(), courseRivera.getId());
 
         // ========================================
         // TERCER USUARIO: SOLO ANALYST
@@ -347,7 +493,7 @@ public class DataSeeder implements CommandLineRunner {
         personalData3.setIdentityDocument("11223344");
         personalData3.setPhoneNumber("099112233");
         personalData3.setCountry("Uruguay");
-        personalData3.setCity("Montevideo");
+        personalData3.setCity("Durazno");
 
         User user3 = new User(
             "carlos.rodriguez@utec.edu.uy",
@@ -357,19 +503,52 @@ public class DataSeeder implements CommandLineRunner {
         user3 = userRepository.save(user3);
         log.info("✓ Created third user: {} (ID: {})", user3.getUtecEmail(), user3.getId());
 
-        // Carlos solo tiene rol de Analyst en ITR Montevideo (Campus Centro)
-        Analyst analystCentro = new Analyst(user3);
-        analystCentro.addCampus(campusCentro);
-        user3.addPosition(analystCentro);
+        // Carlos solo tiene rol de Analyst en ITR Centro-Sur (Campus Durazno)
+        Analyst analystDurazno = new Analyst(user3);
+        analystDurazno.addCampus(campusDurazno);
+        user3.addPosition(analystDurazno);
 
         user3 = userRepository.save(user3);
-        log.info("✓ User 3 has ONLY Analyst position at ITR Montevideo (Campus: Centro)");
+        log.info("✓ User 3 has ONLY Analyst position at ITR Centro-Sur (Campus: Durazno)");
 
+        // ========================================
         // RESUMEN FINAL
+        // ========================================
         log.info("");
         log.info("==================================================");
-        log.info("📊 ACCESS CONTROL TESTING - FINAL SUMMARY:");
+        log.info("📊 DATA SEEDING COMPLETED - SUMMARY");
         log.info("==================================================");
+        log.info("");
+        log.info("🏛️  REGIONAL TECHNOLOGICAL INSTITUTES (4):");
+        log.info("   • ITR Suroeste - Campuses: Fray Bentos, Mercedes, Paysandú, Colonia La Paz, Nueva Helvecia");
+        log.info("   • ITR Centro-Sur - Campuses: Durazno, San José");
+        log.info("   • ITR Norte - Campuses: Rivera, Melo");
+        log.info("   • ITR Este - Campuses: Minas, Maldonado");
+        log.info("");
+        log.info("🎓 PROGRAMS CREATED ({}): ", 15);
+        log.info("   • Ingeniería en Mecatrónica");
+        log.info("   • Ingeniería en Logística");
+        log.info("   • Licenciatura en Tecnologías de la Información");
+        log.info("   • Licenciatura en Ingeniería de Datos e Inteligencia Artificial");
+        log.info("   • Ingeniería en Agua y Desarrollo Sostenible");
+        log.info("   • Ingeniería en Energías Renovables");
+        log.info("   • Tecnólogo en Informática");
+        log.info("   • Tecnólogo en Mecatrónica Industrial");
+        log.info("   • Y más...");
+        log.info("");
+        log.info("👥 USERS FOR ACCESS CONTROL TESTING:");
+        log.info("");
+        log.info("👤 USER 1: juan.perez@utec.edu.uy");
+        log.info("Password: password");
+        log.info("Positions:");
+        log.info("  - Teacher at ITR Suroeste (Campuses: Fray Bentos, Mercedes)");
+        log.info("  - Coordinator at ITR Suroeste (Campus: Fray Bentos)");
+        log.info("  - Administrator at ITR Suroeste (Campus: Fray Bentos)");
+        log.info("  - Education Manager at ITR Suroeste (Campus: Fray Bentos)");
+        log.info("  - Analyst at ITR Suroeste (Campus: Fray Bentos)");
+        log.info("✅ HAS ACCESS to: ITR Suroeste ONLY");
+        log.info("⛔ NO ACCESS to: ITR Norte, ITR Centro-Sur, ITR Este");
+        log.info("✅ Can access Course ID: {} (ITR Suroeste - Fray Bentos)", course.getId());
         log.info("");
         log.info("👤 USER 2: maria.gonzalez@utec.edu.uy");
         log.info("Password: password123");
@@ -377,18 +556,18 @@ public class DataSeeder implements CommandLineRunner {
         log.info("  - Coordinator at ITR Norte (Campus: Rivera)");
         log.info("  - Teacher at ITR Norte (Campus: Rivera)");
         log.info("✅ HAS ACCESS to: ITR Norte ONLY");
-        log.info("⛔ NO ACCESS to: ITR Montevideo, ITR Sur");
-        log.info("✅ Can access Course ID: {} (ITR Norte)", courseNorte.getId());
-        log.info("⛔ CANNOT access Course ID: {} (ITR Montevideo)", course.getId());
+        log.info("⛔ NO ACCESS to: ITR Suroeste, ITR Centro-Sur, ITR Este");
+        log.info("✅ Can access Course ID: {} (ITR Norte - Rivera)", courseRivera.getId());
+        log.info("⛔ CANNOT access Course ID: {} (ITR Suroeste)", course.getId());
         log.info("");
         log.info("👤 USER 3: carlos.rodriguez@utec.edu.uy");
         log.info("Password: password");
         log.info("Positions:");
-        log.info("  - Analyst at ITR Montevideo (Campus: Centro)");
-        log.info("✅ HAS ACCESS to: ITR Montevideo ONLY");
-        log.info("⛔ NO ACCESS to: ITR Norte, ITR Sur");
-        log.info("✅ Can access Course ID: {} (ITR Montevideo)", course.getId());
-        log.info("⛔ CANNOT access Course ID: {} (ITR Norte)", courseNorte.getId());
+        log.info("  - Analyst at ITR Centro-Sur (Campus: Durazno)");
+        log.info("✅ HAS ACCESS to: ITR Centro-Sur ONLY");
+        log.info("⛔ NO ACCESS to: ITR Norte, ITR Suroeste, ITR Este");
+        log.info("⛔ CANNOT access Course ID: {} (ITR Suroeste)", course.getId());
+        log.info("⛔ CANNOT access Course ID: {} (ITR Norte)", courseRivera.getId());
         log.info("");
         log.info("==================================================");
         log.info("🧪 TEST SCENARIOS TO VERIFY ACCESS CONTROL:");
@@ -396,23 +575,25 @@ public class DataSeeder implements CommandLineRunner {
         log.info("");
         log.info("1️⃣  Login as User 1 (juan.perez@utec.edu.uy):");
         log.info("   ✅ GET /api/v1/courses/{} → 200 OK", course.getId());
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseNorte.getId());
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseRivera.getId());
         log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", course.getId());
-        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", courseNorte.getId());
+        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", courseRivera.getId());
         log.info("");
         log.info("2️⃣  Login as User 2 (maria.gonzalez@utec.edu.uy):");
         log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
-        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", courseNorte.getId());
+        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", courseRivera.getId());
         log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", course.getId());
-        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", courseNorte.getId());
+        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", courseRivera.getId());
         log.info("");
         log.info("3️⃣  Login as User 3 (carlos.rodriguez@utec.edu.uy):");
-        log.info("   ✅ GET /api/v1/courses/{} → 200 OK (as Analyst)", course.getId());
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseNorte.getId());
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
+        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseRivera.getId());
+        log.info("   (Analyst has no courses in their ITR in this seed)");
         log.info("");
         log.info("==================================================");
-        log.info("Course {} belongs to ITR Montevideo (Campus Centro)", course.getId());
-        log.info("Course {} belongs to ITR Norte (Campus Rivera)", courseNorte.getId());
+        log.info("📍 Course Locations:");
+        log.info("   Course {} → ITR Suroeste (Fray Bentos) - LTI", course.getId());
+        log.info("   Course {} → ITR Norte (Rivera) - LIDIA", courseRivera.getId());
         log.info("==================================================");
     }
 
