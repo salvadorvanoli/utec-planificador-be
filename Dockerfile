@@ -1,5 +1,5 @@
 # Build stage
-FROM gradle:8.5-jdk21-alpine AS builder
+FROM gradle:8.5-jdk21-jammy AS builder
 
 WORKDIR /app
 
@@ -15,10 +15,20 @@ COPY src src
 RUN gradle clean bootJar --no-daemon -x test
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM ubuntu:24.04 AS runtime
 
-RUN apk add --no-cache tzdata curl
+# Instalar dependencias necesarias
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openjdk-21-jre-headless \
+        tzdata \
+        curl \
+        ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV TZ=America/Montevideo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 LABEL maintainer="UTEC Planificador Team"
 LABEL description="Backend del Planificador Docente - Spring Boot REST API"
@@ -29,7 +39,7 @@ LABEL org.opencontainers.image.vendor="Universidad Tecnológica del Uruguay"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.source="https://github.com/salvadorvanoli/utec-planificador-be"
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 
 WORKDIR /app
 
