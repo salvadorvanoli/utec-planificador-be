@@ -11,16 +11,17 @@
 Multi-stage build que optimiza la imagen final.
 
 **Stage 1 - Builder:**
-- Base: `gradle:8.5-jdk21-alpine`
+- Base: `gradle:8.5-jdk21-jammy` (Ubuntu 22.04)
 - Descarga dependencias (cacheadas)
 - Compila código fuente
 - Genera JAR ejecutable
 
 **Stage 2 - Runtime:**
-- Base: `eclipse-temurin:21-jre-alpine`
+- Base: `ubuntu:24.04` (Ubuntu 24.04 LTS)
+- OpenJDK 21 JRE Headless
 - Usuario no-root (`spring`)
 - JVM options configurables via `JAVA_OPTS`
-- Imagen final: ~200MB
+- Imagen final: ~250MB
 
 ### **.dockerignore**
 Excluye archivos innecesarios del contexto de build:
