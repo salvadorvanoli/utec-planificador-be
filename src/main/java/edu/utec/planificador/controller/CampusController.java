@@ -32,9 +32,10 @@ public class CampusController {
     @GetMapping
     @Operation(
         summary = "Get Campuses",
-        description = "Returns all Campuses, optionally filtered by user. " +
+        description = "Returns all Campuses, optionally filtered by user and/or period. " +
                       "If userId is provided, returns only Campuses where that user has active positions. " +
-                      "If userId is not provided, returns all Campuses. " +
+                      "If period is provided, returns only Campuses that have courses in that period. " +
+                      "If no filters are provided, returns all Campuses. " +
                       "This endpoint is publicly accessible - no authentication required."
     )
     @ApiResponses(value = {
@@ -54,11 +55,13 @@ public class CampusController {
     })
     public ResponseEntity<List<CampusResponse>> getCampuses(
         @Parameter(description = "User ID to filter Campuses", example = "1")
-        @RequestParam(required = false) Long userId
+        @RequestParam(required = false) Long userId,
+        @Parameter(description = "Academic period to filter Campuses (e.g., '2025-1S')", example = "2025-1S")
+        @RequestParam(required = false) String period
     ) {
-        log.info("GET /campuses - userId: {}", userId);
+        log.info("GET /campuses - userId: {}, period: {}", userId, period);
         
-        List<CampusResponse> response = campusService.getCampuses(userId);
+        List<CampusResponse> response = campusService.getCampuses(userId, period);
         
         return ResponseEntity.ok(response);
     }

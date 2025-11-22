@@ -66,10 +66,10 @@ public class UserPositionServiceImpl implements UserPositionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserBasicResponse> getUsers(Role role, Long campusId) {
-        log.debug("Getting users with role: {}, campusId: {}", role, campusId);
+    public List<UserBasicResponse> getUsers(Role role, Long campusId, String period) {
+        log.debug("Getting users with role: {}, campusId: {}, period: {}", role, campusId, period);
         
-        List<User> users = userRepository.findAll(UserSpecification.withFilters(role, campusId));
+        List<User> users = userRepository.findAll(UserSpecification.withFilters(role, campusId, period));
 
         return users.stream()
             .map(userMapper::toBasicResponse)

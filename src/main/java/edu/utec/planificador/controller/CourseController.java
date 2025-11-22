@@ -214,11 +214,13 @@ public class CourseController {
 
     @GetMapping("/periods")
     @Operation(
-        summary = "Get course periods by campus",
-        description = "Returns all unique academic periods for the authenticated user's courses in a specific campus. " +
-                      "Periods are formatted as 'YYYY-XS' where X is 1 for odd semesters or 2 for even semesters. " +
-                      "For example: '2025-1S' for semester 3 in 2025, or '2025-2S' for semester 4 in 2025.",
-        security = @SecurityRequirement(name = "Bearer Authentication")
+        summary = "Get course periods with optional filters",
+        description = "Returns all unique academic periods for courses with optional filtering. " +
+                      "If no filters are provided, returns all periods in the system. " +
+                      "Optionally filter by campus ID and/or user ID to get specific periods. " +
+                      "Periods are formatted as 'YYYY-XS' where X is 1 for Courses that start between January and July or 2 for Courses that start between August and December. " +
+                      "For example: '2025-1S' for semester 3 in 2025, or '2025-2S' for semester 4 in 2025. " +
+                      "This endpoint is publicly accessible - no authentication required."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -230,28 +232,20 @@ public class CourseController {
             )
         ),
         @ApiResponse(
-            responseCode = "401",
-            description = "Not authenticated",
-            content = @Content
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "User does not have access to the specified campus",
-            content = @Content
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Campus not found",
+            responseCode = "500",
+            description = "Internal server error",
             content = @Content
         )
     })
-    public ResponseEntity<List<PeriodResponse>> getPeriodsByCampus(
-        @Parameter(description = "Campus ID to filter courses", required = true, example = "1")
-        @RequestParam Long campusId
+    public ResponseEntity<List<PeriodResponse>> getPeriods(
+        @Parameter(description = "Campus ID to filter courses (optional)", example = "1")
+        @RequestParam(required = false) Long campusId,
+        @Parameter(description = "User ID to filter courses by teacher (optional)", example = "5")
+        @RequestParam(required = false) Long userId
     ) {
-        log.info("GET /courses/periods - campusId: {}", campusId);
+        log.info("GET /courses/periods - campusId: {}, userId: {}", campusId, userId);
 
-        List<PeriodResponse> response = courseService.getPeriodsByCampus(campusId);
+        List<PeriodResponse> response = courseService.getPeriods(campusId, userId);
 
         return ResponseEntity.ok(response);
     }

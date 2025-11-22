@@ -401,9 +401,9 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PeriodResponse> getPeriodsByCampus(Long campusId) {
+    public List<PeriodResponse> getPeriods(Long campusId, Long userId) {
         List<Course> courses = courseRepository.findAll(
-            CourseSpecification.withFilters(null, campusId, null, null)
+            CourseSpecification.withFilters(userId, campusId, null, null)
         );
 
         List<PeriodResponse> periods = courses.stream()
@@ -414,7 +414,7 @@ public class CourseServiceImpl implements CourseService {
             .map(period -> PeriodResponse.builder().period(period).build())
             .toList();
 
-        log.debug("Found {} unique periods for campus {}", periods.size(), campusId);
+        log.debug("Found {} unique periods for campus {} and userId {}", periods.size(), campusId, userId);
 
         return periods;
     }

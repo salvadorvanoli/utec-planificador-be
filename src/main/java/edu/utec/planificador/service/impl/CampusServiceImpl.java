@@ -5,6 +5,7 @@ import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.mapper.CampusMapper;
 import edu.utec.planificador.repository.CampusRepository;
 import edu.utec.planificador.service.CampusService;
+import edu.utec.planificador.specification.CampusSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,12 +24,12 @@ public class CampusServiceImpl implements CampusService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CampusResponse> getCampuses(Long userId) {
-        log.debug("Getting Campuses - userId: {}", userId);
+    public List<CampusResponse> getCampuses(Long userId, String period) {
+        log.debug("Getting Campuses - userId: {}, period: {}", userId, period);
 
-        List<Campus> campuses = userId != null
-            ? campusRepository.findByUserId(userId)
-            : campusRepository.findAll();
+        List<Campus> campuses = campusRepository.findAll(
+            CampusSpecification.withFilters(userId, period)
+        );
 
         return campuses.stream()
             .map(campusMapper::toResponse)

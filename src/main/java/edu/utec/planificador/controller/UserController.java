@@ -66,7 +66,8 @@ public class UserController {
     @Operation(
         summary = "Get teachers",
         description = "Returns all users with TEACHER role. " +
-                      "Optionally filters by Campus. " +
+                      "Optionally filters by Campus and/or period. " +
+                      "If period is provided, returns only teachers that have courses in that period. " +
                       "This endpoint is publicly accessible for course catalog purposes."
     )
     @ApiResponses(value = {
@@ -86,11 +87,13 @@ public class UserController {
     })
     public ResponseEntity<List<UserBasicResponse>> getTeachers(
         @Parameter(description = "Campus ID to filter teachers", example = "1")
-        @RequestParam(required = false) Long campusId
+        @RequestParam(required = false) Long campusId,
+        @Parameter(description = "Academic period to filter teachers (e.g., '2025-1S')", example = "2025-1S")
+        @RequestParam(required = false) String period
     ) {
-        log.info("GET /users/teachers - campusId: {}", campusId);
+        log.info("GET /users/teachers - campusId: {}, period: {}", campusId, period);
 
-        List<UserBasicResponse> response = userPositionService.getUsers(Role.TEACHER, campusId);
+        List<UserBasicResponse> response = userPositionService.getUsers(Role.TEACHER, campusId, period);
 
         return ResponseEntity.ok(response);
     }
@@ -99,9 +102,10 @@ public class UserController {
     @PreAuthorize("hasAuthority('USER_READ')")
     @Operation(
         summary = "Get users with optional filters",
-        description = "Returns users filtered by role and/or Campus. " +
+        description = "Returns users filtered by role, Campus, and/or period. " +
                       "If no filters are specified, returns all users. " +
                       "Role can be TEACHER, COORDINATOR, EDUCATION_MANAGER, etc. " +
+                      "If period is provided, returns only users that have courses in that period. " +
                       "This endpoint requires authentication and is intended for administrative use.",
         security = @SecurityRequirement(name = "Bearer Authentication")
     )
@@ -139,11 +143,13 @@ public class UserController {
         @Parameter(description = "Role to filter users (TEACHER, COORDINATOR, EDUCATION_MANAGER)", example = "TEACHER")
         @RequestParam(required = false) Role role,
         @Parameter(description = "Campus ID to filter users", example = "1")
-        @RequestParam(required = false) Long campusId
+        @RequestParam(required = false) Long campusId,
+        @Parameter(description = "Academic period to filter users (e.g., '2025-1S')", example = "2025-1S")
+        @RequestParam(required = false) String period
     ) {
-        log.info("GET /users - role: {}, campusId: {}", role, campusId);
+        log.info("GET /users - role: {}, campusId: {}, period: {}", role, campusId, period);
 
-        List<UserBasicResponse> response = userPositionService.getUsers(role, campusId);
+        List<UserBasicResponse> response = userPositionService.getUsers(role, campusId, period);
 
         return ResponseEntity.ok(response);
     }

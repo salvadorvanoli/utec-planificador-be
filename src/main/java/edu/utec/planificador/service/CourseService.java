@@ -30,7 +30,7 @@ public interface CourseService {
     // otherwise throws a ForbiddenException or ResourceNotFoundException as appropriate.
     java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> getCoursesForCurrentUserInCampus(Long campusId, Long courseId);
 
-    List<PeriodResponse> getPeriodsByCampus(Long campusId);
+    List<PeriodResponse> getPeriods(Long campusId, Long userId);
 
     // Sustainable Development Goals (ODS)
     CourseResponse addSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal);

@@ -10,5 +10,5 @@ public interface UserPositionService {
 
     UserPositionsResponse getCurrentUserPositions();
 
-    List<UserBasicResponse> getUsers(Role role, Long campusId);
+    List<UserBasicResponse> getUsers(Role role, Long campusId, String period);
 }

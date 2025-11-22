@@ -4,8 +4,6 @@ import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.Position;
 import edu.utec.planificador.entity.Teacher;
-import edu.utec.planificador.entity.User;
-import edu.utec.planificador.enumeration.Role;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -15,41 +13,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JPA Specifications for building dynamic queries on User entity.
- * This allows filtering users by role, Campus, and period without creating multiple repository methods.
+ * JPA Specifications for building dynamic queries on Campus entity.
+ * Allows filtering campuses by userId and period without creating multiple repository methods.
  */
-public class UserSpecification {
+public class CampusSpecification {
 
     /**
-     * Creates a dynamic specification for filtering users based on optional parameters.
+     * Creates a dynamic specification for filtering campuses based on optional parameters.
      *
-     * @param role Optional role to filter by (TEACHER, COORDINATOR, EDUCATION_MANAGER)
-     * @param campusId Optional Campus ID to filter by
-     * @param period Optional period to filter by (returns only users that have courses in this period)
-     * @return Specification that can be used with UserRepository
+     * @param userId Optional User ID to filter by (returns only campuses where the user has active positions)
+     * @param period Optional period to filter by (returns only campuses that have courses in this period)
+     * @return Specification that can be used with CampusRepository
      */
-    public static Specification<User> withFilters(Role role, Long campusId, String period) {
+    public static Specification<Campus> withFilters(Long userId, String period) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            Join<User, Position> positionJoin = root.join("positions", JoinType.LEFT);
-
-            if (role != null) {
-                predicates.add(criteriaBuilder.equal(positionJoin.get("role"), role));
+            // Filter by userId: campuses where the user has active positions
+            if (userId != null) {
+                Join<Campus, Position> positionJoin = root.join("positions", JoinType.INNER);
+                predicates.add(criteriaBuilder.equal(positionJoin.get("user").get("id"), userId));
                 predicates.add(criteriaBuilder.isTrue(positionJoin.get("isActive")));
             }
 
-            if (campusId != null) {
-                Join<Position, Campus> campusJoin = positionJoin.join("campuses", JoinType.LEFT);
-                predicates.add(criteriaBuilder.equal(campusJoin.get("id"), campusId));
-            }
-
-            // Filter by period: users that have courses in this period
+            // Filter by period: campuses that have courses in this period
             if (period != null && !period.isBlank()) {
-                // Need to join through Position -> Teacher (if role is TEACHER) -> Course
-                // Since we're filtering users with TEACHER role who have courses in a specific period
-                Join<Position, Teacher> teacherJoin = positionJoin.join("id", JoinType.INNER);
+                // Join Campus -> Teacher (through many-to-many) -> Course
+                Join<Campus, Teacher> teacherJoin = root.join("teachers", JoinType.INNER);
                 Join<Teacher, Course> courseJoin = teacherJoin.join("courses", JoinType.INNER);
+                predicates.add(criteriaBuilder.isTrue(teacherJoin.get("isActive")));
                 
                 // Parse period format (YYYY-1S or YYYY-2S) and filter by startDate
                 try {
@@ -86,15 +78,10 @@ public class UserSpecification {
                 }
             }
 
+            // Ensure distinct results and order by name
             if (query != null) {
                 query.distinct(true);
-
-                if (root.get("personalData") != null) {
-                    query.orderBy(
-                        criteriaBuilder.asc(root.get("personalData").get("lastName")),
-                        criteriaBuilder.asc(root.get("personalData").get("name"))
-                    );
-                }
+                query.orderBy(criteriaBuilder.asc(root.get("name")));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

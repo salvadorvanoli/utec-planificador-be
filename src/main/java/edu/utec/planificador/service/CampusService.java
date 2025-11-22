@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface CampusService {
 
-    List<CampusResponse> getCampuses(Long userId);
+    List<CampusResponse> getCampuses(Long userId, String period);
 }
