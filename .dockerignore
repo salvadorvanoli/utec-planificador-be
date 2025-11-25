@@ -47,3 +47,5 @@ Thumbs.db
 
 scripts/
 backups/
+run-local.sh
+run-local.ps1

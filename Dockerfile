@@ -8,7 +8,8 @@ COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-RUN gradle dependencies --no-daemon || return 0
+# Download dependencies (cached layer if build.gradle doesn't change)
+RUN gradle dependencies --no-daemon --refresh-dependencies
 
 COPY src src
 
