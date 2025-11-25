@@ -107,7 +107,6 @@ services:
 networks:
   app-network:
     driver: bridge
-    name: ${COMPOSE_PROJECT_NAME:-planificador}-network
 
 volumes:
   postgres_data:

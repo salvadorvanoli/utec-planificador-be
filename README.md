@@ -1,7 +1,55 @@
-# PlanificadorUTEC
-Proyecto "Planificador UTEC"
+# PlanificadorUTEC - Backend
+Proyecto "Planificador UTEC" - API REST con Spring Boot
 
-## 🧪 Testing
+## Inicio Rápido
+
+### Opción 1: Docker (Recomendado)
+
+```powershell
+# Iniciar backend (PostgreSQL + API)
+.\scripts\start.ps1
+
+# Ver estado
+.\scripts\status.ps1
+
+# Ver logs
+.\scripts\logs.ps1
+
+# Detener
+.\scripts\stop.ps1
+```
+
+**URLs disponibles:**
+- API: http://localhost:8080/api
+- Health: http://localhost:8080/api/actuator/health
+- Swagger: http://localhost:8080/api/swagger-ui.html
+
+### Opción 2: Desarrollo Local
+
+**Requisitos:**
+- PostgreSQL 16 corriendo en localhost:5432
+- Java 21 JDK
+- Base de datos `planificador_db` creada
+
+```powershell
+# Cargar variables de entorno y ejecutar
+.\run-local.ps1
+```
+
+## Requisitos
+
+- **Docker Desktop** (para opción 1)
+- **Java 21 JDK** (para opción 2)
+- **PostgreSQL 16** (para opción 2)
+- **PowerShell** (incluido en Windows, instalable en Linux/macOS)
+
+## Configuración
+
+1. Copia `.env.example` a `.env`
+2. Edita `.env` con tus configuraciones
+3. Ejecuta `.\start.ps1`
+
+## Testing
 
 El proyecto cuenta con una suite completa de tests automatizados:
 
