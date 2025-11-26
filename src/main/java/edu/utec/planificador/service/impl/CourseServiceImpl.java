@@ -587,6 +587,30 @@ public class CourseServiceImpl implements CourseService {
             ? curricularUnit.getTerm().getProgram().getName()
             : null;
 
+        // Build weekly planning info list
+        List<CoursePdfDataResponse.WeeklyPlanningInfo> weeklyPlanningInfoList = course.getWeeklyPlannings().stream()
+            .map(weeklyPlanning -> {
+                // Extract content titles from programmatic contents
+                List<String> contentTitles = weeklyPlanning.getProgrammaticContents().stream()
+                    .map(content -> content.getTitle())
+                    .toList();
+
+                return CoursePdfDataResponse.WeeklyPlanningInfo.builder()
+                    .weekNumber(weeklyPlanning.getWeekNumber())
+                    .startDate(weeklyPlanning.getStartDate())
+                    .endDate(weeklyPlanning.getEndDate())
+                    .contentTitles(contentTitles)
+                    .bibliographicReferences(weeklyPlanning.getBibliographicReferences())
+                    .build();
+            })
+            .toList();
+
+        // Collect all bibliographic references from all weekly plannings
+        List<String> allBibliography = course.getWeeklyPlannings().stream()
+            .flatMap(weeklyPlanning -> weeklyPlanning.getBibliographicReferences().stream())
+            .distinct()
+            .toList();
+
         // Build response
         CoursePdfDataResponse response = CoursePdfDataResponse.builder()
             .description(course.getDescription())
@@ -600,6 +624,8 @@ public class CourseServiceImpl implements CourseService {
             .teachers(teacherInfoList)
             .programName(programName)
             .curricularUnit(curricularUnitInfo)
+            .weeklyPlannings(weeklyPlanningInfoList)
+            .bibliography(allBibliography)
             .build();
 
         log.info("PDF data retrieved successfully for course {}", courseId);

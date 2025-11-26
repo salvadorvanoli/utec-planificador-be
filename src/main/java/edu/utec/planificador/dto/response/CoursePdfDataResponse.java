@@ -33,6 +33,12 @@ public class CoursePdfDataResponse {
     // Información de la unidad curricular
     private CurricularUnitInfo curricularUnit;
 
+    // Planificación semanal con contenidos
+    private List<WeeklyPlanningInfo> weeklyPlannings;
+
+    // Bibliografía general del curso
+    private List<String> bibliography;
+
     @Data
     @Builder
     public static class TeacherInfo {
@@ -46,5 +52,15 @@ public class CoursePdfDataResponse {
     public static class CurricularUnitInfo {
         private String name;
         private Integer credits;
+    }
+
+    @Data
+    @Builder
+    public static class WeeklyPlanningInfo {
+        private Integer weekNumber;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private List<String> contentTitles;
+        private List<String> bibliographicReferences;
     }
 }
