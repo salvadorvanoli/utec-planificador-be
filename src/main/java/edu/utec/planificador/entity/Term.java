@@ -63,4 +63,8 @@ public class Term {
     @OneToMany(mappedBy = "term", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("name ASC")
     private List<CurricularUnit> curricularUnits = new ArrayList<>();
+
+    public String getDisplayName() {
+        return "Semestre " + number;
+    }
 }

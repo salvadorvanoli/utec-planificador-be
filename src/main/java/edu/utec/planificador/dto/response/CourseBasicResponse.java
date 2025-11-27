@@ -20,6 +20,9 @@ public class CourseBasicResponse {
     @Schema(description = "Course ID", example = "1")
     private Long id;
 
+    @Schema(description = "Course shift", example = "Matutino")
+    private String shift;
+
     @Schema(description = "Course description", example = "Curso de Programación Avanzada")
     private String description;
 
@@ -31,6 +34,12 @@ public class CourseBasicResponse {
 
     @Schema(description = "Curricular unit name", example = "Programación Avanzada")
     private String curricularUnitName;
+
+    @Schema(description = "Term name", example = "Semestre 3")
+    private String termName;
+
+    @Schema(description = "Program name", example = "Ingeniería en Sistemas")
+    private String programName;
 
     @Schema(description = "List of teachers assigned to this course")
     private List<UserBasicResponse> teachers;

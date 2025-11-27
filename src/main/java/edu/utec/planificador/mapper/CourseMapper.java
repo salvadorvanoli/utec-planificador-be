@@ -68,10 +68,13 @@ public class CourseMapper {
 
         return CourseBasicResponse.builder()
             .id(course.getId())
+            .shift(course.getShift().getDisplayValue())
             .description(course.getDescription())
             .startDate(course.getStartDate())
             .endDate(course.getEndDate())
             .curricularUnitName(course.getCurricularUnit().getName())
+            .termName(course.getCurricularUnit().getTerm().getDisplayName())
+            .programName(course.getCurricularUnit().getTerm().getProgram().getName())
             .teachers(teachers)
             .lastModificationDate(lastModificationDate)
             .build();
