@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -174,6 +175,15 @@ public class CourseServiceImpl implements CourseService {
         }
         
         if (request.getHoursPerDeliveryFormat() != null && !request.getHoursPerDeliveryFormat().isEmpty()) {
+            // Validar que todas las horas sean no negativas
+            for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
+                if (entry.getValue() < 0) {
+                    throw new IllegalArgumentException(
+                        String.format("Las horas para el formato %s no pueden ser negativas. Valor recibido: %d",
+                            entry.getKey(), entry.getValue())
+                    );
+                }
+            }
             course.getHoursPerDeliveryFormat().putAll(request.getHoursPerDeliveryFormat());
         } else {
             for (DeliveryFormat format : DeliveryFormat.values()) {
@@ -359,6 +369,15 @@ public class CourseServiceImpl implements CourseService {
         // Update collections
         course.getHoursPerDeliveryFormat().clear();
         if (request.getHoursPerDeliveryFormat() != null) {
+            // Validar que todas las horas sean no negativas
+            for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
+                if (entry.getValue() != null && entry.getValue() < 0) {
+                    throw new IllegalArgumentException(
+                        String.format("Las horas para el formato %s no pueden ser negativas. Valor recibido: %d",
+                            entry.getKey(), entry.getValue())
+                    );
+                }
+            }
             course.getHoursPerDeliveryFormat().putAll(request.getHoursPerDeliveryFormat());
         }
         
