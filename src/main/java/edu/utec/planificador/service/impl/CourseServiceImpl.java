@@ -63,6 +63,12 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse createCourse(CourseRequest request) {
         log.debug("Creating course for curricular unit: {}", request.getCurricularUnitId());
         
+        // Validate startDate <= endDate
+        if (request.getStartDate() != null && request.getEndDate() != null && 
+            request.getStartDate().isAfter(request.getEndDate())) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+        
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
@@ -256,6 +262,11 @@ public class CourseServiceImpl implements CourseService {
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
+        
+        // Validate that the course has not finished
+        if (course.getEndDate() != null && course.getEndDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Cannot modify a course that has already finished");
+        }
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
