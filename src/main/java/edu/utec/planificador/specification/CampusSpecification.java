@@ -1,10 +1,8 @@
 package edu.utec.planificador.specification;
 
 import edu.utec.planificador.entity.Campus;
-import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.Position;
-import edu.utec.planificador.entity.Teacher;
-import jakarta.persistence.criteria.Join;
+import edu.utec.planificador.entity.Program;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,18 +28,43 @@ public class CampusSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             // Filter by userId: campuses where the user has active positions
-            if (userId != null) {
-                Join<Campus, Position> positionJoin = root.join("positions", JoinType.INNER);
-                predicates.add(criteriaBuilder.equal(positionJoin.get("user").get("id"), userId));
-                predicates.add(criteriaBuilder.isTrue(positionJoin.get("isActive")));
+            // Campus doesn't have positions, Position has campuses (many-to-many)
+            if (userId != null && query != null) {
+                var subquery = query.subquery(Long.class);
+                var positionRoot = subquery.from(Position.class);
+                var campusJoin = positionRoot.join("campuses", JoinType.INNER);
+                
+                subquery.select(criteriaBuilder.literal(1L));
+                subquery.where(
+                    criteriaBuilder.and(
+                        criteriaBuilder.equal(positionRoot.get("user").get("id"), userId),
+                        criteriaBuilder.isTrue(positionRoot.get("isActive")),
+                        criteriaBuilder.equal(campusJoin.get("id"), root.get("id"))
+                    )
+                );
+                
+                predicates.add(criteriaBuilder.exists(subquery));
             }
 
             // Filter by period: campuses that have courses in this period
-            if (period != null && !period.isBlank()) {
-                // Join Campus -> Teacher (through many-to-many) -> Course
-                Join<Campus, Teacher> teacherJoin = root.join("teachers", JoinType.INNER);
-                Join<Teacher, Course> courseJoin = teacherJoin.join("courses", JoinType.INNER);
-                predicates.add(criteriaBuilder.isTrue(teacherJoin.get("isActive")));
+            // Path: Campus -> Programs -> Terms -> CurricularUnits -> Courses
+            if (period != null && !period.isBlank() && query != null) {
+                // Use EXISTS subquery to check if campus has any program with courses in the period
+                var subquery = query.subquery(Long.class);
+                var programRoot = subquery.from(Program.class);
+                var termJoin = programRoot.join("terms", JoinType.INNER);
+                var curricularUnitJoin = termJoin.join("curricularUnits", JoinType.INNER);
+                var courseJoin = curricularUnitJoin.join("courses", JoinType.INNER);
+                
+                // Join Campus->Programs in the subquery to check if this program belongs to the campus
+                // Campus has programs (many-to-many), Program doesn't have campuses
+                var campusSubqueryRoot = subquery.from(Campus.class);
+                var campusProgramsJoin = campusSubqueryRoot.join("programs", JoinType.INNER);
+                
+                List<Predicate> subqueryPredicates = new ArrayList<>();
+                // Match: current campus ID = subquery campus ID AND subquery campus has this program
+                subqueryPredicates.add(criteriaBuilder.equal(campusSubqueryRoot.get("id"), root.get("id")));
+                subqueryPredicates.add(criteriaBuilder.equal(campusProgramsJoin.get("id"), programRoot.get("id")));
                 
                 // Parse period format (YYYY-1S or YYYY-2S) and filter by startDate
                 try {
@@ -50,7 +73,7 @@ public class CampusSpecification {
                         int year = Integer.parseInt(parts[0]);
                         int semester = Integer.parseInt(parts[1].replace("S", ""));
                         
-                        predicates.add(criteriaBuilder.equal(
+                        subqueryPredicates.add(criteriaBuilder.equal(
                             criteriaBuilder.function("date_part", Integer.class, 
                                 criteriaBuilder.literal("year"), 
                                 courseJoin.get("startDate")),
@@ -58,14 +81,14 @@ public class CampusSpecification {
                         ));
                         
                         if (semester == 1) {
-                            predicates.add(criteriaBuilder.between(
+                            subqueryPredicates.add(criteriaBuilder.between(
                                 criteriaBuilder.function("date_part", Integer.class,
                                     criteriaBuilder.literal("month"), 
                                     courseJoin.get("startDate")),
                                 1, 7
                             ));
                         } else if (semester == 2) {
-                            predicates.add(criteriaBuilder.between(
+                            subqueryPredicates.add(criteriaBuilder.between(
                                 criteriaBuilder.function("date_part", Integer.class,
                                     criteriaBuilder.literal("month"), 
                                     courseJoin.get("startDate")),
@@ -76,6 +99,10 @@ public class CampusSpecification {
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     // Invalid period format, ignore the filter
                 }
+                
+                subquery.select(criteriaBuilder.literal(1L));
+                subquery.where(criteriaBuilder.and(subqueryPredicates.toArray(new Predicate[0])));
+                predicates.add(criteriaBuilder.exists(subquery));
             }
 
             // Ensure distinct results and order by name

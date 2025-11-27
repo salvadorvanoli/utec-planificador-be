@@ -1,7 +1,6 @@
 package edu.utec.planificador.specification;
 
 import edu.utec.planificador.entity.Campus;
-import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.Position;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
@@ -45,11 +44,17 @@ public class UserSpecification {
             }
 
             // Filter by period: users that have courses in this period
-            if (period != null && !period.isBlank()) {
-                // Need to join through Position -> Teacher (if role is TEACHER) -> Course
-                // Since we're filtering users with TEACHER role who have courses in a specific period
-                Join<Position, Teacher> teacherJoin = positionJoin.join("id", JoinType.INNER);
-                Join<Teacher, Course> courseJoin = teacherJoin.join("courses", JoinType.INNER);
+            // Path: User -> Teacher (Teacher extends Position) -> Courses
+            if (period != null && !period.isBlank() && query != null) {
+                // Use EXISTS subquery to check if user has any courses in the period
+                var subquery = query.subquery(Long.class);
+                var teacherRoot = subquery.from(Teacher.class);
+                var courseJoin = teacherRoot.join("courses", JoinType.INNER);
+                
+                List<Predicate> subqueryPredicates = new ArrayList<>();
+                // Teacher extends Position which has user attribute
+                subqueryPredicates.add(criteriaBuilder.equal(teacherRoot.get("user").get("id"), root.get("id")));
+                subqueryPredicates.add(criteriaBuilder.isTrue(teacherRoot.get("isActive")));
                 
                 // Parse period format (YYYY-1S or YYYY-2S) and filter by startDate
                 try {
@@ -58,7 +63,7 @@ public class UserSpecification {
                         int year = Integer.parseInt(parts[0]);
                         int semester = Integer.parseInt(parts[1].replace("S", ""));
                         
-                        predicates.add(criteriaBuilder.equal(
+                        subqueryPredicates.add(criteriaBuilder.equal(
                             criteriaBuilder.function("date_part", Integer.class, 
                                 criteriaBuilder.literal("year"), 
                                 courseJoin.get("startDate")),
@@ -66,14 +71,14 @@ public class UserSpecification {
                         ));
                         
                         if (semester == 1) {
-                            predicates.add(criteriaBuilder.between(
+                            subqueryPredicates.add(criteriaBuilder.between(
                                 criteriaBuilder.function("date_part", Integer.class,
                                     criteriaBuilder.literal("month"), 
                                     courseJoin.get("startDate")),
                                 1, 7
                             ));
                         } else if (semester == 2) {
-                            predicates.add(criteriaBuilder.between(
+                            subqueryPredicates.add(criteriaBuilder.between(
                                 criteriaBuilder.function("date_part", Integer.class,
                                     criteriaBuilder.literal("month"), 
                                     courseJoin.get("startDate")),
@@ -84,6 +89,10 @@ public class UserSpecification {
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     // Invalid period format, ignore the filter
                 }
+                
+                subquery.select(criteriaBuilder.literal(1L));
+                subquery.where(criteriaBuilder.and(subqueryPredicates.toArray(new Predicate[0])));
+                predicates.add(criteriaBuilder.exists(subquery));
             }
 
             if (query != null) {

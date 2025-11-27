@@ -2,7 +2,10 @@ package edu.utec.planificador.specification;
 
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
+import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.Teacher;
+import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -31,20 +34,36 @@ public class CourseSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            Join<Course, Teacher> teacherJoin = root.join("teachers", JoinType.LEFT);
+            // Filter by campus through: Course -> CurricularUnit -> Term -> Program
+            // Then check if this Program is in the specified Campus (using Campus.programs relationship)
+            if (campusId != null && query != null) {
+                Join<Course, CurricularUnit> curricularUnitJoin = root.join("curricularUnit", JoinType.INNER);
+                Join<CurricularUnit, Term> termJoin = curricularUnitJoin.join("term", JoinType.INNER);
+                Join<Term, Program> programJoin = termJoin.join("program", JoinType.INNER);
+                
+                // Create a subquery to check if the program exists in the campus
+                // Campus has the 'programs' collection, so we query from Campus side
+                var subquery = query.subquery(Long.class);
+                var campusRoot = subquery.from(Campus.class);
+                var campusProgramsJoin = campusRoot.join("programs", JoinType.INNER);
+                
+                subquery.select(criteriaBuilder.literal(1L));
+                subquery.where(
+                    criteriaBuilder.and(
+                        criteriaBuilder.equal(campusRoot.get("id"), campusId),
+                        criteriaBuilder.equal(campusProgramsJoin.get("id"), programJoin.get("id"))
+                    )
+                );
+                
+                predicates.add(criteriaBuilder.exists(subquery));
+            }
 
+            // Filter by user (teacher) - only join teachers if needed
             if (userId != null) {
+                Join<Course, Teacher> teacherJoin = root.join("teachers", JoinType.INNER);
                 Join<Teacher, User> userJoin = teacherJoin.join("user", JoinType.INNER);
                 predicates.add(criteriaBuilder.equal(userJoin.get("id"), userId));
                 predicates.add(criteriaBuilder.isTrue(teacherJoin.get("isActive")));
-            }
-
-            if (campusId != null) {
-                Join<Teacher, Campus> campusJoin = teacherJoin.join("campuses", JoinType.INNER);
-                predicates.add(criteriaBuilder.equal(campusJoin.get("id"), campusId));
-                if (userId == null) {
-                    predicates.add(criteriaBuilder.isTrue(teacherJoin.get("isActive")));
-                }
             }
 
             if (period != null && !period.isBlank()) {                
