@@ -30,8 +30,8 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
     public OfficeHoursResponse createOfficeHours(OfficeHoursRequest request) {
         log.debug("Creating office hours for course {}", request.getCourseId());
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(request.getCourseId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(request.getCourseId());
 
         // Validate that endHour is after startHour
         if (request.getEndHour() <= request.getStartHour()) {
@@ -85,8 +85,8 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         OfficeHours officeHours = officeHoursRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Office hours not found with id: " + id));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(officeHours.getCourse().getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(officeHours.getCourse().getId());
 
         officeHoursRepository.delete(officeHours);
 

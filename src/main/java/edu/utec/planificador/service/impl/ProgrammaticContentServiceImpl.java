@@ -40,8 +40,8 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         Course course = courseRepository.findByWeeklyPlanningId(request.getWeeklyPlanningId())
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + request.getWeeklyPlanningId()));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
             .orElseThrow(() -> new ResourceNotFoundException("Weekly planning not found with id: " + request.getWeeklyPlanningId()));
@@ -80,7 +80,7 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         Course course = courseRepository.findByProgrammaticContentId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + id));
 
-        accessControlService.validateCourseWriteAccess(course.getId());
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));
@@ -126,7 +126,7 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         Course course = courseRepository.findByProgrammaticContentId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + id));
 
-        accessControlService.validateCourseWriteAccess(course.getId());
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + id));

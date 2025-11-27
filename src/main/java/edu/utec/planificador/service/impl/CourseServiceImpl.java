@@ -244,8 +244,9 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse updateCourse(Long id, CourseRequest request) {
         log.debug("Updating course with id: {}", id);
         
-        // Validate write access (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(id);
+        // Validate update access (ANALYST/COORDINATOR in campus OR teacher of the course)
+        accessControlService.validateCourseUpdateAccess(id);
+        
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         Course course = courseRepository.findById(id)
@@ -367,16 +368,35 @@ public class CourseServiceImpl implements CourseService {
     public void deleteCourse(Long id) {
         log.debug("Deleting course with id: {}", id);
         
-        // Validate access to course
-        accessControlService.validateCourseAccess(id);
+        // Validate delete access (only ANALYST/COORDINATOR can delete courses)
+        accessControlService.validateCourseDeleteAccess(id);
 
-        if (!courseRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Course not found with id: " + id);
+        Course course = courseRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
+        
+        // Validate that the course doesn't have OfficeHours
+        if (course.getOfficeHours() != null && !course.getOfficeHours().isEmpty()) {
+            throw new IllegalStateException(
+                "Cannot delete course with id " + id + " because it has " + 
+                course.getOfficeHours().size() + " associated office hours. " +
+                "Please remove all office hours before deleting the course."
+            );
         }
         
+        // Validate that the course doesn't have Modifications
+        if (course.getModifications() != null && !course.getModifications().isEmpty()) {
+            throw new IllegalStateException(
+                "Cannot delete course with id " + id + " because it has " + 
+                course.getModifications().size() + " associated modifications. " +
+                "Please remove all modifications before deleting the course."
+            );
+        }
+        
+        // WeeklyPlannings will be automatically deleted due to CascadeType.ALL and orphanRemoval
         courseRepository.deleteById(id);
         
-        log.info("Course deleted successfully with id: {}", id);
+        log.info("Course deleted successfully with id: {} (along with {} weekly plannings)", 
+            id, course.getWeeklyPlannings() != null ? course.getWeeklyPlannings().size() : 0);
     }
 
     @Override
@@ -470,8 +490,8 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse addSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal) {
         log.debug("Adding Sustainable Development Goal {} to course {}", goal, courseId);
         
-        // Validate access to course
-        accessControlService.validateCourseWriteAccess(courseId);
+        // Validate planning management access to course
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -489,8 +509,8 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse removeSustainableDevelopmentGoal(Long courseId, SustainableDevelopmentGoal goal) {
         log.debug("Removing Sustainable Development Goal {} from course {}", goal, courseId);
         
-        // Validate access to course
-        accessControlService.validateCourseWriteAccess(courseId);
+        // Validate planning management access to course
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -515,8 +535,8 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse addUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle) {
         log.debug("Adding Universal Design Learning Principle {} to course {}", principle, courseId);
         
-        // Validate access to course
-        accessControlService.validateCourseWriteAccess(courseId);
+        // Validate planning management access to course
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -534,8 +554,8 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse removeUniversalDesignLearningPrinciple(Long courseId, UniversalDesignLearningPrinciple principle) {
         log.debug("Removing Universal Design Learning Principle {} from course {}", principle, courseId);
         
-        // Validate access to course
-        accessControlService.validateCourseWriteAccess(courseId);
+        // Validate planning management access to course
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));

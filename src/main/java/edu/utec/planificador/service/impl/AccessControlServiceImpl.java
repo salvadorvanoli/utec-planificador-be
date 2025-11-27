@@ -381,12 +381,12 @@ public class AccessControlServiceImpl implements AccessControlService {
 
     @Override
     @Transactional(readOnly = true)
-    public void validateCourseWriteAccess(Long courseId) {
+    public void validateCoursePlanningManagement(Long courseId) {
         // First, validate basic course access (campus/RTI check)
         validateCourseAccess(courseId);
 
-        // If user has TEACHER role (regardless of other roles), validate ownership for write operations
-        // This applies to Course and all its planning hierarchy (WeeklyPlanning, ProgrammaticContent, Activity)
+        // If user has TEACHER role (regardless of other roles), validate ownership for planning management operations
+        // This applies to all planning hierarchy (WeeklyPlanning, ProgrammaticContent, Activity, OfficeHours)
         if (hasTeacherRole()) {
             User currentUser = getCurrentUser();
             Course course = courseRepository.findById(courseId)
@@ -396,10 +396,119 @@ public class AccessControlServiceImpl implements AccessControlService {
                 .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
 
             if (!isTeacherOfCourse) {
-                log.warn("User {} with TEACHER role attempted to modify course {} without being assigned",
+                log.warn("User {} with TEACHER role attempted to manage planning for course {} without being assigned",
                     currentUser.getUtecEmail(), courseId);
-                throw new ForbiddenException("You cannot modify this course because you are not assigned as teacher");
+                throw new ForbiddenException("You cannot manage planning for this course because you are not assigned as teacher");
             }
+            
+            log.debug("User {} validated as teacher of course {} for planning management", currentUser.getUtecEmail(), courseId);
+        } else {
+            // If user doesn't have TEACHER role at all, throw exception
+            // (administrative operations should use validateCourseUpdateAccess or validateCourseDeleteAccess instead)
+            User currentUser = getCurrentUser();
+            log.warn("User {} without TEACHER role attempted to use validateCoursePlanningManagement on course {}",
+                currentUser.getUtecEmail(), courseId);
+            throw new ForbiddenException("You must have TEACHER role to manage course planning");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void validateCourseUpdateAccess(Long courseId) {
+        User currentUser = getCurrentUser();
+        
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+
+        CurricularUnit curricularUnit = course.getCurricularUnit();
+        Term term = curricularUnit.getTerm();
+        Program program = term.getProgram();
+
+        // Get campuses where this program is offered
+        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
+
+        if (programCampuses.isEmpty()) {
+            throw new ForbiddenException("No campuses found for this course's program");
+        }
+
+        Set<Long> programCampusIds = programCampuses.stream()
+            .map(Campus::getId)
+            .collect(Collectors.toSet());
+
+        // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
+        User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean hasAdminRole = fullUser.getPositions().stream()
+            .filter(Position::getIsActive)
+            .filter(position -> position.getRole() == Role.ANALYST || position.getRole() == Role.COORDINATOR)
+            .flatMap(position -> position.getCampuses().stream())
+            .map(Campus::getId)
+            .anyMatch(programCampusIds::contains);
+
+        // Check if user is a teacher of this course
+        boolean isTeacherOfCourse = course.getTeachers().stream()
+            .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+
+        // User must have either administrative role OR be a teacher of the course
+        if (!hasAdminRole && !isTeacherOfCourse) {
+            log.warn("User {} attempted to update course {} without ANALYST/COORDINATOR role or being assigned as teacher",
+                currentUser.getUtecEmail(), courseId);
+            throw new ForbiddenException("You don't have permission to update this course. You must have ANALYST or COORDINATOR role in the campus where this course belongs, or be assigned as teacher to this course");
+        }
+
+        if (hasAdminRole) {
+            log.debug("User {} has update access to course {} through ANALYST/COORDINATOR role", 
+                currentUser.getUtecEmail(), courseId);
+        } else {
+            log.debug("User {} has update access to course {} as assigned teacher", 
+                currentUser.getUtecEmail(), courseId);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void validateCourseDeleteAccess(Long courseId) {
+        User currentUser = getCurrentUser();
+        
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+
+        CurricularUnit curricularUnit = course.getCurricularUnit();
+        Term term = curricularUnit.getTerm();
+        Program program = term.getProgram();
+
+        // Get campuses where this program is offered
+        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
+
+        if (programCampuses.isEmpty()) {
+            throw new ForbiddenException("No campuses found for this course's program");
+        }
+
+        Set<Long> programCampusIds = programCampuses.stream()
+            .map(Campus::getId)
+            .collect(Collectors.toSet());
+
+        // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
+        User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean hasAdminRole = fullUser.getPositions().stream()
+            .filter(Position::getIsActive)
+            .filter(position -> position.getRole() == Role.ANALYST || position.getRole() == Role.COORDINATOR)
+            .flatMap(position -> position.getCampuses().stream())
+            .map(Campus::getId)
+            .anyMatch(programCampusIds::contains);
+
+        // Only users with ANALYST or COORDINATOR roles can delete courses
+        // Teachers are NOT allowed to delete courses
+        if (!hasAdminRole) {
+            log.warn("User {} attempted to delete course {} without ANALYST or COORDINATOR role in the appropriate campus",
+                currentUser.getUtecEmail(), courseId);
+            throw new ForbiddenException("You don't have permission to delete this course. Only users with ANALYST or COORDINATOR role in the campus where this course belongs can delete courses");
+        }
+
+        log.debug("User {} has delete access to course {} through ANALYST/COORDINATOR role", 
+            currentUser.getUtecEmail(), courseId);
     }
 }

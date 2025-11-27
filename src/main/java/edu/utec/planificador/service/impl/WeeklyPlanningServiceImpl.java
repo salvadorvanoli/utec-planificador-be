@@ -32,8 +32,8 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     public WeeklyPlanningResponse createWeeklyPlanning(Long courseId, WeeklyPlanningRequest request) {
         log.debug("Creating weekly planning for courseId={}", courseId);
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(courseId);
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
@@ -74,7 +74,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         log.debug("Getting all weekly plannings for courseId={}", courseId);
 
         // Validate access to course
-        accessControlService.validateCourseAccess(courseId);
+        accessControlService.validateCoursePlanningManagement(courseId);
 
         // Verify course exists
         if (!courseRepository.existsById(courseId)) {
@@ -127,8 +127,8 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         Course course = courseRepository.findByWeeklyPlanningId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + id));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + id));
@@ -155,8 +155,8 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         Course course = courseRepository.findByWeeklyPlanningId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + id));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         if (!weeklyPlanningRepository.existsById(id)) {
             throw new ResourceNotFoundException("WeeklyPlanning not found with id: " + id);
@@ -175,8 +175,8 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + weeklyPlanningId));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
             .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
@@ -213,8 +213,8 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + weeklyPlanningId));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
             .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));

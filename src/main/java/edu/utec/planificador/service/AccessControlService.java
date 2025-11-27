@@ -107,19 +107,48 @@ public interface AccessControlService {
     boolean hasAccessToRti(Long rtiId);
 
     /**
-     * Validates if the current user can modify (write) a specific course and its planning hierarchy.
-     * If user has TEACHER role (regardless of other roles), validates ownership.
-     * This ensures that even users with administrative roles can only modify courses they teach.
+     * Validates if the current user can manage the planning of a specific course and its planning hierarchy.
+     * Requires user to have TEACHER role and be assigned to the course.
+     * This ensures that even users with administrative roles can only manage planning for courses they teach.
      * 
-     * This validation should be used for write operations on:
-     * - Course itself
+     * This validation should be used for planning management operations on:
      * - Weekly Planning (children of Course)
      * - Programmatic Content (children of Weekly Planning)
      * - Activity (children of Programmatic Content)
+     * - Office Hours
      *
-     * @param courseId Course ID to validate write access
-     * @throws edu.utec.planificador.exception.ForbiddenException if user cannot modify the course
+     * @param courseId Course ID to validate planning management access
+     * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have TEACHER role or is not assigned to the course
      */
-    void validateCourseWriteAccess(Long courseId);
+    void validateCoursePlanningManagement(Long courseId);
+
+    /**
+     * Validates if the current user has permission to update a course.
+     * 
+     * User must meet ONE of the following criteria:
+     * 1. Have ANALYST or COORDINATOR role in the campus where the course belongs
+     * 2. Be assigned as a teacher to the course
+     * 
+     * This validation is more permissive than validateCourseDeleteAccess, allowing teachers
+     * to update their own courses.
+     *
+     * @param courseId Course ID to validate update access
+     * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't meet any of the criteria
+     */
+    void validateCourseUpdateAccess(Long courseId);
+
+    /**
+     * Validates if the current user has permission to delete a course.
+     * 
+     * User must have ANALYST or COORDINATOR role in the campus where the course belongs.
+     * Teachers are NOT allowed to delete courses, even if they are assigned to them.
+     * 
+     * This is a more restrictive validation than validateCourseUpdateAccess, as deleting
+     * a course is a critical operation that should only be performed by administrative users.
+     *
+     * @param courseId Course ID to validate delete access
+     * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have administrative role
+     */
+    void validateCourseDeleteAccess(Long courseId);
 }
 

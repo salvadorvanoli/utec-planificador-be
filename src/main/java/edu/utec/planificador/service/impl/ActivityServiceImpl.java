@@ -47,8 +47,8 @@ public class ActivityServiceImpl implements ActivityService {
         Course course = courseRepository.findByProgrammaticContentId(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + request.getProgrammaticContentId()));
 
-        // Validate write access to the course (ensures teachers can only modify their own courses)
-        accessControlService.validateCourseWriteAccess(course.getId());
+        // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
             .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
@@ -114,7 +114,7 @@ public class ActivityServiceImpl implements ActivityService {
         Course course = courseRepository.findByActivityId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
 
-        accessControlService.validateCourseWriteAccess(course.getId());
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
@@ -196,7 +196,7 @@ public class ActivityServiceImpl implements ActivityService {
         Course course = courseRepository.findByActivityId(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
 
-        accessControlService.validateCourseWriteAccess(course.getId());
+        accessControlService.validateCoursePlanningManagement(course.getId());
 
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
