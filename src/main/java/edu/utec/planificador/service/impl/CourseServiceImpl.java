@@ -649,4 +649,130 @@ public class CourseServiceImpl implements CourseService {
         
         return statistics;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<edu.utec.planificador.dto.response.TeacherCourseResponse> getTeacherCoursesByCurricularUnit(Long teacherId, Long curricularUnitId) {
+        log.debug("Getting courses for teacher {} and curricular unit {}", teacherId, curricularUnitId);
+
+        // Validate that the teacher exists
+        User teacherUser = userRepository.findById(teacherId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + teacherId));
+
+        // Validate that the curricular unit exists
+        CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
+            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
+
+        // Find the teacher position
+        Teacher teacher = (Teacher) teacherUser.getPositions().stream()
+            .filter(p -> p instanceof Teacher)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("User with id " + teacherId + " is not a teacher"));
+
+        // Get all courses where this teacher is assigned AND the curricular unit matches
+        List<Course> courses = courseRepository.findAll(
+            CourseSpecification.withFilters(teacherId, null, null, null)
+        ).stream()
+            .filter(course -> course.getCurricularUnit().getId().equals(curricularUnitId))
+            .toList();
+
+        // Build response with formatted display names
+        List<edu.utec.planificador.dto.response.TeacherCourseResponse> response = courses.stream()
+            .flatMap(course -> {
+                if (course.getCurricularUnit().getTerm() == null || course.getCurricularUnit().getTerm().getProgram() == null) {
+                    return java.util.stream.Stream.empty();
+                }
+
+                Long programId = course.getCurricularUnit().getTerm().getProgram().getId();
+                List<Campus> programCampuses = campusRepository.findByProgram(programId);
+
+                // Filter teacher's campuses that offer this program
+                return teacher.getCampuses().stream()
+                    .filter(campus -> programCampuses.stream()
+                        .anyMatch(pc -> pc.getId().equals(campus.getId())))
+                    .map(campus -> {
+                        String curricularUnitName = course.getCurricularUnit().getName();
+                        String period = course.getPeriod();
+                        String campusName = campus.getName();
+                        String displayName = String.format("%s - %s - %s", curricularUnitName, period, campusName);
+
+                        return edu.utec.planificador.dto.response.TeacherCourseResponse.builder()
+                            .teacherId(teacherId)
+                            .courseId(course.getId())
+                            .displayName(displayName)
+                            .curricularUnitName(curricularUnitName)
+                            .period(period)
+                            .campusName(campusName)
+                            .build();
+                    });
+            })
+            .sorted((a, b) -> a.getDisplayName().compareTo(b.getDisplayName()))
+            .toList();
+
+        log.info("Found {} courses for teacher {} and curricular unit {}", response.size(), teacherId, curricularUnitId);
+
+        return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public edu.utec.planificador.dto.response.CourseDetailedInfoResponse getCourseDetailedInfo(Long courseId) {
+        log.debug("Getting detailed info for course {}", courseId);
+
+        // Find course with necessary relationships
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+
+        // Get curricular unit
+        CurricularUnit curricularUnit = course.getCurricularUnit();
+        
+        // Get term and program
+        String programName = curricularUnit.getTerm() != null && curricularUnit.getTerm().getProgram() != null
+            ? curricularUnit.getTerm().getProgram().getName()
+            : null;
+        
+        Integer semesterNumber = curricularUnit.getTerm() != null 
+            ? curricularUnit.getTerm().getNumber()
+            : null;
+
+        // Get teachers information
+        List<edu.utec.planificador.dto.response.CourseDetailedInfoResponse.TeacherInfo> teachersInfo = 
+            course.getTeachers().stream()
+                .map(teacher -> {
+                    User user = teacher.getUser();
+                    return edu.utec.planificador.dto.response.CourseDetailedInfoResponse.TeacherInfo.builder()
+                        .name(user.getPersonalData() != null ? user.getPersonalData().getName() : null)
+                        .lastName(user.getPersonalData() != null ? user.getPersonalData().getLastName() : null)
+                        .email(user.getUtecEmail())
+                        .build();
+                })
+                .toList();
+
+        // Convert domain areas to display values
+        List<String> domainAreasDisplay = curricularUnit.getDomainAreas().stream()
+            .map(area -> area.getDisplayValue())
+            .toList();
+
+        // Convert professional competencies to display values
+        List<String> professionalCompetenciesDisplay = curricularUnit.getProfessionalCompetencies().stream()
+            .map(competency -> competency.getDisplayValue())
+            .toList();
+
+        // Build response
+        edu.utec.planificador.dto.response.CourseDetailedInfoResponse response = 
+            edu.utec.planificador.dto.response.CourseDetailedInfoResponse.builder()
+                .courseId(course.getId())
+                .programName(programName)
+                .curricularUnitName(curricularUnit.getName())
+                .teachers(teachersInfo)
+                .credits(curricularUnit.getCredits())
+                .semesterNumber(semesterNumber)
+                .domainAreas(domainAreasDisplay)
+                .professionalCompetencies(professionalCompetenciesDisplay)
+                .build();
+
+        log.info("Retrieved detailed info for course {}", courseId);
+
+        return response;
+    }
 }

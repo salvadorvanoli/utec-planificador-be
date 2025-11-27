@@ -543,5 +543,72 @@ public class CourseController {
         
         return ResponseEntity.ok(statistics);
     }
-}
 
+    @GetMapping("/teacher/{teacherId}/curricular-unit/{curricularUnitId}")
+    @PreAuthorize("hasAnyRole('COORDINATOR', 'ADMINISTRATOR', 'EDUCATION_MANAGER', 'ANALYST', 'TEACHER')")
+    @Operation(
+        summary = "Get courses for a teacher by curricular unit",
+        description = "Returns a list of courses for a specific teacher filtered by curricular unit, " +
+                      "with formatted display names in the format: 'Curricular Unit - Period - Campus'"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Courses retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = edu.utec.planificador.dto.response.TeacherCourseResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Teacher or curricular unit not found",
+            content = @Content
+        )
+    })
+    public ResponseEntity<List<edu.utec.planificador.dto.response.TeacherCourseResponse>> getTeacherCoursesByCurricularUnit(
+        @PathVariable Long teacherId,
+        @PathVariable Long curricularUnitId
+    ) {
+        log.info("GET /courses/teacher/{}/curricular-unit/{} - Getting teacher courses by curricular unit", teacherId, curricularUnitId);
+        
+        List<edu.utec.planificador.dto.response.TeacherCourseResponse> courses = 
+            courseService.getTeacherCoursesByCurricularUnit(teacherId, curricularUnitId);
+        
+        return ResponseEntity.ok(courses);
+    }
+
+    @GetMapping("/{id}/detailed-info")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
+    @Operation(
+        summary = "Get detailed course information",
+        description = "Returns comprehensive information about a course including: program name (career), " +
+                      "curricular unit name, teachers' names and emails, number of credits, semester number, " +
+                      "domain areas, and professional competencies"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Course detailed information retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = edu.utec.planificador.dto.response.CourseDetailedInfoResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Course not found",
+            content = @Content
+        )
+    })
+    public ResponseEntity<edu.utec.planificador.dto.response.CourseDetailedInfoResponse> getCourseDetailedInfo(
+        @PathVariable Long id
+    ) {
+        log.info("GET /courses/{}/detailed-info - Getting detailed course information", id);
+        
+        edu.utec.planificador.dto.response.CourseDetailedInfoResponse response = 
+            courseService.getCourseDetailedInfo(id);
+        
+        return ResponseEntity.ok(response);
+    }
+}

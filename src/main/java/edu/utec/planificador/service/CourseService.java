@@ -50,4 +50,10 @@ public interface CourseService {
 
     // Course statistics
     CourseStatisticsDto getCourseStatistics(Long courseId);
+
+    // Get courses for a teacher filtered by curricular unit
+    List<edu.utec.planificador.dto.response.TeacherCourseResponse> getTeacherCoursesByCurricularUnit(Long teacherId, Long curricularUnitId);
+
+    // Get detailed course information
+    edu.utec.planificador.dto.response.CourseDetailedInfoResponse getCourseDetailedInfo(Long courseId);
 }
