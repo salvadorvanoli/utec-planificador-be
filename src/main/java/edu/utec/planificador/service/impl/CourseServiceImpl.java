@@ -25,7 +25,6 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
-import edu.utec.planificador.service.AuditService;
 import edu.utec.planificador.service.CourseService;
 import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
@@ -58,7 +57,6 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final CourseStatisticsMapper courseStatisticsMapper;
     private final AccessControlService accessControlService;
-    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -202,13 +200,6 @@ public class CourseServiceImpl implements CourseService {
         Course savedCourse = courseRepository.save(course);
         
         log.info("Course created successfully with id: {} and {} teacher(s)", savedCourse.getId(), teachers.size());
-        
-        // Audit logging
-        auditService.logAction(
-            AuditService.Actions.CREATE_COURSE,
-            "Course",
-            savedCourse.getId()
-        );
         
         return courseMapper.toResponse(savedCourse);
     }
@@ -374,13 +365,6 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Course updated successfully with id: {} and {} teacher(s)", id, teachers.size());
         
-        // Audit logging
-        auditService.logAction(
-            AuditService.Actions.UPDATE_COURSE,
-            "Course",
-            updatedCourse.getId()
-        );
-        
         return courseMapper.toResponse(updatedCourse);
     }
 
@@ -418,13 +402,6 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Course deleted successfully with id: {} (along with {} weekly plannings)", 
             id, course.getWeeklyPlannings() != null ? course.getWeeklyPlannings().size() : 0);
-        
-        // Audit logging
-        auditService.logAction(
-            AuditService.Actions.DELETE_COURSE,
-            "Course",
-            id
-        );
     }
 
     @Override
