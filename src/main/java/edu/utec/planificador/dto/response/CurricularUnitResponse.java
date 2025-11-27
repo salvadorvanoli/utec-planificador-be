@@ -35,6 +35,6 @@ public class CurricularUnitResponse {
     @Builder.Default
     private Set<ProfessionalCompetency> professionalCompetencies = new HashSet<>();
 
-    @Schema(description = "Term ID", example = "1")
-    private Long termId;
+    @Schema(description = "Term information")
+    private TermResponse term;
 }

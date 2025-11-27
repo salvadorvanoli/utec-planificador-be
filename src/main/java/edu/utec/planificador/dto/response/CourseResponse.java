@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,6 +61,9 @@ public class CourseResponse {
     @Builder.Default
     private Set<UniversalDesignLearningPrinciple> universalDesignLearningPrinciples = new HashSet<>();
 
-    @Schema(description = "Curricular unit ID", example = "1")
-    private Long curricularUnitId;
+    @Schema(description = "Curricular unit information")
+    private CurricularUnitResponse curricularUnit;
+
+    @Schema(description = "Teachers information")
+    private List<UserBasicResponse> teachers;
 }

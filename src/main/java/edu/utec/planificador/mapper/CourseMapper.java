@@ -2,6 +2,7 @@ package edu.utec.planificador.mapper;
 
 import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
+import edu.utec.planificador.dto.response.CurricularUnitResponse;
 import edu.utec.planificador.dto.response.UserBasicResponse;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.Modification;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CourseMapper {
 
+    private final CurricularUnitMapper curricularUnitMapper;
     private final UserMapper userMapper;
 
     /**
@@ -25,6 +27,12 @@ public class CourseMapper {
         if (course == null) {
             return null;
         }
+
+        CurricularUnitResponse curricularUnit = curricularUnitMapper.toResponse(course.getCurricularUnit());
+
+        List<UserBasicResponse> teachers = course.getTeachers().stream()
+            .map(teacher -> userMapper.toBasicResponse(teacher.getUser()))
+            .toList();
 
         return CourseResponse.builder()
             .id(course.getId())
@@ -38,7 +46,8 @@ public class CourseMapper {
             .involvesActivitiesWithProductiveSector(course.getInvolvesActivitiesWithProductiveSector())
             .sustainableDevelopmentGoals(course.getSustainableDevelopmentGoals())
             .universalDesignLearningPrinciples(course.getUniversalDesignLearningPrinciples())
-            .curricularUnitId(course.getCurricularUnit().getId())
+            .curricularUnit(curricularUnit)
+            .teachers(teachers)
             .build();
     }
 
