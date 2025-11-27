@@ -15,7 +15,14 @@ import java.util.Optional;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
-    // Primera query: cargar el curso con la estructura básica
+    /**
+     * Carga el curso con sus relaciones principales usando dos queries para evitar MultipleBagFetchException.
+     * Primera query: curso + curricularUnit + weeklyPlannings
+     * Segunda query: teachers (se ejecuta automáticamente en la transacción)
+     * 
+     * @param courseId ID del curso
+     * @return Optional con el curso y sus relaciones cargadas
+     */
     @Query("""
         SELECT DISTINCT c FROM Course c
         LEFT JOIN FETCH c.curricularUnit cu
@@ -25,6 +32,21 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
         WHERE c.id = :courseId
         """)
     Optional<Course> findByIdWithWeeklyPlannings(@Param("courseId") Long courseId);
+
+    /**
+     * Carga solo los teachers del curso (query auxiliar para evitar MultipleBagFetchException).
+     * Debe ejecutarse dentro de la misma transacción que findByIdWithWeeklyPlannings.
+     * 
+     * @param courseId ID del curso
+     * @return Optional con el curso y sus teachers cargados
+     */
+    @Query("""
+        SELECT c FROM Course c
+        LEFT JOIN FETCH c.teachers teach
+        LEFT JOIN FETCH teach.user u
+        WHERE c.id = :courseId
+        """)
+    Optional<Course> findByIdWithTeachers(@Param("courseId") Long courseId);
 
     // Query para buscar el último curso de una unidad curricular con un docente específico
     @Query("""

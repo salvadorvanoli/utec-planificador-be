@@ -25,6 +25,7 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
+import edu.utec.planificador.service.AuditService;
 import edu.utec.planificador.service.CourseService;
 import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
@@ -57,6 +58,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final CourseStatisticsMapper courseStatisticsMapper;
     private final AccessControlService accessControlService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -201,6 +203,13 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Course created successfully with id: {} and {} teacher(s)", savedCourse.getId(), teachers.size());
         
+        // Audit logging
+        auditService.logAction(
+            AuditService.Actions.CREATE_COURSE,
+            "Course",
+            savedCourse.getId()
+        );
+        
         return courseMapper.toResponse(savedCourse);
     }
 
@@ -212,10 +221,15 @@ public class CourseServiceImpl implements CourseService {
         // Validate access to course
         accessControlService.validateCourseAccess(id);
 
-        Course course = courseRepository.findById(id)
+        // Cargar el curso con weeklyPlannings (primera query)
+        Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
-        // Mapear dentro de la transacción para acceder a colecciones LAZY
+        // Cargar teachers en query separada (evita MultipleBagFetchException con weeklyPlannings)
+        // Hibernate detecta que es el mismo objeto en la sesión y actualiza la colección teachers
+        courseRepository.findByIdWithTeachers(id);
+        
+        // Mapear dentro de la transacción para acceder a todas las colecciones
         return courseMapper.toResponse(course);
     }
 
@@ -249,7 +263,7 @@ public class CourseServiceImpl implements CourseService {
         
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
@@ -360,6 +374,13 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Course updated successfully with id: {} and {} teacher(s)", id, teachers.size());
         
+        // Audit logging
+        auditService.logAction(
+            AuditService.Actions.UPDATE_COURSE,
+            "Course",
+            updatedCourse.getId()
+        );
+        
         return courseMapper.toResponse(updatedCourse);
     }
 
@@ -397,6 +418,13 @@ public class CourseServiceImpl implements CourseService {
         
         log.info("Course deleted successfully with id: {} (along with {} weekly plannings)", 
             id, course.getWeeklyPlannings() != null ? course.getWeeklyPlannings().size() : 0);
+        
+        // Audit logging
+        auditService.logAction(
+            AuditService.Actions.DELETE_COURSE,
+            "Course",
+            id
+        );
     }
 
     @Override
@@ -493,7 +521,7 @@ public class CourseServiceImpl implements CourseService {
         // Validate planning management access to course
         accessControlService.validateCoursePlanningManagement(courseId);
 
-        Course course = courseRepository.findById(courseId)
+        Course course = courseRepository.findByIdWithWeeklyPlannings(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         
         course.getSustainableDevelopmentGoals().add(goal);
@@ -538,7 +566,7 @@ public class CourseServiceImpl implements CourseService {
         // Validate planning management access to course
         accessControlService.validateCoursePlanningManagement(courseId);
 
-        Course course = courseRepository.findById(courseId)
+        Course course = courseRepository.findByIdWithWeeklyPlannings(courseId)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         
         course.getUniversalDesignLearningPrinciples().add(principle);
