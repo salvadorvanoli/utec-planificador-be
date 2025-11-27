@@ -11,6 +11,6 @@ import java.util.List;
 @Repository
 public interface OfficeHoursRepository extends JpaRepository<OfficeHours, Long> {
 
-    @Query("SELECT oh FROM OfficeHours oh WHERE oh.course.id = :courseId ORDER BY oh.date ASC, oh.startHour ASC")
+    @Query("SELECT oh FROM OfficeHours oh WHERE oh.course.id = :courseId ORDER BY oh.date ASC, oh.startTime ASC")
     List<OfficeHours> findByCourseId(@Param("courseId") Long courseId);
 }

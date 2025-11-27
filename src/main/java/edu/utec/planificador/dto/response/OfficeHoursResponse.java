@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @Builder
@@ -11,7 +12,7 @@ public class OfficeHoursResponse {
 
     private Long id;
     private LocalDate date;
-    private Integer startHour;
-    private Integer endHour;
+    private LocalTime startTime;
+    private LocalTime endTime;
     private Long courseId;
 }
