@@ -5,10 +5,9 @@ import edu.utec.planificador.enumeration.AuthProvider;
 import edu.utec.planificador.exception.InvalidCredentialsException;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AuthenticationStrategy;
+import edu.utec.planificador.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +18,7 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MessageSource messageSource;
+    private final MessageService messageService;
 
     @Override
     public User authenticate(String email, String password) {
@@ -30,9 +29,7 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
                 log.warn("LOCAL authentication failed for {}: user not found", email);
 
                 return new InvalidCredentialsException(
-                    messageSource.getMessage("auth.error.invalid-credentials", 
-                        null, 
-                        LocaleContextHolder.getLocale())
+                    messageService.getMessage("auth.error.invalid-credentials")
                 );
             });
 
@@ -44,10 +41,9 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
             );
 
             throw new InvalidCredentialsException(
-                messageSource.getMessage(
+                messageService.getMessage(
                     "auth.error.incorrect-auth-provider",
-                    new Object[]{user.getAuthProvider().getDisplayName()},
-                    LocaleContextHolder.getLocale()
+                    user.getAuthProvider().getDisplayName()
                 )
             );
         }
@@ -56,10 +52,7 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
             log.warn("LOCAL authentication failed for {}: account disabled", email);
 
             throw new InvalidCredentialsException(
-                messageSource.getMessage("auth.error.account-disabled", 
-                    null, 
-                    LocaleContextHolder.getLocale()
-                )
+                messageService.getMessage("auth.error.account-disabled")
             );
         }
 
@@ -67,9 +60,7 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
             log.warn("LOCAL authentication failed for {}: invalid password", email);
 
             throw new InvalidCredentialsException(
-                messageSource.getMessage("auth.error.invalid-credentials", 
-                    null, 
-                    LocaleContextHolder.getLocale())
+                messageService.getMessage("auth.error.invalid-credentials")
             );
         }
 

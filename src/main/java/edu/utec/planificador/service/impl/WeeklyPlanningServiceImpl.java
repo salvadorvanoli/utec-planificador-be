@@ -8,6 +8,7 @@ import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.WeeklyPlanningRepository;
 import edu.utec.planificador.service.AccessControlService;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.WeeklyPlanningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     private final WeeklyPlanningRepository weeklyPlanningRepository;
     private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -36,7 +38,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
 
         WeeklyPlanning weeklyPlanning = new WeeklyPlanning(
             request.getWeekNumber(),
@@ -63,7 +65,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         accessControlService.validateWeeklyPlanningAccess(id);
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", id)));
 
         return mapToResponse(weeklyPlanning);
     }
@@ -78,7 +80,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
 
         // Verify course exists
         if (!courseRepository.existsById(courseId)) {
-            throw new ResourceNotFoundException("Course not found with id: " + courseId);
+            throw new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId));
         }
 
         List<WeeklyPlanning> weeklyPlannings = weeklyPlanningRepository.findByCourseId(courseId);
@@ -125,13 +127,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     public WeeklyPlanningResponse updateWeeklyPlanning(Long id, WeeklyPlanningRequest request) {
         // Find the course associated with this weekly planning
         Course course = courseRepository.findByWeeklyPlanningId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-planning", id)));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", id)));
 
         weeklyPlanning.setWeekNumber(request.getWeekNumber());
         weeklyPlanning.setStartDate(request.getStartDate());
@@ -153,13 +155,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     public void deleteWeeklyPlanning(Long id) {
         // Find the course associated with this weekly planning
         Course course = courseRepository.findByWeeklyPlanningId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-planning", id)));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         if (!weeklyPlanningRepository.existsById(id)) {
-            throw new ResourceNotFoundException("WeeklyPlanning not found with id: " + id);
+            throw new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", id));
         }
 
         weeklyPlanningRepository.deleteById(id);
@@ -173,13 +175,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
 
         // Find the course associated with this weekly planning
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-planning", weeklyPlanningId)));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", weeklyPlanningId)));
 
         if (!weeklyPlanning.getBibliographicReferences().contains(reference)) {
             weeklyPlanning.getBibliographicReferences().add(reference);
@@ -199,7 +201,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         accessControlService.validateWeeklyPlanningAccess(weeklyPlanningId);
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", weeklyPlanningId)));
 
         return weeklyPlanning.getBibliographicReferences();
     }
@@ -211,13 +213,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
 
         // Find the course associated with this weekly planning
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning with id: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-planning", weeklyPlanningId)));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         WeeklyPlanning weeklyPlanning = weeklyPlanningRepository.findById(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("WeeklyPlanning not found with id: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", weeklyPlanningId)));
 
         if (weeklyPlanning.getBibliographicReferences().remove(reference)) {
             weeklyPlanningRepository.save(weeklyPlanning);

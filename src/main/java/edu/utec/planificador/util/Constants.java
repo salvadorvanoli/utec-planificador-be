@@ -47,6 +47,8 @@ public final class Constants {
     public static final int MAX_WEEK_NUMBER = 52;
 
     private Constants() {
-        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException(
+            "Esta es una clase de utilidad y no puede ser instanciada"
+        );
     }
 }

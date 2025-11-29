@@ -12,6 +12,7 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ModificationRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.ModificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class ModificationServiceImpl implements ModificationService {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
+    private final MessageService messageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -189,7 +191,7 @@ public class ModificationServiceImpl implements ModificationService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
 
         return fullUser.getPositions().stream()
             .filter(position -> position instanceof Teacher)
@@ -204,7 +206,7 @@ public class ModificationServiceImpl implements ModificationService {
             .filter(course -> course.getWeeklyPlannings().stream()
                 .anyMatch(wp -> wp.getId().equals(weeklyPlanningId)))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Course not found for weekly planning: " + weeklyPlanningId));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.course.not-found-for-weekly-planning", weeklyPlanningId)));
     }
 
     private ModificationResponse mapToResponse(Modification modification) {

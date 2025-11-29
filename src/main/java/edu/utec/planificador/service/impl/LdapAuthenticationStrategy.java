@@ -5,12 +5,11 @@ import edu.utec.planificador.enumeration.AuthProvider;
 import edu.utec.planificador.exception.InvalidCredentialsException;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AuthenticationStrategy;
+import edu.utec.planificador.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.Filter;
@@ -25,7 +24,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
 
     private final UserRepository userRepository;
     private final LdapTemplate ldapTemplate;
-    private final MessageSource messageSource;
+    private final MessageService messageService;
 
     @Value("${security.ldap.base:dc=utec,dc=edu,dc=uy}")
     private String ldapBase;
@@ -33,11 +32,11 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
     @Autowired
     public LdapAuthenticationStrategy(
         UserRepository userRepository,
-        MessageSource messageSource,
+        MessageService messageService,
         @Autowired(required = false) LdapTemplate ldapTemplate
     ) {
         this.userRepository = userRepository;
-        this.messageSource = messageSource;
+        this.messageService = messageService;
         this.ldapTemplate = ldapTemplate;
     }
 
@@ -48,11 +47,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
         if (ldapTemplate == null) {
             log.error("LDAP template is not configured");
             throw new InvalidCredentialsException(
-                messageSource.getMessage(
-                    "auth.error.ldap-not-enabled",
-                    null,
-                    LocaleContextHolder.getLocale()
-                )
+                messageService.getMessage("auth.error.ldap-not-enabled")
             );
         }
 
@@ -63,11 +58,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
                 log.warn("LDAP authentication failed for {}: invalid LDAP credentials", email);
 
                 throw new InvalidCredentialsException(
-                    messageSource.getMessage(
-                        "auth.error.invalid-credentials",
-                        null,
-                        LocaleContextHolder.getLocale()
-                    )
+                    messageService.getMessage("auth.error.invalid-credentials")
                 );
             }
 
@@ -76,11 +67,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
             if (!user.isEnabled()) {
                 log.warn("LDAP authentication failed for {}: account disabled", email);
                 throw new InvalidCredentialsException(
-                    messageSource.getMessage(
-                    "auth.error.account-disabled",
-                        null,
-                        LocaleContextHolder.getLocale()
-                    )
+                    messageService.getMessage("auth.error.account-disabled")
                 );
             }
 
@@ -92,11 +79,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
         } catch (Exception e) {
             log.error("LDAP authentication error for user {}: {}", email, e.getMessage());
             throw new InvalidCredentialsException(
-                messageSource.getMessage(
-                    "auth.error.ldap-error",
-                    new Object[]{e.getMessage()},
-                    LocaleContextHolder.getLocale()
-                ), 
+                messageService.getMessage("auth.error.ldap-error", e.getMessage()), 
                 e
             );
         }
@@ -140,11 +123,7 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
             log.warn("LDAP authentication failed for {}: user not found in local database", email);
 
             throw new InvalidCredentialsException(
-                messageSource.getMessage(
-                    "auth.error.invalid-credentials",
-                    null,
-                    LocaleContextHolder.getLocale()
-                )
+                messageService.getMessage("auth.error.invalid-credentials")
             );
         }
 
@@ -157,10 +136,9 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
                 user.getAuthProvider()
             );
             throw new InvalidCredentialsException(
-                messageSource.getMessage(
+                messageService.getMessage(
                     "auth.error.incorrect-auth-provider",
-                    new Object[]{user.getAuthProvider().getDisplayName()},
-                    LocaleContextHolder.getLocale()
+                    user.getAuthProvider().getDisplayName()
                 )
             );
         }

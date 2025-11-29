@@ -1,5 +1,6 @@
 package edu.utec.planificador.util;
 
+import edu.utec.planificador.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,14 +24,19 @@ public class EncryptionUtil {
 
     private final SecretKey secretKey;
     private final SecureRandom secureRandom;
+    private final MessageService messageService;
 
-    public EncryptionUtil(@Value("${security.encryption.secret}") String encryptionSecret) {
+    public EncryptionUtil(
+        @Value("${security.encryption.secret}") String encryptionSecret,
+        MessageService messageService
+    ) {
         byte[] keyBytes = encryptionSecret.getBytes(StandardCharsets.UTF_8);
         byte[] key = new byte[32];
         System.arraycopy(keyBytes, 0, key, 0, Math.min(keyBytes.length, 32));
 
         this.secretKey = new SecretKeySpec(key, "AES");
         this.secureRandom = new SecureRandom();
+        this.messageService = messageService;
 
         log.info("EncryptionUtil initialized with AES-256-GCM");
     }
@@ -57,7 +63,9 @@ public class EncryptionUtil {
 
         } catch (Exception e) {
             log.error("Error encrypting data", e);
-            throw new RuntimeException("Error encrypting data", e);
+            throw new RuntimeException(
+                messageService.getMessage("error.encryption.encrypt-failed"), e
+            );
         }
     }
 
@@ -82,7 +90,9 @@ public class EncryptionUtil {
 
         } catch (Exception e) {
             log.error("Error decrypting data", e);
-            throw new RuntimeException("Error decrypting data", e);
+            throw new RuntimeException(
+                messageService.getMessage("error.encryption.decrypt-failed"), e
+            );
         }
     }
 

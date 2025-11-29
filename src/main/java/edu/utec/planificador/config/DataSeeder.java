@@ -472,7 +472,7 @@ public class DataSeeder implements CommandLineRunner {
         Teacher savedTeacherRivera = (Teacher) user2.getPositions().stream()
             .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusRivera))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Teacher position not found for user2"));
+            .orElseThrow(() -> new RuntimeException("Posición de docente no encontrada para user2"));
 
         // Crear curso para ITR Norte (solo User 2 tiene acceso)
         Course courseRivera = new Course(

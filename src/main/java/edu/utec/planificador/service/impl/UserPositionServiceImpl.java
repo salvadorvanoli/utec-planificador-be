@@ -7,6 +7,7 @@ import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.mapper.PositionMapper;
 import edu.utec.planificador.mapper.UserMapper;
 import edu.utec.planificador.repository.UserRepository;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.UserPositionService;
 import edu.utec.planificador.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class UserPositionServiceImpl implements UserPositionService {
     private final PositionMapper positionMapper;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
+    private final MessageService messageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,7 +39,7 @@ public class UserPositionServiceImpl implements UserPositionService {
         log.debug("Getting positions for user: {}", currentUser.getUtecEmail());
 
         User user = userRepository.findByIdWithPositions(currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
 
         user.getPositions().forEach(position -> {
             position.getCampuses().size();

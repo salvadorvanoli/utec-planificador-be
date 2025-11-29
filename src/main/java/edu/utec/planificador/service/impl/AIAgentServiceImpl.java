@@ -1,7 +1,10 @@
 package edu.utec.planificador.service.impl;
 
 import edu.utec.planificador.config.AIAgentProperties;
-import edu.utec.planificador.dto.aiagent.*;
+import edu.utec.planificador.dto.aiagent.AIChatRequest;
+import edu.utec.planificador.dto.aiagent.AIReportRequest;
+import edu.utec.planificador.dto.aiagent.AISuggestionsRequest;
+import edu.utec.planificador.dto.aiagent.CoursePlanningDto;
 import edu.utec.planificador.dto.response.ChatResponse;
 import edu.utec.planificador.dto.response.ReportResponse;
 import edu.utec.planificador.dto.response.SuggestionsResponse;
@@ -13,9 +16,15 @@ import edu.utec.planificador.mapper.CourseStatisticsMapper;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.AIAgentService;
+import edu.utec.planificador.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -32,6 +41,7 @@ public class AIAgentServiceImpl implements AIAgentService {
     private final CoursePlanningMapper coursePlanningMapper;
     private final CourseStatisticsMapper courseStatisticsMapper;
     private final AccessControlService accessControlService;
+    private final MessageService messageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -70,7 +80,9 @@ public class AIAgentServiceImpl implements AIAgentService {
             );
 
             if (response.getBody() == null) {
-                throw new AIAgentException("Respuesta vacía del agente de IA");
+                throw new AIAgentException(
+                    messageService.getMessage("error.ai.empty-response")
+                );
             }
 
             log.info("Chat message sent successfully");
@@ -78,7 +90,9 @@ public class AIAgentServiceImpl implements AIAgentService {
 
         } catch (RestClientException e) {
             log.error("Error comunicándose con el agente de IA: {}", e.getMessage());
-            throw new AIAgentException("Error al comunicarse con el agente de IA: " + e.getMessage());
+            throw new AIAgentException(
+                messageService.getMessage("error.ai.communication-error", e.getMessage())
+            );
         }
     }
 
@@ -112,7 +126,7 @@ public class AIAgentServiceImpl implements AIAgentService {
             );
 
             if (response.getBody() == null) {
-                throw new AIAgentException("Respuesta vacía del agente de IA");
+                throw new AIAgentException(messageService.getMessage("error.ai.empty-response"));
             }
 
             log.info("Suggestions retrieved successfully");
@@ -120,7 +134,7 @@ public class AIAgentServiceImpl implements AIAgentService {
 
         } catch (RestClientException e) {
             log.error("Error comunicándose con el agente de IA: {}", e.getMessage());
-            throw new AIAgentException("Error al comunicarse con el agente de IA: " + e.getMessage());
+            throw new AIAgentException(messageService.getMessage("error.ai.communication-error", e.getMessage()));
         }
     }
 
@@ -157,7 +171,7 @@ public class AIAgentServiceImpl implements AIAgentService {
             );
 
             if (response.getBody() == null) {
-                throw new AIAgentException("Respuesta vacía del agente de IA");
+                throw new AIAgentException(messageService.getMessage("error.ai.empty-response"));
             }
 
             log.info("Report generated successfully");
@@ -165,7 +179,7 @@ public class AIAgentServiceImpl implements AIAgentService {
 
         } catch (RestClientException e) {
             log.error("Error comunicándose con el agente de IA: {}", e.getMessage());
-            throw new AIAgentException("Error al comunicarse con el agente de IA: " + e.getMessage());
+            throw new AIAgentException(messageService.getMessage("error.ai.communication-error", e.getMessage()));
         }
     }
 
@@ -182,13 +196,13 @@ public class AIAgentServiceImpl implements AIAgentService {
 
         } catch (RestClientException e) {
             log.error("Error comunicándose con el agente de IA: {}", e.getMessage());
-            throw new AIAgentException("Error al comunicarse con el agente de IA: " + e.getMessage());
+            throw new AIAgentException(messageService.getMessage("error.ai.communication-error", e.getMessage()));
         }
     }
 
     private Course getCourseWithDetails(Long courseId) {
         return courseRepository.findByIdWithFullDetails(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
     }
 }
 

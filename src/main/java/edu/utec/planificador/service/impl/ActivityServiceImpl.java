@@ -17,6 +17,7 @@ import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ProgrammaticContentRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.ActivityService;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.ModificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class ActivityServiceImpl implements ActivityService {
     private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
     private final ModificationService modificationService;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -45,13 +47,13 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Find the course associated with this programmatic content
         Course course = courseRepository.findByProgrammaticContentId(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for programmatic content with id: " + request.getProgrammaticContentId()));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content", request.getProgrammaticContentId())));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", request.getProgrammaticContentId())));
 
         Activity activity = new Activity(
             request.getDescription(),
@@ -103,7 +105,7 @@ public class ActivityServiceImpl implements ActivityService {
         accessControlService.validateActivityAccess(id);
 
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
 
         return mapToResponse(activity);
     }
@@ -112,15 +114,15 @@ public class ActivityServiceImpl implements ActivityService {
     @Transactional
     public ActivityResponse updateActivity(Long id, ActivityRequest request) {
         Course course = courseRepository.findByActivityId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-activity", id)));
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException("ProgrammaticContent not found with id: " + request.getProgrammaticContentId()));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", request.getProgrammaticContentId())));
 
         String oldTitle = activity.getTitle();
         String oldDescription = activity.getDescription();
@@ -194,12 +196,12 @@ public class ActivityServiceImpl implements ActivityService {
     @Transactional
     public void deleteActivity(Long id) {
         Course course = courseRepository.findByActivityId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for activity with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-activity", id)));
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
 
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {

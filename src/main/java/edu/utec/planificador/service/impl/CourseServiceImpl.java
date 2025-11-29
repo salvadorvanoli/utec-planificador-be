@@ -4,13 +4,16 @@ import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
 import edu.utec.planificador.dto.response.CourseBasicResponse;
 import edu.utec.planificador.dto.response.CourseBriefResponse;
+import edu.utec.planificador.dto.response.CourseDetailedInfoResponse;
 import edu.utec.planificador.dto.response.CoursePdfDataResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.dto.response.TeacherCourseResponse;
 import edu.utec.planificador.entity.Activity;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.OfficeHours;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
@@ -19,6 +22,7 @@ import edu.utec.planificador.enumeration.DeliveryFormat;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
+import edu.utec.planificador.exception.ForbiddenException;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.mapper.CourseMapper;
 import edu.utec.planificador.mapper.CourseStatisticsMapper;
@@ -28,6 +32,7 @@ import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.repository.UserRepository;
 import edu.utec.planificador.service.AccessControlService;
 import edu.utec.planificador.service.CourseService;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.specification.CourseSpecification;
 import edu.utec.planificador.util.WeeklyPlanningGenerator;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +67,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final CourseStatisticsMapper courseStatisticsMapper;
     private final AccessControlService accessControlService;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -71,19 +77,23 @@ public class CourseServiceImpl implements CourseService {
         // Validate startDate <= endDate
         if (request.getStartDate() != null && request.getEndDate() != null && 
             request.getStartDate().isAfter(request.getEndDate())) {
-            throw new IllegalArgumentException("Start date cannot be after end date");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.start-after-end")
+            );
         }
         
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
-            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.curricular-unit.not-found", request.getCurricularUnitId())
+            ));
         
         Long programId = curricularUnit.getTerm().getProgram().getId();
         List<Campus> programCampuses = campusRepository.findByProgram(programId);
         
         if (programCampuses.isEmpty()) {
-            throw new IllegalStateException("Program with id " + programId + " is not offered at any campus");
+            throw new IllegalStateException(messageService.getMessage("error.course.program-no-campuses", programId));
         }
         
         List<Long> programCampusIds = programCampuses.stream()
@@ -95,21 +105,20 @@ public class CourseServiceImpl implements CourseService {
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", userId)));
             
             Teacher teacher = user.getPositions().stream()
                 .filter(pos -> pos instanceof Teacher)
                 .map(pos -> (Teacher) pos)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " does not have a teacher position"));
+                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher", userId)));
             
             boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
                 .anyMatch(campus -> programCampusIds.contains(campus.getId()));
             
             if (!teacherBelongsToValidCampus) {
                 throw new IllegalArgumentException(
-                    String.format("Teacher with id %d does not belong to any campus where this program is offered. Required campuses: %s", 
-                    userId, programCampusIds)
+                    messageService.getMessage("error.course.teacher-wrong-campus", userId, programCampusIds)
                 );
             }
             
@@ -136,8 +145,7 @@ public class CourseServiceImpl implements CourseService {
             
             if (commonCampusIds.isEmpty()) {
                 throw new IllegalArgumentException(
-                    "All teachers must share at least one common campus where the program is offered. " +
-                    "Teachers provided do not have any campus in common."
+                    messageService.getMessage("error.course.teachers-no-common-campus")
                 );
             }
             
@@ -183,8 +191,7 @@ public class CourseServiceImpl implements CourseService {
             for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
                 if (entry.getValue() < 0) {
                     throw new IllegalArgumentException(
-                        String.format("Las horas para el formato %s no pueden ser negativas. Valor recibido: %d",
-                            entry.getKey(), entry.getValue())
+                        messageService.getMessage("error.course.invalid-hours-format", entry.getKey(), entry.getValue())
                     );
                 }
             }
@@ -260,7 +267,9 @@ public class CourseServiceImpl implements CourseService {
 
         // Cargar el curso con weeklyPlannings (primera query)
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", id)
+            ));
         
         // Cargar teachers en query separada (evita MultipleBagFetchException con weeklyPlannings)
         // Hibernate detecta que es el mismo objeto en la sesión y actualiza la colección teachers
@@ -567,7 +576,7 @@ public class CourseServiceImpl implements CourseService {
             return;
         }
         
-        List<edu.utec.planificador.entity.OfficeHours> officeHoursToRemove = course.getOfficeHours().stream()
+        List<OfficeHours> officeHoursToRemove = course.getOfficeHours().stream()
             .filter(oh -> oh.getDate().isBefore(newStartDate) || oh.getDate().isAfter(newEndDate))
             .toList();
         
@@ -575,7 +584,7 @@ public class CourseServiceImpl implements CourseService {
             log.info("Removing {} office hour(s) that fall outside new course date range [{} to {}]", 
                 officeHoursToRemove.size(), newStartDate, newEndDate);
             
-            for (edu.utec.planificador.entity.OfficeHours oh : officeHoursToRemove) {
+            for (OfficeHours oh : officeHoursToRemove) {
                 log.debug("Removing office hour on {} (outside new range)", oh.getDate());
             }
             
@@ -704,7 +713,7 @@ public class CourseServiceImpl implements CourseService {
     private void validateTeacherDoesntModifyTeachersListOrCurricularUnit(Course course, CourseRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userRepository.findByUtecEmail(authentication.getName())
-            .orElseThrow(() -> new RuntimeException("Current user not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.current-not-found")));
         
         boolean isTeacherOfCourse = course.getTeachers().stream()
             .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
@@ -714,7 +723,9 @@ public class CourseServiceImpl implements CourseService {
             if (!course.getCurricularUnit().getId().equals(request.getCurricularUnitId())) {
                 log.warn("Teacher {} attempted to change curricularUnit for course {}", 
                     currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException("Teachers cannot modify the curricular unit of a course");
+                throw new IllegalArgumentException(
+                    messageService.getMessage("error.course.teacher-cannot-modify-cu")
+                );
             }
             
             // Check if teacher is trying to change the teachers list
@@ -726,7 +737,9 @@ public class CourseServiceImpl implements CourseService {
             if (!currentTeacherIds.equals(requestedTeacherIds)) {
                 log.warn("Teacher {} attempted to modify teachers list for course {}", 
                     currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException("Teachers cannot modify the assigned teachers of a course");
+                throw new IllegalArgumentException(
+                    messageService.getMessage("error.course.teacher-cannot-modify-teachers")
+                );
             }
             
             log.debug("Teacher {} validation passed for course {} update", 
@@ -745,14 +758,16 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", id)));
         
         // Additional validation: Teachers cannot modify curricularUnit or teachers list
         validateTeacherDoesntModifyTeachersListOrCurricularUnit(course, request);
         
         // Validate that the course has not finished
         if (course.getEndDate() != null && course.getEndDate().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("Cannot modify a course that has already finished");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.already-finished")
+            );
         }
         
         // CRITICAL: Detect changes BEFORE modifying the course entity
@@ -792,11 +807,15 @@ public class CourseServiceImpl implements CourseService {
         }
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
-            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + request.getCurricularUnitId()));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.curricular-unit.not-found", request.getCurricularUnitId())
+            ));
         
         // Validate dates
         if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw new IllegalArgumentException("Start date must be before or equal to end date");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.start-not-before-end")
+            );
         }
         
         // Validate and update teachers
@@ -804,7 +823,9 @@ public class CourseServiceImpl implements CourseService {
         List<Campus> programCampuses = campusRepository.findByProgram(programId);
         
         if (programCampuses.isEmpty()) {
-            throw new IllegalStateException("Program with id " + programId + " is not offered at any campus");
+            throw new IllegalStateException(
+                messageService.getMessage("error.course.program-no-campuses", programId)
+            );
         }
         
         List<Long> programCampusIds = programCampuses.stream()
@@ -816,13 +837,13 @@ public class CourseServiceImpl implements CourseService {
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", userId)));
             
             Teacher teacher = user.getPositions().stream()
                 .filter(pos -> pos instanceof Teacher)
                 .map(pos -> (Teacher) pos)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " does not have a teacher position"));
+                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher", userId)));
             
             boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
                 .anyMatch(campus -> programCampusIds.contains(campus.getId()));
@@ -857,8 +878,7 @@ public class CourseServiceImpl implements CourseService {
             
             if (commonCampusIds.isEmpty()) {
                 throw new IllegalArgumentException(
-                    "All teachers must share at least one common campus where the program is offered. " +
-                    "Teachers provided do not have any campus in common."
+                    messageService.getMessage("error.course.teachers-no-common-campus")
                 );
             }
             
@@ -886,8 +906,7 @@ public class CourseServiceImpl implements CourseService {
             for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
                 if (entry.getValue() != null && entry.getValue() < 0) {
                     throw new IllegalArgumentException(
-                        String.format("Las horas para el formato %s no pueden ser negativas. Valor recibido: %d",
-                            entry.getKey(), entry.getValue())
+                        messageService.getMessage("error.course.invalid-hours-format", entry.getKey(), entry.getValue())
                     );
                 }
             }
@@ -929,23 +948,21 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCourseDeleteAccess(id);
 
         Course course = courseRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", id)
+            ));
         
         // Validate that the course doesn't have OfficeHours
         if (course.getOfficeHours() != null && !course.getOfficeHours().isEmpty()) {
             throw new IllegalStateException(
-                "Cannot delete course with id " + id + " because it has " + 
-                course.getOfficeHours().size() + " associated office hours. " +
-                "Please remove all office hours before deleting the course."
+                messageService.getMessage("error.course.has-office-hours", id, course.getOfficeHours().size())
             );
         }
         
         // Validate that the course doesn't have Modifications
         if (course.getModifications() != null && !course.getModifications().isEmpty()) {
             throw new IllegalStateException(
-                "Cannot delete course with id " + id + " because it has " + 
-                course.getModifications().size() + " associated modifications. " +
-                "Please remove all modifications before deleting the course."
+                messageService.getMessage("error.course.has-modifications", id, course.getModifications().size())
             );
         }
         
@@ -1030,9 +1047,13 @@ public class CourseServiceImpl implements CourseService {
                 log.warn("Requested course {} is not accessible by current user in campus {}", courseId, campusId);
                 boolean exists = courseRepository.existsById(courseId);
                 if (!exists) {
-                    throw new edu.utec.planificador.exception.ResourceNotFoundException("Course not found with id: " + courseId);
+                    throw new ResourceNotFoundException(
+                        messageService.getMessage("error.course.no-course-found", courseId)
+                    );
                 }
-                throw new edu.utec.planificador.exception.ForbiddenException("You don't have access to the specified course in this campus");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.course.no-access-in-campus")
+                );
             }
             return brief.stream().filter(b -> b.getId().equals(courseId)).toList();
         }
@@ -1051,7 +1072,9 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            ));
         
         course.getSustainableDevelopmentGoals().add(goal);
         Course updatedCourse = courseRepository.save(course);
@@ -1070,7 +1093,9 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            ));
         
         boolean removed = course.getSustainableDevelopmentGoals().remove(goal);
         
@@ -1096,7 +1121,9 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            ));
         
         course.getUniversalDesignLearningPrinciples().add(principle);
         Course updatedCourse = courseRepository.save(course);
@@ -1115,7 +1142,7 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
         
         boolean removed = course.getUniversalDesignLearningPrinciples().remove(principle);
         
@@ -1138,7 +1165,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Getting PDF data for course {}", courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
 
         // Build teacher info list
         List<CoursePdfDataResponse.TeacherInfo> teacherInfoList = course.getTeachers().stream()
@@ -1218,7 +1245,7 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCourseAccess(courseId);
         
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
         
         CourseStatisticsDto statistics = courseStatisticsMapper.calculateStatistics(course);
         
@@ -1229,22 +1256,25 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<edu.utec.planificador.dto.response.TeacherCourseResponse> getTeacherCoursesByCurricularUnit(Long teacherId, Long curricularUnitId) {
+    public List<TeacherCourseResponse> getTeacherCoursesByCurricularUnit(Long teacherId, Long curricularUnitId) {
         log.debug("Getting courses for teacher {} and curricular unit {}", teacherId, curricularUnitId);
 
         // Validate that the teacher exists
         User teacherUser = userRepository.findById(teacherId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + teacherId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", teacherId)));
 
         // Validate that the curricular unit exists
-        CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
-            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
+        if (!curricularUnitRepository.existsById(curricularUnitId)) {
+            throw new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found", curricularUnitId));
+        }
 
         // Find the teacher position
         Teacher teacher = (Teacher) teacherUser.getPositions().stream()
             .filter(p -> p instanceof Teacher)
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("User with id " + teacherId + " is not a teacher"));
+            .orElseThrow(() -> new IllegalStateException(
+                messageService.getMessage("error.course.user-not-teacher", teacherId)
+            ));
 
         // Get all courses where this teacher is assigned AND the curricular unit matches
         List<Course> courses = courseRepository.findAll(
@@ -1254,7 +1284,7 @@ public class CourseServiceImpl implements CourseService {
             .toList();
 
         // Build response with formatted display names
-        List<edu.utec.planificador.dto.response.TeacherCourseResponse> response = courses.stream()
+        List<TeacherCourseResponse> response = courses.stream()
             .flatMap(course -> {
                 if (course.getCurricularUnit().getTerm() == null || course.getCurricularUnit().getTerm().getProgram() == null) {
                     return java.util.stream.Stream.empty();
@@ -1273,7 +1303,7 @@ public class CourseServiceImpl implements CourseService {
                         String campusName = campus.getName();
                         String displayName = String.format("%s - %s - %s", curricularUnitName, period, campusName);
 
-                        return edu.utec.planificador.dto.response.TeacherCourseResponse.builder()
+                        return TeacherCourseResponse.builder()
                             .teacherId(teacherId)
                             .courseId(course.getId())
                             .displayName(displayName)
@@ -1293,12 +1323,12 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public edu.utec.planificador.dto.response.CourseDetailedInfoResponse getCourseDetailedInfo(Long courseId) {
+    public CourseDetailedInfoResponse getCourseDetailedInfo(Long courseId) {
         log.debug("Getting detailed info for course {}", courseId);
 
         // Find course with necessary relationships
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
 
         // Get curricular unit
         CurricularUnit curricularUnit = course.getCurricularUnit();
@@ -1313,11 +1343,11 @@ public class CourseServiceImpl implements CourseService {
             : null;
 
         // Get teachers information
-        List<edu.utec.planificador.dto.response.CourseDetailedInfoResponse.TeacherInfo> teachersInfo = 
+        List<CourseDetailedInfoResponse.TeacherInfo> teachersInfo = 
             course.getTeachers().stream()
                 .map(teacher -> {
                     User user = teacher.getUser();
-                    return edu.utec.planificador.dto.response.CourseDetailedInfoResponse.TeacherInfo.builder()
+                    return CourseDetailedInfoResponse.TeacherInfo.builder()
                         .name(user.getPersonalData() != null ? user.getPersonalData().getName() : null)
                         .lastName(user.getPersonalData() != null ? user.getPersonalData().getLastName() : null)
                         .email(user.getUtecEmail())
@@ -1336,8 +1366,8 @@ public class CourseServiceImpl implements CourseService {
             .toList();
 
         // Build response
-        edu.utec.planificador.dto.response.CourseDetailedInfoResponse response = 
-            edu.utec.planificador.dto.response.CourseDetailedInfoResponse.builder()
+        CourseDetailedInfoResponse response = 
+            CourseDetailedInfoResponse.builder()
                 .courseId(course.getId())
                 .programName(programName)
                 .curricularUnitName(curricularUnit.getName())

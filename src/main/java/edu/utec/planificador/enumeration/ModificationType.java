@@ -27,6 +27,8 @@ public enum ModificationType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Invalid modification type value: " + value);
+        throw new IllegalArgumentException(
+            "Valor de tipo de modificación inválido: " + value
+        );
     }
 }

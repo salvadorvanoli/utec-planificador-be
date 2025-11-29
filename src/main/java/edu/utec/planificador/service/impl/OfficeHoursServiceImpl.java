@@ -8,6 +8,7 @@ import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.OfficeHoursRepository;
 import edu.utec.planificador.service.AccessControlService;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.OfficeHoursService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
     private final OfficeHoursRepository officeHoursRepository;
     private final CourseRepository courseRepository;
     private final AccessControlService accessControlService;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -35,18 +37,26 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
 
         // Validate that endTime is after startTime
         if (request.getEndTime().isBefore(request.getStartTime()) || request.getEndTime().equals(request.getStartTime())) {
-            throw new IllegalArgumentException("End time must be after start time");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.office-hours.end-before-start")
+            );
         }
 
         Course course = courseRepository.findById(request.getCourseId())
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + request.getCourseId()));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", request.getCourseId())
+            ));
 
         // Validate that office hours date is within course period
         if (request.getDate().isBefore(course.getStartDate())) {
-            throw new IllegalArgumentException("Office hours date must be on or after course start date (" + course.getStartDate() + ")");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.office-hours.date-before-course-start", course.getStartDate())
+            );
         }
         if (request.getDate().isAfter(course.getEndDate())) {
-            throw new IllegalArgumentException("Office hours date must be on or before course end date (" + course.getEndDate() + ")");
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.office-hours.date-after-course-end", course.getEndDate())
+            );
         }
 
         OfficeHours officeHours = new OfficeHours(
@@ -73,7 +83,9 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
 
         // Validate that course exists
         if (!courseRepository.existsById(courseId)) {
-            throw new ResourceNotFoundException("Course not found with id: " + courseId);
+            throw new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            );
         }
 
         List<OfficeHours> officeHoursList = officeHoursRepository.findByCourseId(courseId);
@@ -91,7 +103,7 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         log.debug("Deleting office hours with id: {}", id);
 
         OfficeHours officeHours = officeHoursRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Office hours not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.office-hours.not-found", id)));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(officeHours.getCourse().getId());

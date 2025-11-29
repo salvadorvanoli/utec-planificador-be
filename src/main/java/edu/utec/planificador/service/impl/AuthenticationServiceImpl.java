@@ -10,12 +10,11 @@ import edu.utec.planificador.security.JwtTokenProvider;
 import edu.utec.planificador.security.LoginAttemptService;
 import edu.utec.planificador.service.AuthenticationService;
 import edu.utec.planificador.service.AuthenticationStrategy;
+import edu.utec.planificador.service.MessageService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final List<AuthenticationStrategy> authenticationStrategies;
     private final LoginAttemptService loginAttemptService;
     private final HttpServletRequest request;
-    private final MessageSource messageSource;
+    private final MessageService messageService;
 
     @Value("${security.auth.default-provider:LOCAL}")
     private String defaultAuthProvider;
@@ -51,9 +50,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             long remainingTime = loginAttemptService.getRemainingLockoutTime(clientIP, false);
             log.warn("Blocked login attempt from IP: {} ({} minutes remaining)", clientIP, remainingTime);
             throw new InvalidCredentialsException(
-                messageSource.getMessage("auth.error.too-many-attempts", 
-                    new Object[]{remainingTime}, 
-                    LocaleContextHolder.getLocale())
+                messageService.getMessage("auth.error.too-many-attempts", remainingTime)
             );
         }
 
@@ -61,9 +58,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             long remainingTime = loginAttemptService.getRemainingLockoutTime(email, true);
             log.warn("Blocked login attempt for user: {} ({} minutes remaining)", email, remainingTime);
             throw new InvalidCredentialsException(
-                messageSource.getMessage("auth.error.account-locked", 
-                    new Object[]{remainingTime}, 
-                    LocaleContextHolder.getLocale())
+                messageService.getMessage("auth.error.account-locked", remainingTime)
             );
         }
 
@@ -74,9 +69,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .filter(s -> s.supports(providerName))
                 .findFirst()
                 .orElseThrow(() -> new InvalidCredentialsException(
-                    messageSource.getMessage("auth.error.no-strategy", 
-                        new Object[]{providerName}, 
-                        LocaleContextHolder.getLocale())
+                    messageService.getMessage("auth.error.no-strategy", providerName)
                 ));
 
             User user = strategy.authenticate(email, loginRequest.getPassword());
@@ -106,9 +99,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new InvalidCredentialsException(
-                messageSource.getMessage("auth.error.user-not-authenticated", 
-                    null, 
-                    LocaleContextHolder.getLocale())
+                messageService.getMessage("auth.error.user-not-authenticated")
             );
         }
 

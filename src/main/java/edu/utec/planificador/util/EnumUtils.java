@@ -10,7 +10,9 @@ import java.util.stream.Collectors;
 public final class EnumUtils {
     
     private EnumUtils() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+        throw new UnsupportedOperationException(
+            "Esta es una clase de utilidad y no puede ser instanciada"
+        );
     }
     
     public static <T extends Enum<T> & DisplayableEnum> List<EnumResponse> toEnumResponseList(T[] enumValues) {

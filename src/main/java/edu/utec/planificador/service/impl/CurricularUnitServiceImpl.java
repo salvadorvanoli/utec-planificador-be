@@ -6,6 +6,7 @@ import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.mapper.CurricularUnitMapper;
 import edu.utec.planificador.repository.CurricularUnitRepository;
 import edu.utec.planificador.service.CurricularUnitService;
+import edu.utec.planificador.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
 
     private final CurricularUnitRepository curricularUnitRepository;
     private final CurricularUnitMapper curricularUnitMapper;
+    private final MessageService messageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -42,7 +44,7 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
         log.debug("Getting curricular unit by id: {}", id);
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found", id)));
 
         return curricularUnitMapper.toResponse(curricularUnit);
     }

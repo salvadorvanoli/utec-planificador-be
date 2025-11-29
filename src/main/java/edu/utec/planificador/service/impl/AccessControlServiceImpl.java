@@ -1,10 +1,30 @@
 package edu.utec.planificador.service.impl;
 
-import edu.utec.planificador.entity.*;
+import edu.utec.planificador.entity.Activity;
+import edu.utec.planificador.entity.Campus;
+import edu.utec.planificador.entity.Course;
+import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.Position;
+import edu.utec.planificador.entity.Program;
+import edu.utec.planificador.entity.ProgrammaticContent;
+import edu.utec.planificador.entity.RegionalTechnologicalInstitute;
+import edu.utec.planificador.entity.Term;
+import edu.utec.planificador.entity.User;
+import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.exception.ForbiddenException;
 import edu.utec.planificador.exception.ResourceNotFoundException;
-import edu.utec.planificador.repository.*;
+import edu.utec.planificador.repository.ActivityRepository;
+import edu.utec.planificador.repository.CampusRepository;
+import edu.utec.planificador.repository.CourseRepository;
+import edu.utec.planificador.repository.CurricularUnitRepository;
+import edu.utec.planificador.repository.ProgramRepository;
+import edu.utec.planificador.repository.ProgrammaticContentRepository;
+import edu.utec.planificador.repository.RegionalTechnologicalInstituteRepository;
+import edu.utec.planificador.repository.TermRepository;
+import edu.utec.planificador.repository.UserRepository;
+import edu.utec.planificador.repository.WeeklyPlanningRepository;
+import edu.utec.planificador.service.MessageService;
 import edu.utec.planificador.service.AccessControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +52,15 @@ public class AccessControlServiceImpl implements AccessControlService {
     private final ProgramRepository programRepository;
     private final TermRepository termRepository;
     private final UserRepository userRepository;
+    private final MessageService messageService;
 
     @Override
     @Transactional(readOnly = true)
     public void validateCourseAccess(Long courseId) {
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            ));
 
         User currentUser = getCurrentUser();
         CurricularUnit curricularUnit = course.getCurricularUnit();
@@ -48,7 +71,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
 
         if (programCampuses.isEmpty()) {
-            throw new ForbiddenException("No campuses found for this course's program");
+            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
         }
 
         Set<Long> programCampusIds = programCampuses.stream()
@@ -66,7 +89,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasCampusAccess) {
             log.warn("User {} attempted to access course {} without campus access",
                 currentUser.getUtecEmail(), courseId);
-            throw new ForbiddenException("You don't have access to this course");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-course-access")
+            );
         }
 
         // Second check: If user has ONLY TEACHER role, validate ownership
@@ -77,7 +102,9 @@ public class AccessControlServiceImpl implements AccessControlService {
             if (!isTeacherOfCourse) {
                 log.warn("User {} attempted to access course {} without being assigned as teacher",
                     currentUser.getUtecEmail(), courseId);
-                throw new ForbiddenException("You are not assigned as teacher to this course");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.access.not-assigned-teacher")
+                );
             }
         }
 
@@ -89,7 +116,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateCurricularUnitAccess(Long curricularUnitId) {
         User currentUser = getCurrentUser();
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
-            .orElseThrow(() -> new ResourceNotFoundException("Curricular unit not found with id: " + curricularUnitId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.curricular-unit.not-found", curricularUnitId)
+            ));
 
         Term term = curricularUnit.getTerm();
         Program program = term.getProgram();
@@ -98,7 +127,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
 
         if (programCampuses.isEmpty()) {
-            throw new ForbiddenException("No campuses found for this curricular unit's program");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-campuses")
+            );
         }
 
         Set<Long> programCampusIds = programCampuses.stream()
@@ -116,7 +147,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasCampusAccess) {
             log.warn("User {} attempted to access curricular unit {} without campus access",
                 currentUser.getUtecEmail(), curricularUnitId);
-            throw new ForbiddenException("You don't have access to this curricular unit");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-curricular-unit-access")
+            );
         }
 
         // Second check: If user has ONLY TEACHER role, validate they have at least one course in this CU
@@ -129,7 +162,9 @@ public class AccessControlServiceImpl implements AccessControlService {
             if (!hasAssociatedCourse) {
                 log.warn("User {} attempted to access curricular unit {} without having any associated course",
                     currentUser.getUtecEmail(), curricularUnitId);
-                throw new ForbiddenException("You don't have any course associated with this curricular unit");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.access.no-associated-course-cu")
+                );
             }
         }
 
@@ -141,12 +176,14 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateWeeklyPlanningAccess(Long weeklyPlanningId) {
         // Verify weekly planning exists and get its course
         if (!weeklyPlanningRepository.existsById(weeklyPlanningId)) {
-            throw new ResourceNotFoundException("Weekly planning not found with id: " + weeklyPlanningId);
+            throw new ResourceNotFoundException(
+                messageService.getMessage("error.weekly-planning.not-found", weeklyPlanningId)
+            );
         }
 
         // Optimized: use direct query instead of loading all courses
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found for weekly planning: " + weeklyPlanningId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-weekly-planning", weeklyPlanningId)));
 
         validateCourseAccess(course.getId());
     }
@@ -155,7 +192,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Transactional(readOnly = true)
     public void validateProgrammaticContentAccess(Long programmaticContentId) {
         ProgrammaticContent programmaticContent = programmaticContentRepository.findById(programmaticContentId)
-            .orElseThrow(() -> new ResourceNotFoundException("Programmatic content not found with id: " + programmaticContentId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.programmatic-content.not-found", programmaticContentId)
+            ));
 
         WeeklyPlanning weeklyPlanning = programmaticContent.getWeeklyPlanning();
         validateWeeklyPlanningAccess(weeklyPlanning.getId());
@@ -165,7 +204,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Transactional(readOnly = true)
     public void validateActivityAccess(Long activityId) {
         Activity activity = activityRepository.findById(activityId)
-            .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + activityId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.activity.not-found", activityId)
+            ));
 
         ProgrammaticContent programmaticContent = activity.getProgrammaticContent();
         validateProgrammaticContentAccess(programmaticContent.getId());
@@ -175,7 +216,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Transactional(readOnly = true)
     public void validateCampusAccess(Long campusId) {
         Campus campus = campusRepository.findById(campusId)
-            .orElseThrow(() -> new ResourceNotFoundException("Campus not found with id: " + campusId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.campus.not-found", campusId)
+            ));
 
         Set<Long> userCampusIds = getUserCampusIds();
         Set<Long> userRtiIds = getUserRtiIds();
@@ -186,7 +229,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasAccess) {
             log.warn("User {} attempted to access campus {} without proper permissions",
                 getCurrentUser().getUtecEmail(), campusId);
-            throw new ForbiddenException("You don't have access to this campus");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-campus-access")
+            );
         }
     }
 
@@ -194,7 +239,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     @Transactional(readOnly = true)
     public void validateRtiAccess(Long rtiId) {
         if (!rtiRepository.existsById(rtiId)) {
-            throw new ResourceNotFoundException("RTI not found with id: " + rtiId);
+            throw new ResourceNotFoundException(
+                messageService.getMessage("error.rti.not-found", rtiId)
+            );
         }
 
         Set<Long> userRtiIds = getUserRtiIds();
@@ -202,7 +249,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!userRtiIds.contains(rtiId)) {
             log.warn("User {} attempted to access RTI {} without proper permissions",
                 getCurrentUser().getUtecEmail(), rtiId);
-            throw new ForbiddenException("You don't have access to this Regional Technological Institute");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-rti-access")
+            );
         }
     }
 
@@ -213,14 +262,16 @@ public class AccessControlServiceImpl implements AccessControlService {
         
         // Verify program exists
         if (!programRepository.existsById(programId)) {
-            throw new ResourceNotFoundException("Program not found with id: " + programId);
+            throw new ResourceNotFoundException(
+                messageService.getMessage("error.program.not-found", programId)
+            );
         }
 
         // Get campuses where this program is offered
         List<Campus> programCampuses = campusRepository.findByProgram(programId);
 
         if (programCampuses.isEmpty()) {
-            throw new ForbiddenException("No campuses found for this program");
+            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
         }
 
         Set<Long> programCampusIds = programCampuses.stream()
@@ -238,7 +289,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasCampusAccess) {
             log.warn("User {} attempted to access program {} without campus access",
                 currentUser.getUtecEmail(), programId);
-            throw new ForbiddenException("You don't have access to this program");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.no-program-access")
+            );
         }
 
         // Second check: If user has ONLY TEACHER role, validate they have at least one course in this program
@@ -251,7 +304,9 @@ public class AccessControlServiceImpl implements AccessControlService {
             if (!hasAssociatedCourse) {
                 log.warn("User {} attempted to access program {} without having any associated course",
                     currentUser.getUtecEmail(), programId);
-                throw new ForbiddenException("You don't have any course associated with this program");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.access.no-associated-course-program")
+                );
             }
         }
 
@@ -263,7 +318,9 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateTermAccess(Long termId) {
         User currentUser = getCurrentUser();
         Term term = termRepository.findById(termId)
-            .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + termId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.term.not-found", termId)
+            ));
 
         Program program = term.getProgram();
         
@@ -282,7 +339,9 @@ public class AccessControlServiceImpl implements AccessControlService {
             if (!hasAssociatedCourse) {
                 log.warn("User {} attempted to access term {} without having any associated course in this term",
                     currentUser.getUtecEmail(), termId);
-                throw new ForbiddenException("You don't have any course associated with this term");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.access.no-associated-course-term")
+                );
             }
         }
     }
@@ -315,7 +374,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private Set<Long> getUserCampusIds() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -327,7 +386,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private Set<Long> getUserRtiIds() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -347,7 +406,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private boolean hasOnlyTeacherRole() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
 
         List<Position> activePositions = fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -372,7 +431,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private boolean hasTeacherRole() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -390,15 +449,17 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (hasTeacherRole()) {
             User currentUser = getCurrentUser();
             Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
 
             boolean isTeacherOfCourse = course.getTeachers().stream()
                 .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
 
             if (!isTeacherOfCourse) {
-                log.warn("User {} with TEACHER role attempted to manage planning for course {} without being assigned",
+                log.warn("User {} attempted to manage planning for course {} without being assigned as teacher",
                     currentUser.getUtecEmail(), courseId);
-                throw new ForbiddenException("You cannot manage planning for this course because you are not assigned as teacher");
+                throw new ForbiddenException(
+                    messageService.getMessage("error.access.cannot-manage-planning")
+                );
             }
             
             log.debug("User {} validated as teacher of course {} for planning management", currentUser.getUtecEmail(), courseId);
@@ -408,7 +469,9 @@ public class AccessControlServiceImpl implements AccessControlService {
             User currentUser = getCurrentUser();
             log.warn("User {} without TEACHER role attempted to use validateCoursePlanningManagement on course {}",
                 currentUser.getUtecEmail(), courseId);
-            throw new ForbiddenException("You must have TEACHER role to manage course planning");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.must-have-teacher-role")
+            );
         }
     }
 
@@ -418,7 +481,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         User currentUser = getCurrentUser();
         
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found", courseId)
+            ));
 
         CurricularUnit curricularUnit = course.getCurricularUnit();
         Term term = curricularUnit.getTerm();
@@ -428,7 +493,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
 
         if (programCampuses.isEmpty()) {
-            throw new ForbiddenException("No campuses found for this course's program");
+            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
         }
 
         Set<Long> programCampusIds = programCampuses.stream()
@@ -437,7 +502,7 @@ public class AccessControlServiceImpl implements AccessControlService {
 
         // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
         User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
 
         boolean hasAdminRole = fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -454,7 +519,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasAdminRole && !isTeacherOfCourse) {
             log.warn("User {} attempted to update course {} without ANALYST/COORDINATOR role or being assigned as teacher",
                 currentUser.getUtecEmail(), courseId);
-            throw new ForbiddenException("You don't have permission to update this course. You must have ANALYST or COORDINATOR role in the campus where this course belongs, or be assigned as teacher to this course");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.cannot-update-course")
+            );
         }
 
         if (hasAdminRole) {
@@ -472,7 +539,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         User currentUser = getCurrentUser();
         
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
 
         CurricularUnit curricularUnit = course.getCurricularUnit();
         Term term = curricularUnit.getTerm();
@@ -482,7 +549,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
 
         if (programCampuses.isEmpty()) {
-            throw new ForbiddenException("No campuses found for this course's program");
+            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
         }
 
         Set<Long> programCampusIds = programCampuses.stream()
@@ -491,7 +558,7 @@ public class AccessControlServiceImpl implements AccessControlService {
 
         // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
         User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
 
         boolean hasAdminRole = fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -505,7 +572,9 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (!hasAdminRole) {
             log.warn("User {} attempted to delete course {} without ANALYST or COORDINATOR role in the appropriate campus",
                 currentUser.getUtecEmail(), courseId);
-            throw new ForbiddenException("You don't have permission to delete this course. Only users with ANALYST or COORDINATOR role in the campus where this course belongs can delete courses");
+            throw new ForbiddenException(
+                messageService.getMessage("error.access.cannot-delete-course")
+            );
         }
 
         log.debug("User {} has delete access to course {} through ANALYST/COORDINATOR role", 
