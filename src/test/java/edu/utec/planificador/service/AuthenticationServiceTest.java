@@ -25,8 +25,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -52,6 +59,9 @@ class AuthenticationServiceTest {
     private MessageSource messageSource;
 
     @Mock
+    private MessageService messageService;
+
+    @Mock
     private AuthenticationStrategy mockStrategy;
 
     @InjectMocks
@@ -73,6 +83,10 @@ class AuthenticationServiceTest {
         when(testUser.getUtecEmail()).thenReturn("test@utec.edu.uy");
 
         when(request.getRemoteAddr()).thenReturn("192.168.1.1");
+        
+        // Mock messageService responses
+        when(messageService.getMessage(anyString())).thenReturn("Error message");
+        when(messageService.getMessage(anyString(), any())).thenReturn("Error message with params");
     }
 
     @Test
@@ -104,7 +118,7 @@ class AuthenticationServiceTest {
         // Given
         when(loginAttemptService.isBlocked(anyString(), eq(false))).thenReturn(true);
         when(loginAttemptService.getRemainingLockoutTime(anyString(), eq(false))).thenReturn(15L);
-        when(messageSource.getMessage(eq("auth.error.too-many-attempts"), any(), any()))
+        when(messageService.getMessage(eq("auth.error.too-many-attempts"), any()))
             .thenReturn("Too many login attempts. Try again in 15 minutes.");
 
         // When & Then
@@ -122,7 +136,7 @@ class AuthenticationServiceTest {
         when(loginAttemptService.isBlocked(anyString(), eq(false))).thenReturn(false);
         when(loginAttemptService.isBlocked(eq(loginRequest.getEmail()), eq(true))).thenReturn(true);
         when(loginAttemptService.getRemainingLockoutTime(eq(loginRequest.getEmail()), eq(true))).thenReturn(30L);
-        when(messageSource.getMessage(eq("auth.error.account-locked"), any(), any()))
+        when(messageService.getMessage(eq("auth.error.account-locked"), any()))
             .thenReturn("Account locked. Try again in 30 minutes.");
 
         // When & Then

@@ -29,7 +29,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -44,6 +48,9 @@ class UserPositionServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private MessageService messageService;
 
     @Mock
     private SecurityContext securityContext;
@@ -64,6 +71,10 @@ class UserPositionServiceTest {
         when(testUser.getUtecEmail()).thenReturn("john.doe@utec.edu.uy");
         when(testUser.getPositions()).thenReturn(new ArrayList<>());
         when(testUser.getPersonalData()).thenReturn(null);
+        
+        // Mock messageService responses
+        when(messageService.getMessage(any())).thenReturn("User not found");
+        when(messageService.getMessage(any(), any())).thenReturn("Error message with params");
     }
 
     @Test
@@ -92,6 +103,7 @@ class UserPositionServiceTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(testUser);
         when(userRepository.findByIdWithPositions(1L)).thenReturn(Optional.empty());
+        when(messageService.getMessage(any(), any())).thenReturn("User not found");
 
         // When & Then
         assertThatThrownBy(() -> userPositionService.getCurrentUserPositions())
@@ -115,7 +127,7 @@ class UserPositionServiceTest {
         when(userMapper.toBasicResponse(testUser)).thenReturn(basicResponse);
 
         // When
-        List<UserBasicResponse> responses = userPositionService.getUsers(role, campusId);
+        List<UserBasicResponse> responses = userPositionService.getUsers(role, campusId, null);
 
         // Then
         assertThat(responses).isNotEmpty();
@@ -140,7 +152,7 @@ class UserPositionServiceTest {
         when(userMapper.toBasicResponse(testUser)).thenReturn(basicResponse);
 
         // When
-        List<UserBasicResponse> responses = userPositionService.getUsers(null, null);
+        List<UserBasicResponse> responses = userPositionService.getUsers(null, null, null);
 
         // Then
         assertThat(responses).isNotEmpty();
@@ -156,7 +168,7 @@ class UserPositionServiceTest {
         when(userRepository.findAll(any(Specification.class))).thenReturn(List.of());
 
         // When
-        List<UserBasicResponse> responses = userPositionService.getUsers(Role.TEACHER, 1L);
+        List<UserBasicResponse> responses = userPositionService.getUsers(Role.TEACHER, 1L, null);
 
         // Then
         assertThat(responses).isEmpty();

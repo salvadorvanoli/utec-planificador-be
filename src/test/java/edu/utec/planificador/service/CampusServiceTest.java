@@ -17,8 +17,15 @@ import org.mockito.quality.Strictness;
 
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -54,11 +61,11 @@ class CampusServiceTest {
     void getCampuses_WithoutUserId() {
         // Given
         List<Campus> campuses = List.of(testCampus);
-        when(campusRepository.findAll()).thenReturn(campuses);
+        when(campusRepository.findAll(any(Specification.class))).thenReturn(campuses);
         when(campusMapper.toResponse(testCampus)).thenReturn(campusResponse);
 
         // When
-        List<CampusResponse> responses = campusService.getCampuses(null);
+        List<CampusResponse> responses = campusService.getCampuses(null, null);
 
         // Then
         assertThat(responses).isNotEmpty();
@@ -66,8 +73,7 @@ class CampusServiceTest {
         assertThat(responses.get(0).getId()).isEqualTo(1L);
         assertThat(responses.get(0).getName()).isEqualTo("Campus Test");
 
-        verify(campusRepository, times(1)).findAll();
-        verify(campusRepository, never()).findByUserId(anyLong());
+        verify(campusRepository, times(1)).findAll(any(Specification.class));
         verify(campusMapper, times(1)).toResponse(testCampus);
     }
 
@@ -77,18 +83,17 @@ class CampusServiceTest {
         // Given
         Long userId = 1L;
         List<Campus> campuses = List.of(testCampus);
-        when(campusRepository.findByUserId(userId)).thenReturn(campuses);
+        when(campusRepository.findAll(any(Specification.class))).thenReturn(campuses);
         when(campusMapper.toResponse(testCampus)).thenReturn(campusResponse);
 
         // When
-        List<CampusResponse> responses = campusService.getCampuses(userId);
+        List<CampusResponse> responses = campusService.getCampuses(userId, null);
 
         // Then
         assertThat(responses).isNotEmpty();
         assertThat(responses).hasSize(1);
 
-        verify(campusRepository, times(1)).findByUserId(userId);
-        verify(campusRepository, never()).findAll();
+        verify(campusRepository, times(1)).findAll(any(Specification.class));
         verify(campusMapper, times(1)).toResponse(testCampus);
     }
 
@@ -96,15 +101,15 @@ class CampusServiceTest {
     @DisplayName("Should return empty list when no campuses found")
     void getCampuses_EmptyList() {
         // Given
-        when(campusRepository.findAll()).thenReturn(List.of());
+        when(campusRepository.findAll(any(Specification.class))).thenReturn(List.of());
 
         // When
-        List<CampusResponse> responses = campusService.getCampuses(null);
+        List<CampusResponse> responses = campusService.getCampuses(null, null);
 
         // Then
         assertThat(responses).isEmpty();
 
-        verify(campusRepository, times(1)).findAll();
+        verify(campusRepository, times(1)).findAll(any(Specification.class));
         verify(campusMapper, never()).toResponse(any());
     }
 
@@ -122,12 +127,12 @@ class CampusServiceTest {
             .build();
 
         List<Campus> campuses = List.of(testCampus, campus2);
-        when(campusRepository.findAll()).thenReturn(campuses);
+        when(campusRepository.findAll(any(Specification.class))).thenReturn(campuses);
         when(campusMapper.toResponse(testCampus)).thenReturn(campusResponse);
         when(campusMapper.toResponse(campus2)).thenReturn(response2);
 
         // When
-        List<CampusResponse> responses = campusService.getCampuses(null);
+        List<CampusResponse> responses = campusService.getCampuses(null, null);
 
         // Then
         assertThat(responses).hasSize(2);

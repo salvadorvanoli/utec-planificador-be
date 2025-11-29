@@ -21,9 +21,13 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Tests de integración para UserController.
@@ -98,7 +102,7 @@ class UserControllerIntegrationTest {
                         .build()
         );
 
-        when(userPositionService.getUsers(eq(Role.TEACHER), eq(null))).thenReturn(teachers);
+        when(userPositionService.getUsers(eq(Role.TEACHER), eq(null), eq(null))).thenReturn(teachers);
 
         // When & Then
         mockMvc.perform(get("/users/teachers"))
@@ -108,7 +112,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].fullName").value("Teacher One"))
                 .andExpect(jsonPath("$[1].fullName").value("Teacher Two"));
 
-        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(null));
+        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(null), eq(null));
     }
 
     @Test
@@ -124,7 +128,7 @@ class UserControllerIntegrationTest {
                         .build()
         );
 
-        when(userPositionService.getUsers(eq(Role.TEACHER), eq(campusId))).thenReturn(teachers);
+        when(userPositionService.getUsers(eq(Role.TEACHER), eq(campusId), eq(null))).thenReturn(teachers);
 
         // When & Then
         mockMvc.perform(get("/users/teachers")
@@ -134,14 +138,14 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].fullName").value("Teacher One"));
 
-        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(campusId));
+        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(campusId), eq(null));
     }
 
     @Test
     @DisplayName("GET /users/teachers - Should return empty list when no teachers found")
     void getTeachers_NoTeachers_ReturnsEmptyList() throws Exception {
         // Given
-        when(userPositionService.getUsers(eq(Role.TEACHER), eq(null))).thenReturn(List.of());
+        when(userPositionService.getUsers(eq(Role.TEACHER), eq(null), eq(null))).thenReturn(List.of());
 
         // When & Then
         mockMvc.perform(get("/users/teachers"))
@@ -149,7 +153,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(null));
+        verify(userPositionService, times(1)).getUsers(eq(Role.TEACHER), eq(null), eq(null));
     }
 
     @Test
@@ -170,7 +174,7 @@ class UserControllerIntegrationTest {
                         .build()
         );
 
-        when(userPositionService.getUsers(eq(null), eq(null))).thenReturn(users);
+        when(userPositionService.getUsers(eq(null), eq(null), eq(null))).thenReturn(users);
 
         // When & Then
         mockMvc.perform(get("/users"))
@@ -178,7 +182,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2));
 
-        verify(userPositionService, times(1)).getUsers(eq(null), eq(null));
+        verify(userPositionService, times(1)).getUsers(eq(null), eq(null), eq(null));
     }
 
     @Test
@@ -194,7 +198,7 @@ class UserControllerIntegrationTest {
                         .build()
         );
 
-        when(userPositionService.getUsers(eq(Role.COORDINATOR), eq(null))).thenReturn(users);
+        when(userPositionService.getUsers(eq(Role.COORDINATOR), eq(null), eq(null))).thenReturn(users);
 
         // When & Then
         mockMvc.perform(get("/users")
@@ -203,7 +207,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(userPositionService, times(1)).getUsers(eq(Role.COORDINATOR), eq(null));
+        verify(userPositionService, times(1)).getUsers(eq(Role.COORDINATOR), eq(null), eq(null));
     }
 
     @Test
@@ -214,7 +218,7 @@ class UserControllerIntegrationTest {
         mockMvc.perform(get("/users"))
                 .andExpect(status().isForbidden());
 
-        verify(userPositionService, never()).getUsers(any(), any());
+        verify(userPositionService, never()).getUsers(any(), any(), any());
     }
 }
 

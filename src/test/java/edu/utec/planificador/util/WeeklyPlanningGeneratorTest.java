@@ -3,11 +3,12 @@ package edu.utec.planificador.util;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class WeeklyPlanningGeneratorTest {
 

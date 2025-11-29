@@ -18,9 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Tests de integración para CampusController.
@@ -59,7 +62,7 @@ class CampusControllerIntegrationTest {
                         .build()
         );
 
-        when(campusService.getCampuses(null)).thenReturn(campuses);
+        when(campusService.getCampuses(null, null)).thenReturn(campuses);
 
         // When & Then
         mockMvc.perform(get("/campuses"))
@@ -69,7 +72,7 @@ class CampusControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].name").value("Campus Centro"))
                 .andExpect(jsonPath("$[1].name").value("Campus Norte"));
 
-        verify(campusService, times(1)).getCampuses(null);
+        verify(campusService, times(1)).getCampuses(null, null);
     }
 
     @Test
@@ -84,7 +87,7 @@ class CampusControllerIntegrationTest {
                         .build()
         );
 
-        when(campusService.getCampuses(any())).thenReturn(campuses);
+        when(campusService.getCampuses(any(), any())).thenReturn(campuses);
 
         // When & Then
         mockMvc.perform(get("/campuses"))
@@ -93,7 +96,7 @@ class CampusControllerIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("Campus Centro"));
 
-        verify(campusService, times(1)).getCampuses(any());
+        verify(campusService, times(1)).getCampuses(any(), any());
     }
 
     @Test
@@ -109,7 +112,7 @@ class CampusControllerIntegrationTest {
                         .build()
         );
 
-        when(campusService.getCampuses(userId)).thenReturn(campuses);
+        when(campusService.getCampuses(userId, null)).thenReturn(campuses);
 
         // When & Then
         mockMvc.perform(get("/campuses")
@@ -118,14 +121,14 @@ class CampusControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(campusService, times(1)).getCampuses(userId);
+        verify(campusService, times(1)).getCampuses(userId, null);
     }
 
     @Test
     @DisplayName("GET /campuses - Should return empty list when no campuses found")
     void getCampuses_NoCampuses_ReturnsEmptyList() throws Exception {
         // Given
-        when(campusService.getCampuses(null)).thenReturn(List.of());
+        when(campusService.getCampuses(null, null)).thenReturn(List.of());
 
         // When & Then
         mockMvc.perform(get("/campuses"))
@@ -133,7 +136,7 @@ class CampusControllerIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(campusService, times(1)).getCampuses(null);
+        verify(campusService, times(1)).getCampuses(null, null);
     }
 }
 
