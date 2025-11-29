@@ -40,13 +40,16 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
 
         // Find the course associated with this weekly planning
         Course course = courseRepository.findByWeeklyPlanningId(request.getWeeklyPlanningId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-weekly-planning", request.getWeeklyPlanningId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-weekly-planning")));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", request.getWeeklyPlanningId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found")));
 
         ProgrammaticContent pc = new ProgrammaticContent(request.getTitle(), request.getContent(), week);
         pc.setColor(request.getColor());
@@ -71,7 +74,7 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
         accessControlService.validateProgrammaticContentAccess(id);
 
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found")));
 
         return mapToResponse(pc);
     }
@@ -80,15 +83,18 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Transactional
     public ProgrammaticContentResponse updateProgrammaticContent(Long id, ProgrammaticContentRequest request) {
         Course course = courseRepository.findByProgrammaticContentId(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content")));
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found")));
 
         WeeklyPlanning week = weeklyPlanningRepository.findById(request.getWeeklyPlanningId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found", request.getWeeklyPlanningId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.weekly-planning.not-found")));
 
         // Save OLD values BEFORE modifying
         String oldTitle = pc.getTitle();
@@ -126,12 +132,15 @@ public class ProgrammaticContentServiceImpl implements ProgrammaticContentServic
     @Transactional
     public void deleteProgrammaticContent(Long id) {
         Course course = courseRepository.findByProgrammaticContentId(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content")));
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         ProgrammaticContent pc = programmaticContentRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found")));
 
         // Log modification before deletion
         Teacher teacher = modificationService.getCurrentTeacher();

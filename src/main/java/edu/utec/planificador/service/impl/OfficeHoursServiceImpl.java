@@ -35,6 +35,9 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(request.getCourseId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(request.getCourseId());
+
         // Validate that endTime is after startTime
         if (request.getEndTime().isBefore(request.getStartTime()) || request.getEndTime().equals(request.getStartTime())) {
             throw new IllegalArgumentException(
@@ -44,7 +47,7 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
 
         Course course = courseRepository.findById(request.getCourseId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", request.getCourseId())
+                messageService.getMessage("error.course.not-found")
             ));
 
         // Validate that office hours date is within course period
@@ -84,7 +87,7 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         // Validate that course exists
         if (!courseRepository.existsById(courseId)) {
             throw new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", courseId)
+                messageService.getMessage("error.course.not-found")
             );
         }
 
@@ -103,10 +106,13 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         log.debug("Deleting office hours with id: {}", id);
 
         OfficeHours officeHours = officeHoursRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.office-hours.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.office-hours.not-found")));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(officeHours.getCourse().getId());
+
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(officeHours.getCourse().getId());
 
         officeHoursRepository.delete(officeHours);
 

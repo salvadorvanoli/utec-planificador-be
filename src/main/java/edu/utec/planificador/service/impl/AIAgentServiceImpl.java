@@ -202,7 +202,7 @@ public class AIAgentServiceImpl implements AIAgentService {
 
     private Course getCourseWithDetails(Long courseId) {
         return courseRepository.findByIdWithFullDetails(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
     }
 }
 

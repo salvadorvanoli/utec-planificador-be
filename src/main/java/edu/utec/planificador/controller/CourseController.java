@@ -605,4 +605,51 @@ public class CourseController {
         
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{targetCourseId}/copy-planning/{sourceCourseId}")
+    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
+    @Operation(
+        summary = "Copy planning from source course to target course",
+        description = "Copies all weekly plannings, programmatic contents, and activities from a source course to a target course. " +
+                      "Both courses must have the same curricular unit. The current user must be a teacher of the target course. " +
+                      "Any existing planning in the target course will be completely replaced. " +
+                      "If the courses have different number of weeks, only matching weeks will be copied."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Planning copied successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CourseResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "User is not a teacher of the target course",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Source or target course not found",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Courses have different curricular units",
+            content = @Content
+        )
+    })
+    public ResponseEntity<CourseResponse> copyPlanningFromSourceCourse(
+        @Parameter(description = "ID of the target course (where planning will be copied to)", required = true)
+        @PathVariable Long targetCourseId,
+        @Parameter(description = "ID of the source course (where planning will be copied from)", required = true)
+        @PathVariable Long sourceCourseId
+    ) {
+        log.info("POST /courses/{}/copy-planning/{} - Copying planning from source to target", targetCourseId, sourceCourseId);
+        
+        CourseResponse response = courseService.copyPlanningFromSourceCourse(targetCourseId, sourceCourseId);
+        
+        return ResponseEntity.ok(response);
+    }
 }

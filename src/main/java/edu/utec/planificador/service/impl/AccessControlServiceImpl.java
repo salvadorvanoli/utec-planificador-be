@@ -59,7 +59,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateCourseAccess(Long courseId) {
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", courseId)
+                messageService.getMessage("error.course.not-found")
             ));
 
         User currentUser = getCurrentUser();
@@ -117,7 +117,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         User currentUser = getCurrentUser();
         CurricularUnit curricularUnit = curricularUnitRepository.findById(curricularUnitId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.curricular-unit.not-found", curricularUnitId)
+                messageService.getMessage("error.curricular-unit.not-found")
             ));
 
         Term term = curricularUnit.getTerm();
@@ -177,13 +177,13 @@ public class AccessControlServiceImpl implements AccessControlService {
         // Verify weekly planning exists and get its course
         if (!weeklyPlanningRepository.existsById(weeklyPlanningId)) {
             throw new ResourceNotFoundException(
-                messageService.getMessage("error.weekly-planning.not-found", weeklyPlanningId)
+                messageService.getMessage("error.weekly-planning.not-found")
             );
         }
 
         // Optimized: use direct query instead of loading all courses
         Course course = courseRepository.findByWeeklyPlanningId(weeklyPlanningId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-weekly-planning", weeklyPlanningId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-weekly-planning")));
 
         validateCourseAccess(course.getId());
     }
@@ -193,7 +193,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateProgrammaticContentAccess(Long programmaticContentId) {
         ProgrammaticContent programmaticContent = programmaticContentRepository.findById(programmaticContentId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.programmatic-content.not-found", programmaticContentId)
+                messageService.getMessage("error.programmatic-content.not-found")
             ));
 
         WeeklyPlanning weeklyPlanning = programmaticContent.getWeeklyPlanning();
@@ -205,7 +205,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateActivityAccess(Long activityId) {
         Activity activity = activityRepository.findById(activityId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.activity.not-found", activityId)
+                messageService.getMessage("error.activity.not-found")
             ));
 
         ProgrammaticContent programmaticContent = activity.getProgrammaticContent();
@@ -217,7 +217,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateCampusAccess(Long campusId) {
         Campus campus = campusRepository.findById(campusId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.campus.not-found", campusId)
+                messageService.getMessage("error.campus.not-found")
             ));
 
         Set<Long> userCampusIds = getUserCampusIds();
@@ -240,7 +240,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     public void validateRtiAccess(Long rtiId) {
         if (!rtiRepository.existsById(rtiId)) {
             throw new ResourceNotFoundException(
-                messageService.getMessage("error.rti.not-found", rtiId)
+                messageService.getMessage("error.rti.not-found")
             );
         }
 
@@ -263,7 +263,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         // Verify program exists
         if (!programRepository.existsById(programId)) {
             throw new ResourceNotFoundException(
-                messageService.getMessage("error.program.not-found", programId)
+                messageService.getMessage("error.program.not-found")
             );
         }
 
@@ -319,7 +319,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         User currentUser = getCurrentUser();
         Term term = termRepository.findById(termId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.term.not-found", termId)
+                messageService.getMessage("error.term.not-found")
             ));
 
         Program program = term.getProgram();
@@ -374,7 +374,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private Set<Long> getUserCampusIds() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -386,7 +386,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private Set<Long> getUserRtiIds() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -406,7 +406,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private boolean hasOnlyTeacherRole() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         List<Position> activePositions = fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -431,7 +431,7 @@ public class AccessControlServiceImpl implements AccessControlService {
     private boolean hasTeacherRole() {
         User user = getCurrentUser();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         return fullUser.getPositions().stream()
             .filter(Position::getIsActive)
@@ -449,7 +449,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         if (hasTeacherRole()) {
             User currentUser = getCurrentUser();
             Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
 
             boolean isTeacherOfCourse = course.getTeachers().stream()
                 .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
@@ -482,7 +482,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", courseId)
+                messageService.getMessage("error.course.not-found")
             ));
 
         CurricularUnit curricularUnit = course.getCurricularUnit();
@@ -539,7 +539,7 @@ public class AccessControlServiceImpl implements AccessControlService {
         User currentUser = getCurrentUser();
         
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
 
         CurricularUnit curricularUnit = course.getCurricularUnit();
         Term term = curricularUnit.getTerm();
@@ -579,5 +579,23 @@ public class AccessControlServiceImpl implements AccessControlService {
 
         log.debug("User {} has delete access to course {} through ANALYST/COORDINATOR role", 
             currentUser.getUtecEmail(), courseId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void validateCourseNotExpired(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found")
+            ));
+
+        if (course.getEndDate() != null && course.getEndDate().isBefore(java.time.LocalDate.now())) {
+            User currentUser = getCurrentUser();
+            log.warn("User {} attempted to modify expired course {} (endDate: {})",
+                currentUser.getUtecEmail(), courseId, course.getEndDate());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.already-finished")
+            );
+        }
     }
 }

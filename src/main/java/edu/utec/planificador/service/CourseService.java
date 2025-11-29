@@ -56,4 +56,7 @@ public interface CourseService {
 
     // Get detailed course information
     edu.utec.planificador.dto.response.CourseDetailedInfoResponse getCourseDetailedInfo(Long courseId);
+
+    // Copy planning from source course to target course (manual operation by teacher)
+    CourseResponse copyPlanningFromSourceCourse(Long targetCourseId, Long sourceCourseId);
 }

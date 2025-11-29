@@ -39,7 +39,7 @@ public class UserPositionServiceImpl implements UserPositionService {
         log.debug("Getting positions for user: {}", currentUser.getUtecEmail());
 
         User user = userRepository.findByIdWithPositions(currentUser.getId())
-                .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
+                .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         user.getPositions().forEach(position -> {
             position.getCampuses().size();

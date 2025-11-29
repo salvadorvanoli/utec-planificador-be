@@ -86,14 +86,14 @@ public class CourseServiceImpl implements CourseService {
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.curricular-unit.not-found", request.getCurricularUnitId())
+                messageService.getMessage("error.curricular-unit.not-found")
             ));
         
         Long programId = curricularUnit.getTerm().getProgram().getId();
         List<Campus> programCampuses = campusRepository.findByProgram(programId);
         
         if (programCampuses.isEmpty()) {
-            throw new IllegalStateException(messageService.getMessage("error.course.program-no-campuses", programId));
+            throw new IllegalStateException(messageService.getMessage("error.course.program-no-campuses"));
         }
         
         List<Long> programCampusIds = programCampuses.stream()
@@ -105,20 +105,20 @@ public class CourseServiceImpl implements CourseService {
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", userId)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found")));
             
             Teacher teacher = user.getPositions().stream()
                 .filter(pos -> pos instanceof Teacher)
                 .map(pos -> (Teacher) pos)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher", userId)));
+                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher")));
             
             boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
                 .anyMatch(campus -> programCampusIds.contains(campus.getId()));
             
             if (!teacherBelongsToValidCampus) {
                 throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-wrong-campus", userId, programCampusIds)
+                    messageService.getMessage("error.course.teacher-wrong-campus")
                 );
             }
             
@@ -191,7 +191,7 @@ public class CourseServiceImpl implements CourseService {
             for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
                 if (entry.getValue() < 0) {
                     throw new IllegalArgumentException(
-                        messageService.getMessage("error.course.invalid-hours-format", entry.getKey(), entry.getValue())
+                        messageService.getMessage("error.course.invalid-hours-format")
                     );
                 }
             }
@@ -222,37 +222,12 @@ public class CourseServiceImpl implements CourseService {
             request.getEndDate()
         );
         course.getWeeklyPlannings().addAll(weeklyPlannings);
-        log.info("Generated {} weekly planning(s) for course", weeklyPlannings.size());
+        log.info("Generated {} empty weekly planning(s) for course", weeklyPlannings.size());
         
-        // Primero guardar el curso para obtener su ID y persistir los WeeklyPlannings vacíos
+        // Guardar el curso con WeeklyPlannings vacíos
         Course savedCourse = courseRepository.save(course);
-        log.info("Course created with id: {}", savedCourse.getId());
-        
-        // Ahora buscar el último curso DIFERENTE del actual para copiar su planificación
-        // Considerar TODOS los docentes asignados al curso para encontrar el curso más reciente
-        // que comparta al menos uno de ellos
-        Optional<Course> previousCourseOpt = courseRepository.findLatestByCurricularUnitAndUsers(
-            request.getCurricularUnitId(), 
-            request.getUserIds(),
-            savedCourse.getId()
-        );
-        
-        if (previousCourseOpt.isPresent()) {
-            Course previousCourse = previousCourseOpt.get();
-            log.debug("Found previous course with id: {} for copying planning", previousCourse.getId());
-            
-            // Copiar la planificación del curso anterior al curso recién creado
-            copyPlanningFromPreviousCourse(previousCourse.getId(), savedCourse);
-            
-            // Guardar nuevamente para persistir la planificación copiada
-            savedCourse = courseRepository.save(savedCourse);
-            log.info("Planning copied and persisted for course {}", savedCourse.getId());
-        } else {
-            log.debug("No previous course found for teachers {} and curricular unit {}, course has empty plannings",
-                request.getUserIds(), request.getCurricularUnitId());
-        }
-        
-        log.info("Course created successfully with id: {} and {} teacher(s)", savedCourse.getId(), teachers.size());
+        log.info("Course created successfully with id: {} and {} teacher(s) - planning is empty and must be loaded manually by teacher", 
+            savedCourse.getId(), teachers.size());
         
         return courseMapper.toResponse(savedCourse);
     }
@@ -268,7 +243,7 @@ public class CourseServiceImpl implements CourseService {
         // Cargar el curso con weeklyPlannings (primera query)
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", id)
+                messageService.getMessage("error.course.not-found")
             ));
         
         // Cargar teachers en query separada (evita MultipleBagFetchException con weeklyPlannings)
@@ -300,97 +275,6 @@ public class CourseServiceImpl implements CourseService {
         
         log.debug("Found previous course with id: {}", course.getId());
         return courseMapper.toResponse(course);
-    }
-
-    /**
-     * Copia la planificación (WeeklyPlanning, ProgrammaticContent y Activity) de un curso anterior a un nuevo curso.
-     * 
-     * Mapea las semanas del curso anterior a las del nuevo curso basándose en el número de semana,
-     * creando copias de todos los ProgrammaticContent y Activities asociados.
-     * 
-     * @param sourceCourseId ID del curso del cual copiar la planificación
-     * @param targetCourse Curso al cual copiar la planificación
-     */
-    private void copyPlanningFromPreviousCourse(Long sourceCourseId, Course targetCourse) {
-        log.debug("Copying planning from course {} to new course", sourceCourseId);
-        
-        // Cargar el curso fuente con todos sus detalles
-        Optional<Course> sourceCourseOpt = courseRepository.findByIdWithWeeklyPlannings(sourceCourseId);
-        if (sourceCourseOpt.isEmpty()) {
-            log.warn("Source course {} not found, skipping planning copy", sourceCourseId);
-            return;
-        }
-        
-        // Cargar programmatic contents y activities en queries separadas para evitar MultipleBagFetchException
-        courseRepository.loadProgrammaticContents(sourceCourseId);
-        courseRepository.loadProgrammaticContentActivities(sourceCourseId);
-        
-        Course sourceCourse = sourceCourseOpt.get();
-        
-        // Mapear WeeklyPlannings del curso fuente por número de semana
-        java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = sourceCourse.getWeeklyPlannings().stream()
-            .collect(java.util.stream.Collectors.toMap(
-                WeeklyPlanning::getWeekNumber,
-                wp -> wp
-            ));
-        
-        int copiedWeeks = 0;
-        int copiedContents = 0;
-        int copiedActivities = 0;
-        
-        // Iterar sobre los WeeklyPlannings del nuevo curso y copiar contenido del curso fuente
-        for (WeeklyPlanning targetWeeklyPlanning : targetCourse.getWeeklyPlannings()) {
-            Integer weekNumber = targetWeeklyPlanning.getWeekNumber();
-            WeeklyPlanning sourceWeeklyPlanning = sourceWeeklyPlanningMap.get(weekNumber);
-            
-            if (sourceWeeklyPlanning == null) {
-                log.debug("No source planning found for week {}, skipping", weekNumber);
-                continue;
-            }
-            
-            // Copiar referencias bibliográficas
-            targetWeeklyPlanning.getBibliographicReferences().addAll(
-                sourceWeeklyPlanning.getBibliographicReferences()
-            );
-            
-            // Copiar ProgrammaticContents
-            for (ProgrammaticContent sourceProgrammaticContent : sourceWeeklyPlanning.getProgrammaticContents()) {
-                ProgrammaticContent targetProgrammaticContent = new ProgrammaticContent(
-                    sourceProgrammaticContent.getTitle(),
-                    sourceProgrammaticContent.getContent(),
-                    targetWeeklyPlanning
-                );
-                
-                targetProgrammaticContent.setColor(sourceProgrammaticContent.getColor());
-                targetWeeklyPlanning.getProgrammaticContents().add(targetProgrammaticContent);
-                copiedContents++;
-                
-                // Copiar Activities del ProgrammaticContent
-                for (Activity sourceActivity : sourceProgrammaticContent.getActivities()) {
-                    Activity targetActivity = new Activity(
-                        sourceActivity.getDescription(),
-                        sourceActivity.getDurationInMinutes(),
-                        sourceActivity.getLearningModality(),
-                        targetProgrammaticContent
-                    );
-                    
-                    targetActivity.setTitle(sourceActivity.getTitle());
-                    targetActivity.setColor(sourceActivity.getColor());
-                    targetActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
-                    targetActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
-                    targetActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
-                    targetActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
-                    
-                    targetProgrammaticContent.getActivities().add(targetActivity);
-                    copiedActivities++;
-                }
-            }
-            
-            copiedWeeks++;
-        }
-        
-        log.info("Planning copy completed: {} weeks, {} programmatic contents, {} activities copied from course {} to new course",
-            copiedWeeks, copiedContents, copiedActivities, sourceCourseId);
     }
 
     /**
@@ -593,117 +477,6 @@ public class CourseServiceImpl implements CourseService {
     }
 
     /**
-     * Reemplaza completamente la planificación de un curso cuando cambian los docentes o la unidad curricular.
-     * 
-     * Elimina todos los WeeklyPlannings existentes (con sus ProgrammaticContents y Activities)
-     * y crea nuevos basados en las fechas actuales del curso, intentando copiar la planificación
-     * del curso más reciente de los nuevos docentes y unidad curricular.
-     * 
-     * @param course Curso cuya planificación se va a reemplazar
-     * @param newTeacherIds IDs de los nuevos docentes
-     * @param newCurricularUnitId ID de la nueva unidad curricular
-     */
-    private void resetAndCopyPlanningFromLatest(Course course, List<Long> newTeacherIds, Long newCurricularUnitId) {
-        log.info("Resetting and replacing planning for course {}", course.getId());
-        
-        // Eliminar todos los WeeklyPlannings existentes (orphanRemoval se encargará del resto)
-        int removedWeeks = course.getWeeklyPlannings().size();
-        course.getWeeklyPlannings().clear();
-        log.debug("Removed {} existing weekly planning(s)", removedWeeks);
-        
-        // Generar nuevos WeeklyPlannings vacíos basados en las fechas del curso
-        List<WeeklyPlanning> newWeeklyPlannings = WeeklyPlanningGenerator.generateWeeklyPlannings(
-            course.getStartDate(),
-            course.getEndDate()
-        );
-        course.getWeeklyPlannings().addAll(newWeeklyPlannings);
-        log.info("Generated {} new empty weekly planning(s)", newWeeklyPlannings.size());
-        
-        // Buscar curso anterior con la nueva unidad curricular y nuevos docentes
-        Optional<Course> previousCourseOpt = courseRepository.findLatestByCurricularUnitAndUsers(
-            newCurricularUnitId,
-            newTeacherIds,
-            course.getId()
-        );
-        
-        if (previousCourseOpt.isPresent()) {
-            Course previousCourse = previousCourseOpt.get();
-            log.info("Found previous course {} for new configuration, copying planning", previousCourse.getId());
-            
-            // Cargar los detalles del curso fuente
-            courseRepository.findByIdWithWeeklyPlannings(previousCourse.getId());
-            courseRepository.loadProgrammaticContents(previousCourse.getId());
-            courseRepository.loadProgrammaticContentActivities(previousCourse.getId());
-            
-            // Refrescar el curso fuente para obtener las colecciones cargadas
-            previousCourse = courseRepository.findByIdWithWeeklyPlannings(previousCourse.getId()).orElse(null);
-            
-            if (previousCourse != null) {
-                // Mapear WeeklyPlannings del curso fuente por número de semana
-                java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = previousCourse.getWeeklyPlannings().stream()
-                    .collect(java.util.stream.Collectors.toMap(
-                        WeeklyPlanning::getWeekNumber,
-                        wp -> wp
-                    ));
-                
-                int copiedWeeks = 0;
-                int copiedContents = 0;
-                int copiedActivities = 0;
-                
-                // Copiar contenido a los nuevos WeeklyPlannings
-                for (WeeklyPlanning targetWeekly : course.getWeeklyPlannings()) {
-                    WeeklyPlanning sourceWeekly = sourceWeeklyPlanningMap.get(targetWeekly.getWeekNumber());
-                    
-                    if (sourceWeekly != null) {
-                        // Copiar referencias bibliográficas
-                        targetWeekly.getBibliographicReferences().addAll(sourceWeekly.getBibliographicReferences());
-                        
-                        // Copiar ProgrammaticContents y Activities
-                        for (ProgrammaticContent sourceContent : sourceWeekly.getProgrammaticContents()) {
-                            ProgrammaticContent newContent = new ProgrammaticContent(
-                                sourceContent.getTitle(),
-                                sourceContent.getContent(),
-                                targetWeekly
-                            );
-                            newContent.setColor(sourceContent.getColor());
-                            
-                            // Copiar Activities
-                            for (Activity sourceActivity : sourceContent.getActivities()) {
-                                Activity newActivity = new Activity(
-                                    sourceActivity.getDescription(),
-                                    sourceActivity.getDurationInMinutes(),
-                                    sourceActivity.getLearningModality(),
-                                    newContent
-                                );
-                                newActivity.setTitle(sourceActivity.getTitle());
-                                newActivity.setColor(sourceActivity.getColor());
-                                newActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
-                                newActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
-                                newActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
-                                newActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
-                                
-                                newContent.getActivities().add(newActivity);
-                                copiedActivities++;
-                            }
-                            
-                            targetWeekly.getProgrammaticContents().add(newContent);
-                            copiedContents++;
-                        }
-                        
-                        copiedWeeks++;
-                    }
-                }
-                
-                log.info("Planning replacement completed: {} weeks, {} contents, {} activities copied from course {}", 
-                    copiedWeeks, copiedContents, copiedActivities, previousCourse.getId());
-            }
-        } else {
-            log.info("No previous course found for new configuration (CU: {}, Teachers: {}), course has empty planning", 
-                newCurricularUnitId, newTeacherIds);
-        }
-    }
-
-    /**
      * Valida que un docente no intente modificar la unidad curricular o la lista de docentes
      * de un curso al actualizarlo.
      * 
@@ -742,6 +515,33 @@ public class CourseServiceImpl implements CourseService {
                 );
             }
             
+            // Check if teacher is trying to change the shift
+            if (!course.getShift().equals(request.getShift())) {
+                log.warn("Teacher {} attempted to change shift for course {}", 
+                    currentUser.getUtecEmail(), course.getId());
+                throw new IllegalArgumentException(
+                    messageService.getMessage("error.course.teacher-cannot-modify-shift")
+                );
+            }
+            
+            // Check if teacher is trying to change the start date
+            if (!course.getStartDate().equals(request.getStartDate())) {
+                log.warn("Teacher {} attempted to change start date for course {}", 
+                    currentUser.getUtecEmail(), course.getId());
+                throw new IllegalArgumentException(
+                    messageService.getMessage("error.course.teacher-cannot-modify-dates")
+                );
+            }
+            
+            // Check if teacher is trying to change the end date
+            if (!course.getEndDate().equals(request.getEndDate())) {
+                log.warn("Teacher {} attempted to change end date for course {}", 
+                    currentUser.getUtecEmail(), course.getId());
+                throw new IllegalArgumentException(
+                    messageService.getMessage("error.course.teacher-cannot-modify-dates")
+                );
+            }
+            
             log.debug("Teacher {} validation passed for course {} update", 
                 currentUser.getUtecEmail(), course.getId());
         }
@@ -758,57 +558,20 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
         
         // Additional validation: Teachers cannot modify curricularUnit or teachers list
         validateTeacherDoesntModifyTeachersListOrCurricularUnit(course, request);
         
         // Validate that the course has not finished
-        if (course.getEndDate() != null && course.getEndDate().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException(
-                messageService.getMessage("error.course.already-finished")
-            );
-        }
+        accessControlService.validateCourseNotExpired(id);
         
-        // CRITICAL: Detect changes BEFORE modifying the course entity
-        boolean curricularUnitChanged = !course.getCurricularUnit().getId().equals(request.getCurricularUnitId());
-        
-        Set<Long> originalTeacherIds = course.getTeachers().stream()
-            .map(teacher -> teacher.getUser().getId())
-            .collect(Collectors.toSet());
-        Set<Long> newTeacherIds = new HashSet<>(request.getUserIds());
-        boolean teachersChanged = !originalTeacherIds.equals(newTeacherIds);
-        
-        // Check if there's at least one teacher in common (intersection)
-        boolean hasCommonTeacher = originalTeacherIds.stream()
-            .anyMatch(newTeacherIds::contains);
-        
-        // Only replace planning if:
-        // 1. Curricular unit changed (different content) OR
-        // 2. ALL teachers were replaced (no continuity in teaching team)
-        boolean shouldReplacePlanning = curricularUnitChanged || (teachersChanged && !hasCommonTeacher);
-        
-        if (shouldReplacePlanning) {
-            log.info("Critical change detected in course {} requiring planning replacement: curricularUnit={}, allTeachersReplaced={}", 
-                id, curricularUnitChanged, (teachersChanged && !hasCommonTeacher));
-            
-            if (curricularUnitChanged) {
-                log.info("Curricular unit will change from {} to {} - planning will be replaced", 
-                    course.getCurricularUnit().getId(), request.getCurricularUnitId());
-            }
-            
-            if (teachersChanged && !hasCommonTeacher) {
-                log.info("All teachers will be replaced (from {} to {}) - planning will be replaced", 
-                    originalTeacherIds, newTeacherIds);
-            }
-        } else if (teachersChanged && hasCommonTeacher) {
-            log.info("Teachers partially changed for course {} (from {} to {}) but at least one teacher remains - planning will be preserved", 
-                id, originalTeacherIds, newTeacherIds);
-        }
+        // Note: Planning is no longer automatically replaced when changing curricular unit or teachers
+        // Teachers must manually load planning from a previous course if desired
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.curricular-unit.not-found", request.getCurricularUnitId())
+                messageService.getMessage("error.curricular-unit.not-found")
             ));
         
         // Validate dates
@@ -824,7 +587,7 @@ public class CourseServiceImpl implements CourseService {
         
         if (programCampuses.isEmpty()) {
             throw new IllegalStateException(
-                messageService.getMessage("error.course.program-no-campuses", programId)
+                messageService.getMessage("error.course.program-no-campuses")
             );
         }
         
@@ -837,13 +600,13 @@ public class CourseServiceImpl implements CourseService {
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", userId)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found")));
             
             Teacher teacher = user.getPositions().stream()
                 .filter(pos -> pos instanceof Teacher)
                 .map(pos -> (Teacher) pos)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher", userId)));
+                .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher")));
             
             boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
                 .anyMatch(campus -> programCampusIds.contains(campus.getId()));
@@ -906,7 +669,7 @@ public class CourseServiceImpl implements CourseService {
             for (Map.Entry<DeliveryFormat, Integer> entry : request.getHoursPerDeliveryFormat().entrySet()) {
                 if (entry.getValue() != null && entry.getValue() < 0) {
                     throw new IllegalArgumentException(
-                        messageService.getMessage("error.course.invalid-hours-format", entry.getKey(), entry.getValue())
+                        messageService.getMessage("error.course.invalid-hours-format")
                     );
                 }
             }
@@ -923,14 +686,8 @@ public class CourseServiceImpl implements CourseService {
             course.getUniversalDesignLearningPrinciples().addAll(request.getUniversalDesignLearningPrinciples());
         }
         
-        // Apply planning changes based on what was detected earlier (BEFORE course modification)
-        if (shouldReplacePlanning) {
-            // Replace planning completely: curricular unit changed OR all teachers replaced
-            resetAndCopyPlanningFromLatest(course, request.getUserIds(), request.getCurricularUnitId());
-        } else {
-            // Adjust WeeklyPlannings if dates changed (preserves existing content)
-            adjustWeeklyPlanningsIfNeeded(course, request.getStartDate(), request.getEndDate(), request.getUserIds());
-        }
+        // Adjust WeeklyPlannings if dates changed (preserves existing content)
+        adjustWeeklyPlanningsIfNeeded(course, request.getStartDate(), request.getEndDate(), request.getUserIds());
         
         Course updatedCourse = courseRepository.save(course);
         
@@ -949,20 +706,20 @@ public class CourseServiceImpl implements CourseService {
 
         Course course = courseRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", id)
+                messageService.getMessage("error.course.not-found")
             ));
         
         // Validate that the course doesn't have OfficeHours
         if (course.getOfficeHours() != null && !course.getOfficeHours().isEmpty()) {
             throw new IllegalStateException(
-                messageService.getMessage("error.course.has-office-hours", id, course.getOfficeHours().size())
+                messageService.getMessage("error.course.has-office-hours")
             );
         }
         
         // Validate that the course doesn't have Modifications
         if (course.getModifications() != null && !course.getModifications().isEmpty()) {
             throw new IllegalStateException(
-                messageService.getMessage("error.course.has-modifications", id, course.getModifications().size())
+                messageService.getMessage("error.course.has-modifications")
             );
         }
         
@@ -1048,7 +805,7 @@ public class CourseServiceImpl implements CourseService {
                 boolean exists = courseRepository.existsById(courseId);
                 if (!exists) {
                     throw new ResourceNotFoundException(
-                        messageService.getMessage("error.course.no-course-found", courseId)
+                        messageService.getMessage("error.course.no-course-found")
                     );
                 }
                 throw new ForbiddenException(
@@ -1094,7 +851,7 @@ public class CourseServiceImpl implements CourseService {
 
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", courseId)
+                messageService.getMessage("error.course.not-found")
             ));
         
         boolean removed = course.getSustainableDevelopmentGoals().remove(goal);
@@ -1122,7 +879,7 @@ public class CourseServiceImpl implements CourseService {
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(courseId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.course.not-found", courseId)
+                messageService.getMessage("error.course.not-found")
             ));
         
         course.getUniversalDesignLearningPrinciples().add(principle);
@@ -1142,7 +899,7 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCoursePlanningManagement(courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
         
         boolean removed = course.getUniversalDesignLearningPrinciples().remove(principle);
         
@@ -1165,7 +922,7 @@ public class CourseServiceImpl implements CourseService {
         log.debug("Getting PDF data for course {}", courseId);
 
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
 
         // Build teacher info list
         List<CoursePdfDataResponse.TeacherInfo> teacherInfoList = course.getTeachers().stream()
@@ -1245,7 +1002,7 @@ public class CourseServiceImpl implements CourseService {
         accessControlService.validateCourseAccess(courseId);
         
         Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found", courseId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
         
         CourseStatisticsDto statistics = courseStatisticsMapper.calculateStatistics(course);
         
@@ -1261,11 +1018,11 @@ public class CourseServiceImpl implements CourseService {
 
         // Validate that the teacher exists
         User teacherUser = userRepository.findById(teacherId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found", teacherId)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.user.not-found")));
 
         // Validate that the curricular unit exists
         if (!curricularUnitRepository.existsById(curricularUnitId)) {
-            throw new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found", curricularUnitId));
+            throw new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found"));
         }
 
         // Find the teacher position
@@ -1273,7 +1030,7 @@ public class CourseServiceImpl implements CourseService {
             .filter(p -> p instanceof Teacher)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException(
-                messageService.getMessage("error.course.user-not-teacher", teacherId)
+                messageService.getMessage("error.course.user-not-teacher")
             ));
 
         // Get all courses where this teacher is assigned AND the curricular unit matches
@@ -1381,5 +1138,137 @@ public class CourseServiceImpl implements CourseService {
         log.info("Retrieved detailed info for course {}", courseId);
 
         return response;
+    }
+
+    @Override
+    @Transactional
+    public CourseResponse copyPlanningFromSourceCourse(Long targetCourseId, Long sourceCourseId) {
+        log.info("Copying planning from source course {} to target course {}", sourceCourseId, targetCourseId);
+        
+        // Validate that both courses exist
+        Course targetCourse = courseRepository.findByIdWithWeeklyPlannings(targetCourseId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found")
+            ));
+        
+        Course sourceCourse = courseRepository.findByIdWithWeeklyPlannings(sourceCourseId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found")
+            ));
+        
+        // Validate that the current user is a teacher of the target course
+        accessControlService.validateCourseAccess(targetCourseId);
+        
+        // Validate that the target course has not finished
+        accessControlService.validateCourseNotExpired(targetCourseId);
+        
+        // Get current user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByUtecEmail(authentication.getName())
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.current-not-found")));
+        
+        // Validate that the user is a teacher of the target course
+        boolean isTeacherOfTargetCourse = targetCourse.getTeachers().stream()
+            .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+        
+        if (!isTeacherOfTargetCourse) {
+            throw new ForbiddenException(
+                messageService.getMessage("error.course.user-not-teacher-of-course")
+            );
+        }
+        
+        // Validate that both courses have the same curricular unit
+        if (!targetCourse.getCurricularUnit().getId().equals(sourceCourse.getCurricularUnit().getId())) {
+            throw new IllegalArgumentException(
+                "Cannot copy planning from course with different curricular unit. Source: " + 
+                sourceCourse.getCurricularUnit().getName() + ", Target: " + 
+                targetCourse.getCurricularUnit().getName()
+            );
+        }
+        
+        // Load programmatic contents and activities for source course
+        courseRepository.loadProgrammaticContents(sourceCourseId);
+        courseRepository.loadProgrammaticContentActivities(sourceCourseId);
+        
+        // Refresh source course to get loaded collections
+        sourceCourse = courseRepository.findByIdWithWeeklyPlannings(sourceCourseId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.course.not-found")
+            ));
+        
+        // Clear existing planning from target course
+        log.debug("Clearing existing planning from target course {}", targetCourseId);
+        for (WeeklyPlanning targetWeekly : targetCourse.getWeeklyPlannings()) {
+            targetWeekly.getBibliographicReferences().clear();
+            targetWeekly.getProgrammaticContents().clear(); // orphanRemoval will delete activities too
+        }
+        
+        // Map source weekly plannings by week number
+        java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = sourceCourse.getWeeklyPlannings().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                WeeklyPlanning::getWeekNumber,
+                wp -> wp
+            ));
+        
+        int copiedWeeks = 0;
+        int copiedContents = 0;
+        int copiedActivities = 0;
+        
+        // Copy planning to target course
+        for (WeeklyPlanning targetWeekly : targetCourse.getWeeklyPlannings()) {
+            Integer weekNumber = targetWeekly.getWeekNumber();
+            WeeklyPlanning sourceWeekly = sourceWeeklyPlanningMap.get(weekNumber);
+            
+            if (sourceWeekly == null) {
+                log.debug("No source planning found for week {} in source course, skipping", weekNumber);
+                continue;
+            }
+            
+            // Copy bibliographic references
+            targetWeekly.getBibliographicReferences().addAll(
+                sourceWeekly.getBibliographicReferences()
+            );
+            
+            // Copy ProgrammaticContents
+            for (ProgrammaticContent sourceContent : sourceWeekly.getProgrammaticContents()) {
+                ProgrammaticContent targetContent = new ProgrammaticContent(
+                    sourceContent.getTitle(),
+                    sourceContent.getContent(),
+                    targetWeekly
+                );
+                targetContent.setColor(sourceContent.getColor());
+                targetWeekly.getProgrammaticContents().add(targetContent);
+                copiedContents++;
+                
+                // Copy Activities
+                for (Activity sourceActivity : sourceContent.getActivities()) {
+                    Activity targetActivity = new Activity(
+                        sourceActivity.getDescription(),
+                        sourceActivity.getDurationInMinutes(),
+                        sourceActivity.getLearningModality(),
+                        targetContent
+                    );
+                    targetActivity.setTitle(sourceActivity.getTitle());
+                    targetActivity.setColor(sourceActivity.getColor());
+                    targetActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
+                    targetActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
+                    targetActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
+                    targetActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
+                    
+                    targetContent.getActivities().add(targetActivity);
+                    copiedActivities++;
+                }
+            }
+            
+            copiedWeeks++;
+        }
+        
+        // Save target course with copied planning
+        Course updatedCourse = courseRepository.save(targetCourse);
+        
+        log.info("Planning copy completed successfully: {} weeks, {} programmatic contents, {} activities copied from course {} to course {}",
+            copiedWeeks, copiedContents, copiedActivities, sourceCourseId, targetCourseId);
+        
+        return courseMapper.toResponse(updatedCourse);
     }
 }

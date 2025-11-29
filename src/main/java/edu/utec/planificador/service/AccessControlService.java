@@ -150,5 +150,23 @@ public interface AccessControlService {
      * @throws edu.utec.planificador.exception.ForbiddenException if user doesn't have administrative role
      */
     void validateCourseDeleteAccess(Long courseId);
+
+    /**
+     * Validates that a course has not passed its end date.
+     * This validation ensures that no modifications can be made to a course or its planning hierarchy
+     * (WeeklyPlanning, ProgrammaticContent, Activity, OfficeHours, Modification) after the course has ended.
+     * 
+     * Should be called before any CREATE, UPDATE, or DELETE operation on:
+     * - Course properties
+     * - Weekly Planning
+     * - Programmatic Content
+     * - Activity
+     * - Office Hours
+     * - Modification logs
+     * 
+     * @param courseId Course ID to validate
+     * @throws IllegalArgumentException if course has already finished (endDate is before current date)
+     */
+    void validateCourseNotExpired(Long courseId);
 }
 

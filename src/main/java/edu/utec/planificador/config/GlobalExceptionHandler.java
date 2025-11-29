@@ -3,9 +3,12 @@ package edu.utec.planificador.config;
 import edu.utec.planificador.dto.response.error.ErrorResponse;
 import edu.utec.planificador.dto.response.error.FieldErrorResponse;
 import edu.utec.planificador.dto.response.error.ValidationErrorResponse;
+import edu.utec.planificador.exception.AIAgentException;
 import edu.utec.planificador.exception.BusinessException;
 import edu.utec.planificador.exception.DuplicateResourceException;
 import edu.utec.planificador.exception.ForbiddenException;
+import edu.utec.planificador.exception.InvalidCredentialsException;
+import edu.utec.planificador.exception.InvalidTokenException;
 import edu.utec.planificador.exception.ResourceNotFoundException;
 import edu.utec.planificador.exception.UnauthorizedException;
 import edu.utec.planificador.exception.ValidationException;
@@ -19,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -225,6 +229,114 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
+        InvalidCredentialsException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.warn("Invalid credentials: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getErrorCode(),
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(
+        InvalidTokenException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.warn("Invalid token: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getErrorCode(),
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(
+        UsernameNotFoundException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.warn("Username not found: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.UNAUTHORIZED.value(),
+            "USER_NOT_FOUND",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(AIAgentException.class)
+    public ResponseEntity<ErrorResponse> handleAIAgentException(
+        AIAgentException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.error("AI Agent error: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "AI_AGENT_ERROR",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+        IllegalArgumentException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.warn("Illegal argument: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.BAD_REQUEST.value(),
+            "INVALID_ARGUMENT",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+        IllegalStateException ex,
+        HttpServletRequest request
+    ) {
+        
+        log.warn("Illegal state: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.of(
+            HttpStatus.CONFLICT.value(),
+            "ILLEGAL_STATE",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

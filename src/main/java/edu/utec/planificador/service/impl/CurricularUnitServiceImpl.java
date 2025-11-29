@@ -44,7 +44,7 @@ public class CurricularUnitServiceImpl implements CurricularUnitService {
         log.debug("Getting curricular unit by id: {}", id);
 
         CurricularUnit curricularUnit = curricularUnitRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found")));
 
         return curricularUnitMapper.toResponse(curricularUnit);
     }

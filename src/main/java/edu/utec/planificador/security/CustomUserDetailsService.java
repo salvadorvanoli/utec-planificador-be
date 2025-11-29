@@ -47,7 +47,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         return userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                messageService.getMessage("error.user.not-found", id)
+                messageService.getMessage("error.user.not-found")
             ));
     }
 }

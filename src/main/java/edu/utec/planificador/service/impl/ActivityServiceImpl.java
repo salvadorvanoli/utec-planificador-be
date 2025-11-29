@@ -47,13 +47,16 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Find the course associated with this programmatic content
         Course course = courseRepository.findByProgrammaticContentId(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content", request.getProgrammaticContentId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-programmatic-content")));
 
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", request.getProgrammaticContentId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found")));
 
         Activity activity = new Activity(
             request.getDescription(),
@@ -105,7 +108,7 @@ public class ActivityServiceImpl implements ActivityService {
         accessControlService.validateActivityAccess(id);
 
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found")));
 
         return mapToResponse(activity);
     }
@@ -118,11 +121,14 @@ public class ActivityServiceImpl implements ActivityService {
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found")));
 
         ProgrammaticContent pc = programmaticContentRepository.findById(request.getProgrammaticContentId())
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found", request.getProgrammaticContentId())));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.programmatic-content.not-found")));
 
         String oldTitle = activity.getTitle();
         String oldDescription = activity.getDescription();
@@ -196,12 +202,15 @@ public class ActivityServiceImpl implements ActivityService {
     @Transactional
     public void deleteActivity(Long id) {
         Course course = courseRepository.findByActivityId(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-activity", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found-for-activity")));
 
         accessControlService.validateCoursePlanningManagement(course.getId());
 
+        // Validate that the course has not finished
+        accessControlService.validateCourseNotExpired(course.getId());
+
         Activity activity = activityRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found", id)));
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.activity.not-found")));
 
         Teacher teacher = modificationService.getCurrentTeacher();
         if (teacher != null) {

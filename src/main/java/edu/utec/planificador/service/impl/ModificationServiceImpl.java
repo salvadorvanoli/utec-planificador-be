@@ -191,7 +191,7 @@ public class ModificationServiceImpl implements ModificationService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         User fullUser = userRepository.findByIdWithPositions(user.getId())
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", user.getId())));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found")));
 
         return fullUser.getPositions().stream()
             .filter(position -> position instanceof Teacher)
@@ -206,7 +206,7 @@ public class ModificationServiceImpl implements ModificationService {
             .filter(course -> course.getWeeklyPlannings().stream()
                 .anyMatch(wp -> wp.getId().equals(weeklyPlanningId)))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.course.not-found-for-weekly-planning", weeklyPlanningId)));
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.course.not-found-for-weekly-planning")));
     }
 
     private ModificationResponse mapToResponse(Modification modification) {
