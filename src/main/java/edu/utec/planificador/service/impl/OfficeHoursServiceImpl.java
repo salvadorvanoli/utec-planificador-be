@@ -41,6 +41,14 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         Course course = courseRepository.findById(request.getCourseId())
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + request.getCourseId()));
 
+        // Validate that office hours date is within course period
+        if (request.getDate().isBefore(course.getStartDate())) {
+            throw new IllegalArgumentException("Office hours date must be on or after course start date (" + course.getStartDate() + ")");
+        }
+        if (request.getDate().isAfter(course.getEndDate())) {
+            throw new IllegalArgumentException("Office hours date must be on or before course end date (" + course.getEndDate() + ")");
+        }
+
         OfficeHours officeHours = new OfficeHours(
             request.getDate(),
             request.getStartHour(),
