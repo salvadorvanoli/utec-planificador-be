@@ -9,8 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -20,6 +18,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter
 @ToString(exclude = {"course"})
@@ -34,10 +33,10 @@ public class OfficeHours {
     @EqualsAndHashCode.Include
     private Long id;
 
-    public OfficeHours(LocalDate date, Integer startHour, Integer endHour, Course course) {
+    public OfficeHours(LocalDate date, LocalTime startTime, LocalTime endTime, Course course) {
         this.date = date;
-        this.startHour = startHour;
-        this.endHour = endHour;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.course = course;
     }
 
@@ -49,16 +48,12 @@ public class OfficeHours {
     @Setter
     @Column(nullable = false)
     @NotNull
-    @Min(0)
-    @Max(23)
-    private Integer startHour;
+    private LocalTime startTime;
 
     @Setter
     @Column(nullable = false)
     @NotNull
-    @Min(0)
-    @Max(23)
-    private Integer endHour;
+    private LocalTime endTime;
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)

@@ -176,7 +176,7 @@ public class Course {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "course_id")
-    @OrderBy("date ASC, startHour ASC")
+    @OrderBy("date ASC, startTime ASC")
     private List<OfficeHours> officeHours = new ArrayList<>();
 
     public String getPeriod() {

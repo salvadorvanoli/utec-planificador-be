@@ -18,9 +18,11 @@ import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.CognitiveProcess;
 import edu.utec.planificador.enumeration.DeliveryFormat;
+import edu.utec.planificador.enumeration.DomainArea;
 import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
+import edu.utec.planificador.enumeration.ProfessionalCompetency;
 import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.repository.CampusRepository;
@@ -340,9 +342,17 @@ public class DataSeeder implements CommandLineRunner {
         ucIntroTI = curricularUnitRepository.save(ucIntroTI);
 
         CurricularUnit ucProgramacion1 = new CurricularUnit("Programación I", 8, termLTI1);
+        ucProgramacion1.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
+        ucProgramacion1.getDomainAreas().add(DomainArea.RDI_PROJECTS);
+        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
+        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.PROJECT_DESIGN_MANAGEMENT);
         ucProgramacion1 = curricularUnitRepository.save(ucProgramacion1);
 
         CurricularUnit ucMatDiscreta = new CurricularUnit("Matemática Discreta", 6, termLTI1);
+        ucMatDiscreta.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
+        ucMatDiscreta.getDomainAreas().add(DomainArea.INSTALLATION_MANAGEMENT);
+        ucMatDiscreta.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
+        ucMatDiscreta.getProfessionalCompetencies().add(ProfessionalCompetency.EFFICIENT_MANAGEMENT);
         ucMatDiscreta = curricularUnitRepository.save(ucMatDiscreta);
 
         CurricularUnit ucFundamentosBD = new CurricularUnit("Fundamentos de Bases de Datos", 6, termLTI1);

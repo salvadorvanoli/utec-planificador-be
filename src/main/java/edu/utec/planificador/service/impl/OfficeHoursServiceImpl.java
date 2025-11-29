@@ -33,9 +33,9 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         // Validate planning management access to the course (ensures teachers can only manage planning for their own courses)
         accessControlService.validateCoursePlanningManagement(request.getCourseId());
 
-        // Validate that endHour is after startHour
-        if (request.getEndHour() <= request.getStartHour()) {
-            throw new IllegalArgumentException("End hour must be after start hour");
+        // Validate that endTime is after startTime
+        if (request.getEndTime().isBefore(request.getStartTime()) || request.getEndTime().equals(request.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
         }
 
         Course course = courseRepository.findById(request.getCourseId())
@@ -51,8 +51,8 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
 
         OfficeHours officeHours = new OfficeHours(
             request.getDate(),
-            request.getStartHour(),
-            request.getEndHour(),
+            request.getStartTime(),
+            request.getEndTime(),
             course
         );
 
@@ -105,8 +105,8 @@ public class OfficeHoursServiceImpl implements OfficeHoursService {
         return OfficeHoursResponse.builder()
             .id(officeHours.getId())
             .date(officeHours.getDate())
-            .startHour(officeHours.getStartHour())
-            .endHour(officeHours.getEndHour())
+            .startTime(officeHours.getStartTime())
+            .endTime(officeHours.getEndTime())
             .courseId(officeHours.getCourse().getId())
             .build();
     }

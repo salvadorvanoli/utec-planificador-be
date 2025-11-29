@@ -41,7 +41,7 @@ public class OfficeHoursController {
     @PreAuthorize("hasAuthority('PLANNING_WRITE')")
     @Operation(
         summary = "Create office hours",
-        description = "Creates new office hours for a course. End hour must be after start hour."
+        description = "Creates new office hours for a course. End time must be after start time. Times should be in HH:mm format (e.g., '14:30')."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -59,7 +59,7 @@ public class OfficeHoursController {
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Invalid input data (e.g., end hour before start hour)",
+            description = "Invalid input data (e.g., end time before start time)",
             content = @Content
         )
     })
@@ -75,7 +75,7 @@ public class OfficeHoursController {
     @PreAuthorize("hasAuthority('PLANNING_READ')")
     @Operation(
         summary = "Get office hours by course",
-        description = "Returns all office hours for a specific course, ordered by date and start hour"
+        description = "Returns all office hours for a specific course, ordered by date and start time"
     )
     @ApiResponses(value = {
         @ApiResponse(
