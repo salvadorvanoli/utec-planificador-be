@@ -48,19 +48,30 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
         """)
     Optional<Course> findByIdWithTeachers(@Param("courseId") Long courseId);
 
-    // Query para buscar el último curso de una unidad curricular con un docente específico
+    /**
+     * Busca el último curso para una unidad curricular donde AL MENOS UNO de los docentes
+     * especificados está asignado, opcionalmente excluyendo un curso específico.
+     * Los cursos se ordenan por fecha de inicio descendente y se retorna solo el primero.
+     * 
+     * @param curricularUnitId ID de la unidad curricular
+     * @param userIds Lista de IDs de docentes
+     * @param excludeCourseId ID del curso a excluir (puede ser null para no excluir ninguno)
+     * @return Optional con el curso más reciente que coincide con los criterios
+     */
     @Query("""
-        SELECT c FROM Course c
+        SELECT DISTINCT c FROM Course c
         JOIN c.teachers t
         JOIN c.curricularUnit cu
         WHERE cu.id = :curricularUnitId
-        AND t.user.id = :userId
+        AND t.user.id IN :userIds
+        AND (:excludeCourseId IS NULL OR c.id != :excludeCourseId)
         ORDER BY c.startDate DESC
         LIMIT 1
         """)
-    Optional<Course> findLatestByCurricularUnitAndUser(
+    Optional<Course> findLatestByCurricularUnitAndUsers(
         @Param("curricularUnitId") Long curricularUnitId,
-        @Param("userId") Long userId
+        @Param("userIds") List<Long> userIds,
+        @Param("excludeCourseId") Long excludeCourseId
     );
 
     // Segunda query: cargar programmatic contents

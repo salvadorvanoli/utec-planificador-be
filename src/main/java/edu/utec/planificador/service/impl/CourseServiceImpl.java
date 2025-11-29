@@ -7,9 +7,11 @@ import edu.utec.planificador.dto.response.CourseBriefResponse;
 import edu.utec.planificador.dto.response.CoursePdfDataResponse;
 import edu.utec.planificador.dto.response.CourseResponse;
 import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.entity.Activity;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
+import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
@@ -39,9 +41,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
@@ -213,7 +217,33 @@ public class CourseServiceImpl implements CourseService {
         course.getWeeklyPlannings().addAll(weeklyPlannings);
         log.info("Generated {} weekly planning(s) for course", weeklyPlannings.size());
         
+        // Primero guardar el curso para obtener su ID y persistir los WeeklyPlannings vacíos
         Course savedCourse = courseRepository.save(course);
+        log.info("Course created with id: {}", savedCourse.getId());
+        
+        // Ahora buscar el último curso DIFERENTE del actual para copiar su planificación
+        // Considerar TODOS los docentes asignados al curso para encontrar el curso más reciente
+        // que comparta al menos uno de ellos
+        Optional<Course> previousCourseOpt = courseRepository.findLatestByCurricularUnitAndUsers(
+            request.getCurricularUnitId(), 
+            request.getUserIds(),
+            savedCourse.getId()
+        );
+        
+        if (previousCourseOpt.isPresent()) {
+            Course previousCourse = previousCourseOpt.get();
+            log.debug("Found previous course with id: {} for copying planning", previousCourse.getId());
+            
+            // Copiar la planificación del curso anterior al curso recién creado
+            copyPlanningFromPreviousCourse(previousCourse.getId(), savedCourse);
+            
+            // Guardar nuevamente para persistir la planificación copiada
+            savedCourse = courseRepository.save(savedCourse);
+            log.info("Planning copied and persisted for course {}", savedCourse.getId());
+        } else {
+            log.debug("No previous course found for teachers {} and curricular unit {}, course has empty plannings",
+                request.getUserIds(), request.getCurricularUnitId());
+        }
         
         log.info("Course created successfully with id: {} and {} teacher(s)", savedCourse.getId(), teachers.size());
         
@@ -248,8 +278,11 @@ public class CourseServiceImpl implements CourseService {
         // Validate access to curricular unit
         accessControlService.validateCurricularUnitAccess(curricularUnitId);
         
-        Course course = courseRepository.findLatestByCurricularUnitAndUser(curricularUnitId, userId)
-            .orElse(null);
+        Course course = courseRepository.findLatestByCurricularUnitAndUsers(
+            curricularUnitId, 
+            List.of(userId), 
+            null
+        ).orElse(null);
         
         if (course == null) {
             log.debug("No previous course found for curricular unit: {} and user: {}", curricularUnitId, userId);
@@ -258,6 +291,447 @@ public class CourseServiceImpl implements CourseService {
         
         log.debug("Found previous course with id: {}", course.getId());
         return courseMapper.toResponse(course);
+    }
+
+    /**
+     * Copia la planificación (WeeklyPlanning, ProgrammaticContent y Activity) de un curso anterior a un nuevo curso.
+     * 
+     * Mapea las semanas del curso anterior a las del nuevo curso basándose en el número de semana,
+     * creando copias de todos los ProgrammaticContent y Activities asociados.
+     * 
+     * @param sourceCourseId ID del curso del cual copiar la planificación
+     * @param targetCourse Curso al cual copiar la planificación
+     */
+    private void copyPlanningFromPreviousCourse(Long sourceCourseId, Course targetCourse) {
+        log.debug("Copying planning from course {} to new course", sourceCourseId);
+        
+        // Cargar el curso fuente con todos sus detalles
+        Optional<Course> sourceCourseOpt = courseRepository.findByIdWithWeeklyPlannings(sourceCourseId);
+        if (sourceCourseOpt.isEmpty()) {
+            log.warn("Source course {} not found, skipping planning copy", sourceCourseId);
+            return;
+        }
+        
+        // Cargar programmatic contents y activities en queries separadas para evitar MultipleBagFetchException
+        courseRepository.loadProgrammaticContents(sourceCourseId);
+        courseRepository.loadProgrammaticContentActivities(sourceCourseId);
+        
+        Course sourceCourse = sourceCourseOpt.get();
+        
+        // Mapear WeeklyPlannings del curso fuente por número de semana
+        java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = sourceCourse.getWeeklyPlannings().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                WeeklyPlanning::getWeekNumber,
+                wp -> wp
+            ));
+        
+        int copiedWeeks = 0;
+        int copiedContents = 0;
+        int copiedActivities = 0;
+        
+        // Iterar sobre los WeeklyPlannings del nuevo curso y copiar contenido del curso fuente
+        for (WeeklyPlanning targetWeeklyPlanning : targetCourse.getWeeklyPlannings()) {
+            Integer weekNumber = targetWeeklyPlanning.getWeekNumber();
+            WeeklyPlanning sourceWeeklyPlanning = sourceWeeklyPlanningMap.get(weekNumber);
+            
+            if (sourceWeeklyPlanning == null) {
+                log.debug("No source planning found for week {}, skipping", weekNumber);
+                continue;
+            }
+            
+            // Copiar referencias bibliográficas
+            targetWeeklyPlanning.getBibliographicReferences().addAll(
+                sourceWeeklyPlanning.getBibliographicReferences()
+            );
+            
+            // Copiar ProgrammaticContents
+            for (ProgrammaticContent sourceProgrammaticContent : sourceWeeklyPlanning.getProgrammaticContents()) {
+                ProgrammaticContent targetProgrammaticContent = new ProgrammaticContent(
+                    sourceProgrammaticContent.getTitle(),
+                    sourceProgrammaticContent.getContent(),
+                    targetWeeklyPlanning
+                );
+                
+                targetProgrammaticContent.setColor(sourceProgrammaticContent.getColor());
+                targetWeeklyPlanning.getProgrammaticContents().add(targetProgrammaticContent);
+                copiedContents++;
+                
+                // Copiar Activities del ProgrammaticContent
+                for (Activity sourceActivity : sourceProgrammaticContent.getActivities()) {
+                    Activity targetActivity = new Activity(
+                        sourceActivity.getDescription(),
+                        sourceActivity.getDurationInMinutes(),
+                        sourceActivity.getLearningModality(),
+                        targetProgrammaticContent
+                    );
+                    
+                    targetActivity.setTitle(sourceActivity.getTitle());
+                    targetActivity.setColor(sourceActivity.getColor());
+                    targetActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
+                    targetActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
+                    targetActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
+                    targetActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
+                    
+                    targetProgrammaticContent.getActivities().add(targetActivity);
+                    copiedActivities++;
+                }
+            }
+            
+            copiedWeeks++;
+        }
+        
+        log.info("Planning copy completed: {} weeks, {} programmatic contents, {} activities copied from course {} to new course",
+            copiedWeeks, copiedContents, copiedActivities, sourceCourseId);
+    }
+
+    /**
+     * Ajusta los WeeklyPlannings de un curso cuando se modifican sus fechas de inicio o fin.
+     * 
+     * Comportamiento:
+     * - Si se agregan semanas: Copia planificación de curso anterior si existe, o crea semanas vacías
+     * - Si se eliminan semanas: Elimina las últimas WeeklyPlannings con sus contenidos
+     * - Ajusta las fechas de las WeeklyPlannings existentes según las nuevas fechas del curso
+     * 
+     * @param course Curso a ajustar
+     * @param newStartDate Nueva fecha de inicio
+     * @param newEndDate Nueva fecha de fin
+     * @param teacherIds IDs de los docentes del curso (para buscar cursos anteriores)
+     */
+    private void adjustWeeklyPlanningsIfNeeded(Course course, LocalDate newStartDate, LocalDate newEndDate, List<Long> teacherIds) {
+        LocalDate oldStartDate = course.getStartDate();
+        LocalDate oldEndDate = course.getEndDate();
+        
+        // Si no cambiaron las fechas, no hacer nada
+        if (oldStartDate.equals(newStartDate) && oldEndDate.equals(newEndDate)) {
+            log.debug("Course dates unchanged, no weekly planning adjustment needed");
+            return;
+        }
+        
+        log.debug("Adjusting weekly plannings due to date change: [{} to {}] -> [{} to {}]", 
+            oldStartDate, oldEndDate, newStartDate, newEndDate);
+        
+        // Calcular el número de semanas actual y nuevo
+        List<WeeklyPlanning> currentPlannings = new ArrayList<>(course.getWeeklyPlannings());
+        int currentWeekCount = currentPlannings.size();
+        
+        List<WeeklyPlanning> newPlannings = WeeklyPlanningGenerator.generateWeeklyPlannings(newStartDate, newEndDate);
+        int newWeekCount = newPlannings.size();
+        
+        log.debug("Current week count: {}, New week count: {}", currentWeekCount, newWeekCount);
+        
+        if (newWeekCount > currentWeekCount) {
+            // Caso 1: Se agregan semanas
+            log.info("Adding {} week(s) to course", newWeekCount - currentWeekCount);
+            
+            // Actualizar fechas de las semanas existentes
+            for (int i = 0; i < currentWeekCount; i++) {
+                WeeklyPlanning existing = currentPlannings.get(i);
+                WeeklyPlanning template = newPlannings.get(i);
+                existing.setStartDate(template.getStartDate());
+                existing.setEndDate(template.getEndDate());
+            }
+            
+            // Intentar copiar planificación de curso anterior para las nuevas semanas
+            Optional<Course> sourceCourseOpt = courseRepository.findLatestByCurricularUnitAndUsers(
+                course.getCurricularUnit().getId(),
+                teacherIds,
+                course.getId()
+            );
+            
+            Course sourceCourse = null;
+            java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = null;
+            
+            if (sourceCourseOpt.isPresent()) {
+                sourceCourse = sourceCourseOpt.get();
+                log.debug("Found previous course {} for copying additional weeks", sourceCourse.getId());
+                
+                // Cargar los detalles del curso fuente
+                courseRepository.findByIdWithWeeklyPlannings(sourceCourse.getId());
+                courseRepository.loadProgrammaticContents(sourceCourse.getId());
+                courseRepository.loadProgrammaticContentActivities(sourceCourse.getId());
+                
+                // Refrescar el curso fuente para obtener las colecciones cargadas
+                sourceCourse = courseRepository.findByIdWithWeeklyPlannings(sourceCourse.getId()).orElse(null);
+                
+                if (sourceCourse != null) {
+                    sourceWeeklyPlanningMap = sourceCourse.getWeeklyPlannings().stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                            WeeklyPlanning::getWeekNumber,
+                            wp -> wp
+                        ));
+                }
+            }
+            
+            // Agregar las nuevas semanas
+            for (int i = currentWeekCount; i < newWeekCount; i++) {
+                WeeklyPlanning template = newPlannings.get(i);
+                WeeklyPlanning newWeekly = new WeeklyPlanning(
+                    template.getWeekNumber(),
+                    template.getStartDate(),
+                    template.getEndDate()
+                );
+                
+                // Intentar copiar contenido del curso anterior si existe
+                if (sourceWeeklyPlanningMap != null) {
+                    WeeklyPlanning sourceWeekly = sourceWeeklyPlanningMap.get(template.getWeekNumber());
+                    if (sourceWeekly != null) {
+                        log.debug("Copying content from previous course for week {}", template.getWeekNumber());
+                        
+                        // Copiar referencias bibliográficas
+                        newWeekly.getBibliographicReferences().addAll(sourceWeekly.getBibliographicReferences());
+                        
+                        // Copiar ProgrammaticContents y Activities
+                        for (ProgrammaticContent sourceContent : sourceWeekly.getProgrammaticContents()) {
+                            ProgrammaticContent newContent = new ProgrammaticContent(
+                                sourceContent.getTitle(),
+                                sourceContent.getContent(),
+                                newWeekly
+                            );
+                            newContent.setColor(sourceContent.getColor());
+                            
+                            // Copiar Activities
+                            for (Activity sourceActivity : sourceContent.getActivities()) {
+                                Activity newActivity = new Activity(
+                                    sourceActivity.getDescription(),
+                                    sourceActivity.getDurationInMinutes(),
+                                    sourceActivity.getLearningModality(),
+                                    newContent
+                                );
+                                newActivity.setTitle(sourceActivity.getTitle());
+                                newActivity.setColor(sourceActivity.getColor());
+                                newActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
+                                newActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
+                                newActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
+                                newActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
+                                
+                                newContent.getActivities().add(newActivity);
+                            }
+                            
+                            newWeekly.getProgrammaticContents().add(newContent);
+                        }
+                    }
+                }
+                
+                course.getWeeklyPlannings().add(newWeekly);
+            }
+            
+            log.info("Added {} new week(s) to course", newWeekCount - currentWeekCount);
+            
+        } else if (newWeekCount < currentWeekCount) {
+            // Caso 2: Se eliminan semanas
+            int weeksToRemove = currentWeekCount - newWeekCount;
+            log.info("Removing last {} week(s) from course", weeksToRemove);
+            
+            // Actualizar fechas de las semanas que se mantienen
+            for (int i = 0; i < newWeekCount; i++) {
+                WeeklyPlanning existing = currentPlannings.get(i);
+                WeeklyPlanning template = newPlannings.get(i);
+                existing.setStartDate(template.getStartDate());
+                existing.setEndDate(template.getEndDate());
+            }
+            
+            // Eliminar las últimas semanas (orphanRemoval se encargará de eliminar contenidos)
+            List<WeeklyPlanning> toRemove = new ArrayList<>();
+            for (int i = newWeekCount; i < currentWeekCount; i++) {
+                toRemove.add(currentPlannings.get(i));
+            }
+            
+            course.getWeeklyPlannings().removeAll(toRemove);
+            log.info("Removed {} week(s) with their contents", weeksToRemove);
+            
+        } else {
+            // Caso 3: Mismo número de semanas, solo actualizar fechas
+            log.debug("Same week count, updating dates only");
+            for (int i = 0; i < currentWeekCount; i++) {
+                WeeklyPlanning existing = currentPlannings.get(i);
+                WeeklyPlanning template = newPlannings.get(i);
+                existing.setStartDate(template.getStartDate());
+                existing.setEndDate(template.getEndDate());
+            }
+        }
+        
+        // Ajustar OfficeHours que queden fuera del nuevo rango de fechas
+        adjustOfficeHours(course, newStartDate, newEndDate);
+    }
+
+    /**
+     * Ajusta los OfficeHours de un curso cuando cambian las fechas.
+     * Elimina los OfficeHours que queden fuera del nuevo rango de fechas del curso.
+     * 
+     * @param course Curso a ajustar
+     * @param newStartDate Nueva fecha de inicio
+     * @param newEndDate Nueva fecha de fin
+     */
+    private void adjustOfficeHours(Course course, LocalDate newStartDate, LocalDate newEndDate) {
+        if (course.getOfficeHours() == null || course.getOfficeHours().isEmpty()) {
+            return;
+        }
+        
+        List<edu.utec.planificador.entity.OfficeHours> officeHoursToRemove = course.getOfficeHours().stream()
+            .filter(oh -> oh.getDate().isBefore(newStartDate) || oh.getDate().isAfter(newEndDate))
+            .toList();
+        
+        if (!officeHoursToRemove.isEmpty()) {
+            log.info("Removing {} office hour(s) that fall outside new course date range [{} to {}]", 
+                officeHoursToRemove.size(), newStartDate, newEndDate);
+            
+            for (edu.utec.planificador.entity.OfficeHours oh : officeHoursToRemove) {
+                log.debug("Removing office hour on {} (outside new range)", oh.getDate());
+            }
+            
+            course.getOfficeHours().removeAll(officeHoursToRemove);
+        }
+    }
+
+    /**
+     * Reemplaza completamente la planificación de un curso cuando cambian los docentes o la unidad curricular.
+     * 
+     * Elimina todos los WeeklyPlannings existentes (con sus ProgrammaticContents y Activities)
+     * y crea nuevos basados en las fechas actuales del curso, intentando copiar la planificación
+     * del curso más reciente de los nuevos docentes y unidad curricular.
+     * 
+     * @param course Curso cuya planificación se va a reemplazar
+     * @param newTeacherIds IDs de los nuevos docentes
+     * @param newCurricularUnitId ID de la nueva unidad curricular
+     */
+    private void resetAndCopyPlanningFromLatest(Course course, List<Long> newTeacherIds, Long newCurricularUnitId) {
+        log.info("Resetting and replacing planning for course {}", course.getId());
+        
+        // Eliminar todos los WeeklyPlannings existentes (orphanRemoval se encargará del resto)
+        int removedWeeks = course.getWeeklyPlannings().size();
+        course.getWeeklyPlannings().clear();
+        log.debug("Removed {} existing weekly planning(s)", removedWeeks);
+        
+        // Generar nuevos WeeklyPlannings vacíos basados en las fechas del curso
+        List<WeeklyPlanning> newWeeklyPlannings = WeeklyPlanningGenerator.generateWeeklyPlannings(
+            course.getStartDate(),
+            course.getEndDate()
+        );
+        course.getWeeklyPlannings().addAll(newWeeklyPlannings);
+        log.info("Generated {} new empty weekly planning(s)", newWeeklyPlannings.size());
+        
+        // Buscar curso anterior con la nueva unidad curricular y nuevos docentes
+        Optional<Course> previousCourseOpt = courseRepository.findLatestByCurricularUnitAndUsers(
+            newCurricularUnitId,
+            newTeacherIds,
+            course.getId()
+        );
+        
+        if (previousCourseOpt.isPresent()) {
+            Course previousCourse = previousCourseOpt.get();
+            log.info("Found previous course {} for new configuration, copying planning", previousCourse.getId());
+            
+            // Cargar los detalles del curso fuente
+            courseRepository.findByIdWithWeeklyPlannings(previousCourse.getId());
+            courseRepository.loadProgrammaticContents(previousCourse.getId());
+            courseRepository.loadProgrammaticContentActivities(previousCourse.getId());
+            
+            // Refrescar el curso fuente para obtener las colecciones cargadas
+            previousCourse = courseRepository.findByIdWithWeeklyPlannings(previousCourse.getId()).orElse(null);
+            
+            if (previousCourse != null) {
+                // Mapear WeeklyPlannings del curso fuente por número de semana
+                java.util.Map<Integer, WeeklyPlanning> sourceWeeklyPlanningMap = previousCourse.getWeeklyPlannings().stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                        WeeklyPlanning::getWeekNumber,
+                        wp -> wp
+                    ));
+                
+                int copiedWeeks = 0;
+                int copiedContents = 0;
+                int copiedActivities = 0;
+                
+                // Copiar contenido a los nuevos WeeklyPlannings
+                for (WeeklyPlanning targetWeekly : course.getWeeklyPlannings()) {
+                    WeeklyPlanning sourceWeekly = sourceWeeklyPlanningMap.get(targetWeekly.getWeekNumber());
+                    
+                    if (sourceWeekly != null) {
+                        // Copiar referencias bibliográficas
+                        targetWeekly.getBibliographicReferences().addAll(sourceWeekly.getBibliographicReferences());
+                        
+                        // Copiar ProgrammaticContents y Activities
+                        for (ProgrammaticContent sourceContent : sourceWeekly.getProgrammaticContents()) {
+                            ProgrammaticContent newContent = new ProgrammaticContent(
+                                sourceContent.getTitle(),
+                                sourceContent.getContent(),
+                                targetWeekly
+                            );
+                            newContent.setColor(sourceContent.getColor());
+                            
+                            // Copiar Activities
+                            for (Activity sourceActivity : sourceContent.getActivities()) {
+                                Activity newActivity = new Activity(
+                                    sourceActivity.getDescription(),
+                                    sourceActivity.getDurationInMinutes(),
+                                    sourceActivity.getLearningModality(),
+                                    newContent
+                                );
+                                newActivity.setTitle(sourceActivity.getTitle());
+                                newActivity.setColor(sourceActivity.getColor());
+                                newActivity.getCognitiveProcesses().addAll(sourceActivity.getCognitiveProcesses());
+                                newActivity.getTransversalCompetencies().addAll(sourceActivity.getTransversalCompetencies());
+                                newActivity.getTeachingStrategies().addAll(sourceActivity.getTeachingStrategies());
+                                newActivity.getLearningResources().addAll(sourceActivity.getLearningResources());
+                                
+                                newContent.getActivities().add(newActivity);
+                                copiedActivities++;
+                            }
+                            
+                            targetWeekly.getProgrammaticContents().add(newContent);
+                            copiedContents++;
+                        }
+                        
+                        copiedWeeks++;
+                    }
+                }
+                
+                log.info("Planning replacement completed: {} weeks, {} contents, {} activities copied from course {}", 
+                    copiedWeeks, copiedContents, copiedActivities, previousCourse.getId());
+            }
+        } else {
+            log.info("No previous course found for new configuration (CU: {}, Teachers: {}), course has empty planning", 
+                newCurricularUnitId, newTeacherIds);
+        }
+    }
+
+    /**
+     * Valida que un docente no intente modificar la unidad curricular o la lista de docentes
+     * de un curso al actualizarlo.
+     * 
+     * @param course Curso que se está actualizando
+     * @param request Datos de la actualización del curso
+     */
+    private void validateTeacherDoesntModifyTeachersListOrCurricularUnit(Course course, CourseRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByUtecEmail(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Current user not found"));
+        
+        boolean isTeacherOfCourse = course.getTeachers().stream()
+            .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+        
+        if (isTeacherOfCourse) {
+            // Check if teacher is trying to change curricularUnit
+            if (!course.getCurricularUnit().getId().equals(request.getCurricularUnitId())) {
+                log.warn("Teacher {} attempted to change curricularUnit for course {}", 
+                    currentUser.getUtecEmail(), course.getId());
+                throw new IllegalArgumentException("Teachers cannot modify the curricular unit of a course");
+            }
+            
+            // Check if teacher is trying to change the teachers list
+            Set<Long> currentTeacherIds = course.getTeachers().stream()
+                .map(teacher -> teacher.getUser().getId())
+                .collect(Collectors.toSet());
+            Set<Long> requestedTeacherIds = new HashSet<>(request.getUserIds());
+            
+            if (!currentTeacherIds.equals(requestedTeacherIds)) {
+                log.warn("Teacher {} attempted to modify teachers list for course {}", 
+                    currentUser.getUtecEmail(), course.getId());
+                throw new IllegalArgumentException("Teachers cannot modify the assigned teachers of a course");
+            }
+            
+            log.debug("Teacher {} validation passed for course {} update", 
+                currentUser.getUtecEmail(), course.getId());
+        }
     }
 
     @Override
@@ -273,9 +747,48 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         
+        // Additional validation: Teachers cannot modify curricularUnit or teachers list
+        validateTeacherDoesntModifyTeachersListOrCurricularUnit(course, request);
+        
         // Validate that the course has not finished
         if (course.getEndDate() != null && course.getEndDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Cannot modify a course that has already finished");
+        }
+        
+        // CRITICAL: Detect changes BEFORE modifying the course entity
+        boolean curricularUnitChanged = !course.getCurricularUnit().getId().equals(request.getCurricularUnitId());
+        
+        Set<Long> originalTeacherIds = course.getTeachers().stream()
+            .map(teacher -> teacher.getUser().getId())
+            .collect(Collectors.toSet());
+        Set<Long> newTeacherIds = new HashSet<>(request.getUserIds());
+        boolean teachersChanged = !originalTeacherIds.equals(newTeacherIds);
+        
+        // Check if there's at least one teacher in common (intersection)
+        boolean hasCommonTeacher = originalTeacherIds.stream()
+            .anyMatch(newTeacherIds::contains);
+        
+        // Only replace planning if:
+        // 1. Curricular unit changed (different content) OR
+        // 2. ALL teachers were replaced (no continuity in teaching team)
+        boolean shouldReplacePlanning = curricularUnitChanged || (teachersChanged && !hasCommonTeacher);
+        
+        if (shouldReplacePlanning) {
+            log.info("Critical change detected in course {} requiring planning replacement: curricularUnit={}, allTeachersReplaced={}", 
+                id, curricularUnitChanged, (teachersChanged && !hasCommonTeacher));
+            
+            if (curricularUnitChanged) {
+                log.info("Curricular unit will change from {} to {} - planning will be replaced", 
+                    course.getCurricularUnit().getId(), request.getCurricularUnitId());
+            }
+            
+            if (teachersChanged && !hasCommonTeacher) {
+                log.info("All teachers will be replaced (from {} to {}) - planning will be replaced", 
+                    originalTeacherIds, newTeacherIds);
+            }
+        } else if (teachersChanged && hasCommonTeacher) {
+            log.info("Teachers partially changed for course {} (from {} to {}) but at least one teacher remains - planning will be preserved", 
+                id, originalTeacherIds, newTeacherIds);
         }
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
@@ -389,6 +902,15 @@ public class CourseServiceImpl implements CourseService {
         course.getUniversalDesignLearningPrinciples().clear();
         if (request.getUniversalDesignLearningPrinciples() != null) {
             course.getUniversalDesignLearningPrinciples().addAll(request.getUniversalDesignLearningPrinciples());
+        }
+        
+        // Apply planning changes based on what was detected earlier (BEFORE course modification)
+        if (shouldReplacePlanning) {
+            // Replace planning completely: curricular unit changed OR all teachers replaced
+            resetAndCopyPlanningFromLatest(course, request.getUserIds(), request.getCurricularUnitId());
+        } else {
+            // Adjust WeeklyPlannings if dates changed (preserves existing content)
+            adjustWeeklyPlanningsIfNeeded(course, request.getStartDate(), request.getEndDate(), request.getUserIds());
         }
         
         Course updatedCourse = courseRepository.save(course);
