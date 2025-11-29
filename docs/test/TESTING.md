@@ -1,6 +1,6 @@
 # Testing Strategy - UTEC Planificador Backend
-> **Last Update**: November 14, 2025  
-> **Status**: ✅ 49 tests working (30+ integration tests, 19 unit tests)
+> **Last Update**: November 26, 2025  
+> **Status**: ✅ 89 tests working (39 integration tests, 50 unit tests)
 
 ## Overview
 
@@ -25,46 +25,65 @@ We use both **unit tests** with mocks and **integration tests** for controllers:
 - 🔗 **Realistic**: Tests actual HTTP endpoints
 - 🛡️ **Security**: Validates authentication and authorization
 - 📝 **Documentation**: Shows real API usage examples
+- ✅ **Full Coverage**: Tests all REST controllers with MockMvc
 
 **Test Coverage:**
-- ✅ **49 unit tests** implemented and passing
-- ✅ Utilities coverage (10 tests)  
-- ✅ Generators coverage (7 tests)
-- ✅ **Controller integration tests** implemented:
-  - ✅ AuthControllerIntegrationTest (empty - pendiente)
-  - ✅ CampusControllerIntegrationTest (2 tests)
-  - ✅ UserControllerIntegrationTest (empty - pendiente)
-  - ✅ EnumControllerIntegrationTest (13 tests)
-  - ✅ ActivityControllerIntegrationTest (4 tests)
-  - ✅ CourseControllerIntegrationTest (4 tests)
-  - ✅ CurricularUnitControllerIntegrationTest (4 tests)
-  - ✅ RegionalTechnologicalInstituteControllerIntegrationTest (3 tests)
+- ✅ **89 tests total** implemented and passing
+- ✅ **39 integration tests** (controllers)
+- ✅ **50 unit tests** (services, utilities, generators)
+
+**Controller Integration Tests:**
+- ✅ ActivityControllerIntegrationTest (2 tests)
+- ✅ AuthControllerIntegrationTest (6 tests)
+- ✅ CampusControllerIntegrationTest (4 tests)
+- ✅ CourseControllerIntegrationTest (2 tests)
+- ✅ CurricularUnitControllerIntegrationTest (1 test)
+- ✅ EnumControllerIntegrationTest (13 tests)
+- ✅ RegionalTechnologicalInstituteControllerIntegrationTest (3 tests)
+- ✅ UserControllerIntegrationTest (8 tests)
+
+**Service Unit Tests:**
+- ✅ AuthenticationServiceTest (5 tests)
+- ✅ CampusServiceTest (4 tests)
+- ✅ EnumServiceTest (14 tests)
+- ✅ RegionalTechnologicalInstituteServiceTest (4 tests)
+- ✅ UserPositionServiceTest (5 tests)
+
+**Utility & Helper Tests:**
+- ✅ CookieUtilTest (3 tests)
+- ✅ EnumUtilsTest (7 tests)
+- ✅ WeeklyPlanningGeneratorTest (7 tests)
+
+**Application Test:**
+- ✅ UtecPlanificadorDocenteBackendApplicationTests (1 test)
 ## Test Structure
 
 ```
 src/test/java/edu/utec/planificador/
-├── controller/                           30+ tests ✅
-│   ├── AuthControllerIntegrationTest.java       (pendiente)
-│   ├── CampusControllerIntegrationTest.java     2 tests
-│   ├── UserControllerIntegrationTest.java       (pendiente)
-│   ├── EnumControllerIntegrationTest.java       13 tests
-│   ├── ActivityControllerIntegrationTest.java   4 tests
-│   ├── CourseControllerIntegrationTest.java     4 tests
-│   ├── CurricularUnitControllerIntegrationTest.java  4 tests
-│   └── RegionalTechnologicalInstituteControllerIntegrationTest.java  3 tests
-├── service/                              29 tests ✅
-│   ├── AuthenticationServiceTest.java           5 tests
-│   ├── CampusServiceTest.java                   4 tests
-│   ├── EnumServiceTest.java                     13 tests
-│   ├── UserPositionServiceTest.java             5 tests
-│   └── WeeklyPlanningGeneratorTest.java         7 tests
-├── util/                                 10 tests ✅
-│   ├── CookieUtilTest.java                      3 tests
-│   └── EnumUtilsTest.java                       7 tests
+├── controller/                                                    39 tests ✅
+│   ├── ActivityControllerIntegrationTest.java                     2 tests
+│   ├── AuthControllerIntegrationTest.java                         6 tests
+│   ├── CampusControllerIntegrationTest.java                       4 tests
+│   ├── CourseControllerIntegrationTest.java                       2 tests
+│   ├── CurricularUnitControllerIntegrationTest.java              1 test
+│   ├── EnumControllerIntegrationTest.java                        13 tests
+│   ├── RegionalTechnologicalInstituteControllerIntegrationTest.java  3 tests
+│   └── UserControllerIntegrationTest.java                         8 tests
+├── service/                                                       32 tests ✅
+│   ├── AuthenticationServiceTest.java                             5 tests
+│   ├── CampusServiceTest.java                                     4 tests
+│   ├── EnumServiceTest.java                                      14 tests
+│   ├── RegionalTechnologicalInstituteServiceTest.java            4 tests
+│   └── UserPositionServiceTest.java                               5 tests
+├── util/                                                          17 tests ✅
+│   ├── CookieUtilTest.java                                        3 tests
+│   ├── EnumUtilsTest.java                                         7 tests
+│   └── WeeklyPlanningGeneratorTest.java                           7 tests
 ├── config/
-│   └── TestSecurityConfig.java          (configuración de seguridad para tests)
-├── BaseIntegrationTest.java             (clase base para tests de integración)
-└── UtecPlanificadorDocenteBackendApplicationTests.java  1 test ✅
+│   └── TestSecurityConfig.java                    (configuración de seguridad para tests)
+├── BaseIntegrationTest.java                       (clase base abstracta para tests de integración)
+├── BaseSecurityTest.java                          (clase base abstracta con utilidades de seguridad)
+└── UtecPlanificadorDocenteBackendApplicationTests.java            1 test ✅
 ```
 
 ## Running Tests
@@ -82,8 +101,8 @@ src/test/java/edu/utec/planificador/
 ```
 > Task :test
 
-BUILD SUCCESSFUL in 15s
-49 tests completed, 49 passed
+BUILD SUCCESSFUL in 47s
+89 tests completed, 89 passed, 0 failed, 0 skipped
 ```
 
 ### Run Tests with Coverage
@@ -200,24 +219,39 @@ when(campus.getId()).thenReturn(1L);
 - **File**: `UtecPlanificadorDocenteBackendApplicationTests`
 - **Purpose**: Verify Spring context loads successfully
 
-### 2. Service Unit Tests (29 tests)
+### 2. Service Unit Tests (32 tests)
 - **Purpose**: Test business logic in isolation
 - **Mocks**: Repositories, mappers, external services
 - **Files**: `*ServiceTest.java`
+- **Covers**: 
+  - AuthenticationService (login, security, blocked accounts)
+  - CampusService (filtering by user)
+  - EnumService (all enumeration types)
+  - RegionalTechnologicalInstituteService (RTI filtering)
+  - UserPositionService (user positions and roles)
 
-### 3. Utility Tests (10 tests)
+### 3. Utility Tests (17 tests)
 - **Purpose**: Test helper classes and utilities
-- **Files**: `*UtilTest.java`
+- **Files**: `*UtilTest.java`, `*GeneratorTest.java`
+- **Covers**:
+  - CookieUtil (JWT cookie management)
+  - EnumUtils (enum conversions and lookups)
+  - WeeklyPlanningGenerator (date calculations and planning generation)
 
-### 4. Generator Tests (7 tests)
-- **Purpose**: Test data generation logic
-- **Files**: `*GeneratorTest.java`
-
-### 5. Controller Integration Tests (27+ tests)
+### 4. Controller Integration Tests (39 tests)
 - **Purpose**: Test HTTP endpoints with MockMvc
 - **Coverage**: Authentication, authorization, request/response validation
 - **Files**: `*ControllerIntegrationTest.java`
 - **Technology**: `@SpringBootTest`, `@AutoConfigureMockMvc`, `MockMvc`
+- **Controllers Tested**:
+  - ActivityController (CRUD operations)
+  - AuthController (login, current user)
+  - CampusController (campus listing and filtering)
+  - CourseController (course management)
+  - CurricularUnitController (curricular units)
+  - EnumController (all enumeration endpoints)
+  - RegionalTechnologicalInstituteController (RTI management)
+  - UserController (user management, teachers, positions)
 
 #### Controller Test Structure
 
@@ -443,18 +477,191 @@ jobs:
 - ❌ Repository tests (Mockito covers business logic)
 - ❌ E2E tests (manual testing with Swagger)
 
+## Detailed Test Suites
+
+### Controller Integration Tests (39 tests)
+
+#### ActivityControllerIntegrationTest (2 tests)
+- ✅ GET /activities/{id} - Should return activity by ID
+- ✅ DELETE /activities/{id} - Should delete activity
+
+#### AuthControllerIntegrationTest (6 tests)
+- ✅ POST /auth/login - Should login successfully with valid credentials
+- ✅ POST /auth/login - Should return 400 when email is null
+- ✅ POST /auth/login - Should return 400 when email format is invalid
+- ✅ POST /auth/login - Should return 400 when password is null
+- ✅ GET /auth/me - Should return current user when authenticated
+- ✅ GET /auth/me - Should return 401 when not authenticated
+
+#### CampusControllerIntegrationTest (4 tests)
+- ✅ GET /campuses - Should return all campuses without authentication
+- ✅ GET /campuses - Should return campuses filtered by authenticated user
+- ✅ GET /campuses?userId=1 - Should return campuses for specific user
+- ✅ GET /campuses - Should return empty list when no campuses found
+
+#### CourseControllerIntegrationTest (2 tests)
+- ✅ GET /courses/{id} - Should return course by ID
+- ✅ DELETE /courses/{id} - Should delete course
+
+#### CurricularUnitControllerIntegrationTest (1 test)
+- ✅ GET /curricular-units/{id} - Should return curricular unit by ID
+
+#### EnumControllerIntegrationTest (13 tests)
+- ✅ GET /enums - Should return all enumerations
+- ✅ GET /enums/domain-areas - Should return domain areas
+- ✅ GET /enums/professional-competencies - Should return professional competencies
+- ✅ GET /enums/transversal-competencies - Should return transversal competencies
+- ✅ GET /enums/cognitive-processes - Should return cognitive processes
+- ✅ GET /enums/teaching-strategies - Should return teaching strategies
+- ✅ GET /enums/learning-resources - Should return learning resources
+- ✅ GET /enums/delivery-formats - Should return delivery formats
+- ✅ GET /enums/learning-modalities - Should return learning modalities
+- ✅ GET /enums/shifts - Should return shifts
+- ✅ GET /enums/partial-grading-systems - Should return partial grading systems
+- ✅ GET /enums/sustainable-development-goals - Should return SDGs
+- ✅ GET /enums/universal-design-learning-principles - Should return UDL principles
+
+#### RegionalTechnologicalInstituteControllerIntegrationTest (3 tests)
+- ✅ GET /regional-technological-institutes - Should return all RTIs without authentication
+- ✅ GET /regional-technological-institutes?userId={id} - Should return RTIs filtered by user
+- ✅ GET /regional-technological-institutes - Should return empty list when no RTIs found
+
+#### UserControllerIntegrationTest (8 tests)
+- ✅ GET /users/positions - Should return current user positions when authenticated
+- ✅ GET /users/positions - Should return 401 when not authenticated
+- ✅ GET /users/teachers - Should return all teachers without campus filter
+- ✅ GET /users/teachers?campusId=1 - Should return teachers filtered by campus
+- ✅ GET /users/teachers - Should return empty list when no teachers found
+- ✅ GET /users - Should return all users when no filters provided
+- ✅ GET /users?role=COORDINATOR - Should return users filtered by role
+- ✅ GET /users - Should return 403 when user lacks USER_READ permission
+
+### Service Unit Tests (32 tests)
+
+#### AuthenticationServiceTest (5 tests)
+- ✅ Should login successfully with valid credentials
+- ✅ Should throw exception when IP is blocked
+- ✅ Should throw exception when account is blocked
+- ✅ Should record failed login attempt on authentication failure
+- ✅ Should throw exception when no authentication strategy found
+
+#### CampusServiceTest (4 tests)
+- ✅ Should get all campuses when userId is null
+- ✅ Should get campuses by userId
+- ✅ Should return empty list when no campuses found
+- ✅ Should map multiple campuses correctly
+
+#### EnumServiceTest (14 tests)
+- ✅ Should get all enums
+- ✅ Should get domain areas
+- ✅ Should get cognitive processes
+- ✅ Should get shifts
+- ✅ Should get delivery formats
+- ✅ Should get transversal competencies
+- ✅ Should get partial grading systems
+- ✅ Should get professional competencies
+- ✅ Should get sustainable development goals
+- ✅ Should get teaching strategies
+- ✅ Should get learning modalities
+- ✅ Should get learning resources
+- ✅ Should get universal design learning principles
+- ✅ All enum lists should have consistent structure
+
+#### RegionalTechnologicalInstituteServiceTest (4 tests)
+- ✅ Should get all RTIs when userId is null
+- ✅ Should get RTIs by userId when userId is provided
+- ✅ Should return empty list when no RTIs found
+- ✅ Should map multiple RTIs correctly
+
+#### UserPositionServiceTest (5 tests)
+- ✅ Should get current user positions successfully
+- ✅ Should throw exception when user not found
+- ✅ Should get users by role and campus
+- ✅ Should get all users when role and campus are null
+- ✅ Should return empty list when no users found
+
+### Utility & Helper Tests (17 tests)
+
+#### CookieUtilTest (3 tests)
+- ✅ Should add JWT cookie with encryption
+- ✅ Should get and decrypt cookie value
+- ✅ Should return empty when cookie not found
+
+#### EnumUtilsTest (7 tests)
+- ✅ Should not allow instantiation
+- ✅ Should convert enum values to EnumResponse list
+- ✅ Should find enum by name - case insensitive
+- ✅ Should return null when enum name not found
+- ✅ Should return null when name is null
+- ✅ Should find enum by display value
+- ✅ Should return null when display value not found
+
+#### WeeklyPlanningGeneratorTest (7 tests)
+- ✅ testGetMondayOfWeek()
+- ✅ testGetSundayOfWeek()
+- ✅ testGenerateWeeklyPlannings_SingleWeek()
+- ✅ testGenerateWeeklyPlannings_ExactWeek()
+- ✅ testGenerateWeeklyPlannings_CourseStartingOnMonday()
+- ✅ testGenerateWeeklyPlannings_CourseStartingAndEndingMidweek()
+- ✅ testGenerateWeeklyPlannings_LongCourse()
+
+### Application Test (1 test)
+
+#### UtecPlanificadorDocenteBackendApplicationTests (1 test)
+- ✅ contextLoads() - Verifies Spring Boot application context loads successfully
+
+## Test Execution Results
+
+### Latest Test Run (November 26, 2025)
+
+```
+Total Tests: 89
+✅ Passed: 89
+❌ Failed: 0
+⏭️ Skipped: 0
+⏱️ Duration: ~47 seconds
+
+Success Rate: 100%
+```
+
+### Test Distribution by Type
+
+| Category | Tests | Percentage |
+|----------|-------|------------|
+| Controller Integration | 39 | 43.8% |
+| Service Unit | 32 | 36.0% |
+| Utility & Helper | 17 | 19.1% |
+| Application | 1 | 1.1% |
+| **TOTAL** | **89** | **100%** |
+
+### Coverage by Module
+
+| Module | Tests | Status |
+|--------|-------|--------|
+| Authentication | 11 | ✅ Complete |
+| Campus Management | 8 | ✅ Complete |
+| Course Management | 2 | ✅ Complete |
+| Curricular Units | 1 | ✅ Complete |
+| Enumerations | 27 | ✅ Complete |
+| RTI Management | 7 | ✅ Complete |
+| User Management | 13 | ✅ Complete |
+| Activities | 2 | ✅ Complete |
+| Utilities | 17 | ✅ Complete |
+| Application Context | 1 | ✅ Complete |
+
 ## Additional Resources
 
 - [JUnit 5 Documentation](https://junit.org/junit5/docs/current/user-guide/)
 - [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
 - [AssertJ Guide](https://assertj.github.io/doc/)
 - [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
+- [MockMvc Documentation](https://docs.spring.io/spring-framework/docs/current/reference/html/testing.html#spring-mvc-test-framework)
 
 ---
 
-**Last Updated**: November 14, 2025  
-**Version**: 1.1  
-**Status**: ✅ 49 Tests Passing
+**Last Updated**: November 26, 2025  
+**Version**: 2.0  
+**Status**: ✅ 89 Tests Passing (100% Success Rate)
 
 ### Updating Test Dependencies
 
@@ -473,5 +680,6 @@ testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 ---
 
-**Last Updated**: October 28, 2025  
-**Maintained By**: UTEC Development Team
+**Last Updated**: November 26, 2025  
+**Maintained By**: UTEC Development Team  
+**Total Tests**: 89 (39 integration, 50 unit)
