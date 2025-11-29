@@ -483,7 +483,12 @@ public class CourseServiceImpl implements CourseService {
      * @param course Curso que se está actualizando
      * @param request Datos de la actualización del curso
      */
-    private void validateTeacherDoesntModifyTeachersListOrCurricularUnit(Course course, CourseRequest request) {
+    /**
+     * Validates that teachers cannot modify certain restricted fields when updating a course.
+     * Teachers can only modify: description, planning-related fields, and some metadata.
+     * They CANNOT modify: shift, dates, teachers list (now handled separately), or curricularUnit (handled in main method).
+     */
+    private void validateTeacherDoesntModifyRestrictedFields(Course course, CourseRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userRepository.findByUtecEmail(authentication.getName())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.current-not-found")));
@@ -492,15 +497,6 @@ public class CourseServiceImpl implements CourseService {
             .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
         
         if (isTeacherOfCourse) {
-            // Check if teacher is trying to change curricularUnit
-            if (!course.getCurricularUnit().getId().equals(request.getCurricularUnitId())) {
-                log.warn("Teacher {} attempted to change curricularUnit for course {}", 
-                    currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-cannot-modify-cu")
-                );
-            }
-            
             // Check if teacher is trying to change the teachers list
             Set<Long> currentTeacherIds = course.getTeachers().stream()
                 .map(teacher -> teacher.getUser().getId())
@@ -546,6 +542,30 @@ public class CourseServiceImpl implements CourseService {
                 currentUser.getUtecEmail(), course.getId());
         }
     }
+    
+    /**
+     * Clears all planning data for a course when teachers are completely replaced.
+     * This includes: WeeklyPlannings, ProgrammaticContents, Activities, and bibliographic references.
+     * OfficeHours are preserved as they are not part of the weekly planning structure.
+     */
+    private void clearCoursePlanning(Course course) {
+        log.info("Clearing all planning data for course {} due to complete teacher replacement", course.getId());
+        
+        int weeklyPlanningsCount = course.getWeeklyPlannings().size();
+        
+        // Clear all weekly plannings (cascade will remove programmatic contents and activities)
+        course.getWeeklyPlannings().clear();
+        
+        // Regenerate empty weekly plannings based on course dates
+        List<WeeklyPlanning> emptyPlannings = WeeklyPlanningGenerator.generateWeeklyPlannings(
+            course.getStartDate(),
+            course.getEndDate()
+        );
+        course.getWeeklyPlannings().addAll(emptyPlannings);
+        
+        log.info("Cleared {} weekly plannings and regenerated {} empty plannings for course {}", 
+            weeklyPlanningsCount, emptyPlannings.size(), course.getId());
+    }
 
     @Override
     @Transactional
@@ -554,20 +574,37 @@ public class CourseServiceImpl implements CourseService {
         
         // Validate update access (ANALYST/COORDINATOR in campus OR teacher of the course)
         accessControlService.validateCourseUpdateAccess(id);
-        
-        accessControlService.validateCurricularUnitAccess(request.getCurricularUnitId());
 
         Course course = courseRepository.findByIdWithWeeklyPlannings(id)
             .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
         
-        // Additional validation: Teachers cannot modify curricularUnit or teachers list
-        validateTeacherDoesntModifyTeachersListOrCurricularUnit(course, request);
+        // Validate that CurricularUnit is not being modified (not allowed for any user)
+        if (!course.getCurricularUnit().getId().equals(request.getCurricularUnitId())) {
+            log.warn("Attempt to change curricularUnit for course {} from {} to {}", 
+                course.getId(), course.getCurricularUnit().getId(), request.getCurricularUnitId());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.cannot-modify-cu")
+            );
+        }
+        
+        // Additional validation: Teachers cannot modify shift or dates
+        validateTeacherDoesntModifyRestrictedFields(course, request);
         
         // Validate that the course has not finished
         accessControlService.validateCourseNotExpired(id);
         
-        // Note: Planning is no longer automatically replaced when changing curricular unit or teachers
-        // Teachers must manually load planning from a previous course if desired
+        // Check if we need to clear planning due to teacher changes
+        Set<Long> currentTeacherIds = course.getTeachers().stream()
+            .map(teacher -> teacher.getUser().getId())
+            .collect(Collectors.toSet());
+        Set<Long> newTeacherIds = new HashSet<>(request.getUserIds());
+        
+        boolean hasCommonTeachers = currentTeacherIds.stream().anyMatch(newTeacherIds::contains);
+        boolean shouldClearPlanning = !hasCommonTeachers && !currentTeacherIds.equals(newTeacherIds);
+        
+        if (shouldClearPlanning) {
+            log.info("Clearing planning for course {} due to complete teacher change (no common teachers)", id);
+        }
         
         CurricularUnit curricularUnit = curricularUnitRepository.findById(request.getCurricularUnitId())
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -646,6 +683,11 @@ public class CourseServiceImpl implements CourseService {
             }
             
             log.debug("Teachers share {} common campus(es): {}", commonCampusIds.size(), commonCampusIds);
+        }
+        
+        // Clear planning if all teachers were replaced
+        if (shouldClearPlanning) {
+            clearCoursePlanning(course);
         }
         
         // Update fields
