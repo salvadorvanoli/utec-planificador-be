@@ -26,8 +26,8 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
     private final LdapTemplate ldapTemplate;
     private final MessageService messageService;
 
-    @Value("${security.ldap.base:dc=utec,dc=edu,dc=uy}")
-    private String ldapBase;
+    @Value("${security.ldap.user-base:ou=people}")
+    private String userBase;
 
     @Autowired
     public LdapAuthenticationStrategy(
@@ -85,19 +85,43 @@ public class LdapAuthenticationStrategy implements AuthenticationStrategy {
         }
     }
 
+    /**
+     * Authenticates a user against LDAP using Spring LDAP's authenticate method.
+     * This method performs a search using manager credentials (configured in LdapContextSource)
+     * followed by a bind operation with the user's credentials.
+     * 
+     * @param email User email address
+     * @param password User password
+     * @return true if authentication succeeds, false otherwise
+     */
     private boolean authenticateWithLdap(String email, String password) {
         try {
             String sanitizedEmail = sanitizeLdapInput(email);
 
+            // Extract username from email
             String username = sanitizedEmail.contains("@") 
                 ? sanitizedEmail.substring(0, sanitizedEmail.indexOf("@")) 
                 : sanitizedEmail;
 
+            log.debug("Attempting LDAP authentication for username: {}", username);
+            
+            // Create filter to search for user by uid
             Filter filter = new EqualsFilter("uid", username);
-            return ldapTemplate.authenticate(ldapBase, filter.encode(), password);
+            
+            // Authenticate using Spring LDAP's authenticate method
+            // This internally uses manager credentials for search and user credentials for bind
+            boolean authenticated = ldapTemplate.authenticate(userBase, filter.encode(), password);
+            
+            if (authenticated) {
+                log.info("LDAP authentication successful for user: {}", username);
+            } else {
+                log.warn("LDAP authentication failed for user: {}", username);
+            }
+            
+            return authenticated;
 
         } catch (Exception e) {
-            log.error("LDAP authentication error for {}: {}", email, e.getMessage());
+            log.error("LDAP authentication error for {}: {}", email, e.getMessage(), e);
             return false;
         }
     }
