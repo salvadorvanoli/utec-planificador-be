@@ -16,6 +16,7 @@ import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
+import edu.utec.planificador.enumeration.AuthProvider;
 import edu.utec.planificador.enumeration.CognitiveProcess;
 import edu.utec.planificador.enumeration.DeliveryFormat;
 import edu.utec.planificador.enumeration.DomainArea;
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +51,7 @@ import java.util.Arrays;
 @Slf4j
 @Component
 @Profile({"dev"}) // Solo se ejecuta en el perfil 'dev'
+@Order(2)
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
@@ -435,13 +438,15 @@ public class DataSeeder implements CommandLineRunner {
         personalData2.setCountry("Uruguay");
         personalData2.setCity("Rivera");
 
+        // Usuario configurado para autenticación LDAP
         User user2 = new User(
             "maria.gonzalez@utec.edu.uy",
-            passwordEncoder.encode("password123"),
+            null, // No se almacena password para usuarios LDAP
             personalData2
         );
+        user2.setAuthProvider(AuthProvider.LDAP);
         user2 = userRepository.save(user2);
-        log.info("✓ Created second user: {} (ID: {})", user2.getUtecEmail(), user2.getId());
+        log.info("✓ Created second user: {} (ID: {}) - AUTH: LDAP", user2.getUtecEmail(), user2.getId());
 
         // María solo tiene acceso al ITR Norte (Campus Rivera)
         Coordinator coordinatorRivera = new Coordinator(user2);
@@ -561,7 +566,8 @@ public class DataSeeder implements CommandLineRunner {
         log.info("✅ Can access Course ID: {} (ITR Suroeste - Fray Bentos)", course.getId());
         log.info("");
         log.info("👤 USER 2: maria.gonzalez@utec.edu.uy");
-        log.info("Password: password123");
+        log.info("Authentication: LDAP (uses LDAP server credentials)");
+        log.info("Note: Password stored in LDAP, not in local database");
         log.info("Positions:");
         log.info("  - Coordinator at ITR Norte (Campus: Rivera)");
         log.info("  - Teacher at ITR Norte (Campus: Rivera)");
@@ -589,7 +595,8 @@ public class DataSeeder implements CommandLineRunner {
         log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", course.getId());
         log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", courseRivera.getId());
         log.info("");
-        log.info("2️⃣  Login as User 2 (maria.gonzalez@utec.edu.uy):");
+        log.info("2️⃣  Login as User 2 (maria.gonzalez@utec.edu.uy) - LDAP AUTH:");
+        log.info("   🔐 POST /api/v1/auth/login {{ email: maria.gonzalez@utec.edu.uy, password: <LDAP_PASSWORD> }}");
         log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
         log.info("   ✅ GET /api/v1/courses/{} → 200 OK", courseRivera.getId());
         log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", course.getId());
