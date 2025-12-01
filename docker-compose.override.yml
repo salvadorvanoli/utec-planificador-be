@@ -53,46 +53,12 @@ services:
       ADMINER_DESIGN: pepa-linha
   
   ldap:
-    profiles: ["ldap"]
-    image: osixia/openldap:1.5.0
-    container_name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap
-    hostname: ldap.utec.edu.uy
-    restart: unless-stopped
-    
     labels:
-      - "com.utec.project=planificador-docente"
-      - "com.utec.component=ldap-server"
       - "com.utec.environment=development"
-    
-    environment:
-      LDAP_ORGANISATION: "Universidad Tecnologica del Uruguay"
-      LDAP_DOMAIN: "utec.edu.uy"
-      LDAP_BASE_DN: "dc=utec,dc=edu,dc=uy"
-      LDAP_ADMIN_PASSWORD: "admin123"
-      LDAP_CONFIG_PASSWORD: "config123"
-      LDAP_READONLY_USER: "false"
-      LDAP_RFC2307BIS_SCHEMA: "true"
-      LDAP_BACKEND: "mdb"
-      LDAP_TLS: "false"
-      LDAP_LOG_LEVEL: "256"
-    
-    volumes:
-      - ldap-data:/var/lib/ldap
-      - ldap-config:/etc/ldap/slapd.d
     
     ports:
       - "127.0.0.1:389:389"
       - "127.0.0.1:636:636"
-    
-    networks:
-      - app-network
-    
-    healthcheck:
-      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=utec,dc=edu,dc=uy", "-D", "cn=admin,dc=utec,dc=edu,dc=uy", "-w", "admin123"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
 
   phpldapadmin:
     profiles: ["ldap"]
@@ -119,8 +85,4 @@ services:
     depends_on:
       - ldap
 
-volumes:
-  ldap-data:
-    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-data
-  ldap-config:
-    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-config
+

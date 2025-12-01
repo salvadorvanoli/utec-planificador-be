@@ -74,6 +74,30 @@ services:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-3}
 
+  ldap:
+    profiles: []
+    restart: always
+    
+    labels:
+      - "com.utec.environment=production"
+    
+    environment:
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+    
+    deploy:
+      resources:
+        limits:
+          cpus: ${LDAP_CPU_LIMIT:-1}
+          memory: ${LDAP_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: ${LDAP_CPU_RESERVATION:-0.5}
+          memory: ${LDAP_MEMORY_RESERVATION:-256M}
+    
+    ports: []
+
 volumes:
   postgres_prod_data:
     driver: local

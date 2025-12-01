@@ -104,6 +104,43 @@ services:
       retries: ${HEALTHCHECK_RETRIES:-3}
       start_period: ${HEALTHCHECK_START_PERIOD:-40s}
 
+  ldap:
+    profiles: ["ldap"]
+    image: osixia/openldap:1.5.0
+    container_name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap
+    hostname: ldap.utec.edu.uy
+    restart: unless-stopped
+    
+    labels:
+      - "com.utec.project=planificador-docente"
+      - "com.utec.component=ldap-server"
+    
+    environment:
+      LDAP_ORGANISATION: "Universidad Tecnologica del Uruguay"
+      LDAP_DOMAIN: "utec.edu.uy"
+      LDAP_BASE_DN: "dc=utec,dc=edu,dc=uy"
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin123}
+      LDAP_CONFIG_PASSWORD: ${LDAP_CONFIG_PASSWORD:-config123}
+      LDAP_READONLY_USER: "false"
+      LDAP_RFC2307BIS_SCHEMA: "true"
+      LDAP_BACKEND: "mdb"
+      LDAP_TLS: ${LDAP_TLS:-false}
+      LDAP_LOG_LEVEL: ${LDAP_LOG_LEVEL:-256}
+    
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    
+    networks:
+      - app-network
+    
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=utec,dc=edu,dc=uy", "-D", "cn=admin,dc=utec,dc=edu,dc=uy", "-w", "${LDAP_ADMIN_PASSWORD:-admin123}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
 networks:
   app-network:
     driver: bridge
@@ -112,3 +149,11 @@ volumes:
   postgres_data:
     driver: local
     name: ${COMPOSE_PROJECT_NAME:-planificador}-postgres-data
+  
+  ldap_data:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-data
+  
+  ldap_config:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap-config
