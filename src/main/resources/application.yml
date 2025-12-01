@@ -42,6 +42,12 @@ spring:
   web:
     resources:
       add-mappings: false
+  
+  ldap:
+    urls: ${LDAP_URL:ldap://localhost:389}
+    base: ${LDAP_BASE:dc=utec,dc=edu,dc=uy}
+    username: ${LDAP_MANAGER_DN:}
+    password: ${LDAP_MANAGER_PASSWORD:}
 
 management:
   endpoints:
@@ -101,6 +107,7 @@ security:
     enabled: ${LDAP_ENABLED:false}
     url: ${LDAP_URL:ldap://localhost:389}
     base: ${LDAP_BASE:dc=utec,dc=edu,dc=uy}
+    user-base: ${LDAP_USER_BASE:ou=people}
     user-dn-pattern: ${LDAP_USER_DN_PATTERN:uid={0},ou=people}
     user-search-filter: ${LDAP_USER_SEARCH_FILTER:(uid={0})}
     default-role: ${LDAP_DEFAULT_ROLE:TEACHER}

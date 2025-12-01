@@ -3,8 +3,16 @@
 # SCRIPT: scripts/start.ps1
 # =============================================================================
 # Inicia el backend del Planificador Docente UTEC
-# Incluye: PostgreSQL + Spring Boot API
+# Incluye: PostgreSQL + Spring Boot API + LDAP (opcional)
+# 
+# Uso:
+#   .\scripts\start.ps1              # Inicia servicios esenciales (DB + API)
+#   .\scripts\start.ps1 -WithLdap    # Inicia con LDAP habilitado
 # =============================================================================
+
+param(
+    [switch]$WithLdap = $false
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -51,9 +59,19 @@ else {
 }
 
 Write-Host ""
-Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
 
-docker-compose up -d
+# Determinar qué servicios iniciar
+if ($WithLdap) {
+    Write-Host "[INFO] Iniciando con LDAP habilitado" -ForegroundColor Cyan
+    Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+    docker-compose --profile ldap up -d
+}
+else {
+    Write-Host "[INFO] Iniciando servicios esenciales (DB + API)" -ForegroundColor Yellow
+    Write-Host "[INFO] Para incluir LDAP, usa: .\scripts\start.ps1 -WithLdap" -ForegroundColor Gray
+    Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+    docker-compose up -d
+}
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -133,12 +151,26 @@ if ($apiReady) {
     Write-Host "  API:          http://localhost:8080/api" -ForegroundColor White
     Write-Host "  Health:       http://localhost:8080/api/actuator/health" -ForegroundColor White
     Write-Host "  Swagger:      http://localhost:8080/api/swagger-ui.html" -ForegroundColor White
-    Write-Host "  Database:     localhost:5432 (interno)" -ForegroundColor White
+    Write-Host "  Adminer:      http://localhost:8081" -ForegroundColor White
+    
+    if ($WithLdap) {
+        Write-Host "  LDAP:         ldap://localhost:389" -ForegroundColor White
+        Write-Host "  phpLDAPadmin: http://localhost:6443" -ForegroundColor White
+    }
+    
     Write-Host ""
     Write-Host "Comandos útiles:" -ForegroundColor Cyan
     Write-Host "  Ver logs:     .\scripts\logs.ps1" -ForegroundColor White
     Write-Host "  Ver estado:   .\scripts\status.ps1" -ForegroundColor White
     Write-Host "  Detener:      .\scripts\stop.ps1" -ForegroundColor White
+    
+    if (-not $WithLdap) {
+        Write-Host ""
+        Write-Host "Nota: LDAP no está activo. Para habilitarlo:" -ForegroundColor Yellow
+        Write-Host "  .\scripts\stop.ps1" -ForegroundColor Cyan
+        Write-Host "  .\scripts\start.ps1 -WithLdap" -ForegroundColor Cyan
+    }
+    
     Write-Host ""
 }
 else {

@@ -53,9 +53,37 @@ catch {
     Write-Host " NO RESPONDE" -ForegroundColor Red
 }
 
+# Check LDAP
+Write-Host "  LDAP Server..." -NoNewline
+try {
+    $ldapCheck = docker exec planificador-ldap ldapsearch -x -H ldap://localhost -b "dc=utec,dc=edu,dc=uy" -D "cn=admin,dc=utec,dc=edu,dc=uy" -w "admin123" -LLL 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host " OK" -ForegroundColor Green
+        $ldapRunning = $true
+    }
+    else {
+        Write-Host " ERROR" -ForegroundColor Red
+        $ldapRunning = $false
+    }
+}
+catch {
+    Write-Host " NO ACTIVO" -ForegroundColor Yellow
+    $ldapRunning = $false
+}
+
 Write-Host ""
 Write-Host "[Endpoints]" -ForegroundColor Blue
 Write-Host "  API:          http://localhost:8080/api" -ForegroundColor White
 Write-Host "  Health:       http://localhost:8080/api/actuator/health" -ForegroundColor White
 Write-Host "  Swagger:      http://localhost:8080/api/swagger-ui.html" -ForegroundColor White
+Write-Host "  Adminer:      http://localhost:8081" -ForegroundColor White
+
+if ($ldapRunning) {
+    Write-Host "  LDAP:         ldap://localhost:389" -ForegroundColor White
+    Write-Host "  phpLDAPadmin: http://localhost:6443" -ForegroundColor White
+}
+else {
+    Write-Host "  LDAP:         (no activo - usa .\scripts\start.ps1 -WithLdap)" -ForegroundColor Gray
+}
+
 Write-Host ""
