@@ -26,8 +26,6 @@ public class ReportResponse {
     @Schema(description = "List of recommendations")
     private List<String> recommendations;
 
-    @Schema(description = "Overall rating")
-    private String overallRating;
 
     @Data
     @Builder
@@ -37,8 +35,6 @@ public class ReportResponse {
     public static class CourseReport {
         private String courseId;
         private String analysisDate;
-        private String overallRating;
-        private String score;
         private String message;
         private ExecutiveSummary executiveSummary;
         private DetailedAnalysis detailedAnalysis;
