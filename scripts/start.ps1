@@ -6,12 +6,15 @@
 # Incluye: PostgreSQL + Spring Boot API + LDAP (opcional)
 # 
 # Uso:
-#   .\scripts\start.ps1              # Inicia servicios esenciales (DB + API)
-#   .\scripts\start.ps1 -WithLdap    # Inicia con LDAP habilitado
+#   .\scripts\start.ps1                        # Inicia en modo desarrollo (DB + API)
+#   .\scripts\start.ps1 -WithLdap              # Inicia en desarrollo con LDAP
+#   .\scripts\start.ps1 -Production            # Inicia en modo producción
+#   .\scripts\start.ps1 -Production -WithLdap  # Inicia en producción con LDAP
 # =============================================================================
 
 param(
-    [switch]$WithLdap = $false
+    [switch]$WithLdap = $false,
+    [switch]$Production = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,6 +40,24 @@ catch {
     exit 1
 }
 
+# Verificar/Crear red compartida
+$sharedNetworkName = "utec-shared-network"
+try {
+    $networkExists = docker network ls --format "{{.Name}}" | Select-String -Pattern "^$sharedNetworkName$" -Quiet
+    
+    if (-not $networkExists) {
+        Write-Host "[INFO] Creando red compartida: $sharedNetworkName" -ForegroundColor Yellow
+        docker network create $sharedNetworkName | Out-Null
+        Write-Host "[OK] Red compartida creada" -ForegroundColor Green
+    }
+    else {
+        Write-Host "[OK] Red compartida disponible: $sharedNetworkName" -ForegroundColor Green
+    }
+}
+catch {
+    Write-Host "[ADVERTENCIA] No se pudo verificar/crear la red compartida" -ForegroundColor Yellow
+}
+
 # Verificar .env
 if (-not (Test-Path ".env")) {
     Write-Host "[ADVERTENCIA] Archivo .env no encontrado" -ForegroundColor Yellow
@@ -60,17 +81,36 @@ else {
 
 Write-Host ""
 
-# Determinar qué servicios iniciar
-if ($WithLdap) {
-    Write-Host "[INFO] Iniciando con LDAP habilitado" -ForegroundColor Cyan
-    Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
-    docker-compose --profile ldap up -d
+# Determinar modo de ejecución
+if ($Production) {
+    Write-Host "[INFO] Iniciando en modo PRODUCCIÓN" -ForegroundColor Cyan
+    Write-Host "[INFO] Configuración: Resource limits, security options" -ForegroundColor Yellow
+    
+    if ($WithLdap) {
+        Write-Host "[INFO] Con LDAP habilitado" -ForegroundColor Cyan
+        Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+        docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile ldap up -d --build
+    }
+    else {
+        Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+        docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+    }
 }
 else {
-    Write-Host "[INFO] Iniciando servicios esenciales (DB + API)" -ForegroundColor Yellow
-    Write-Host "[INFO] Para incluir LDAP, usa: .\scripts\start.ps1 -WithLdap" -ForegroundColor Gray
-    Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
-    docker-compose up -d
+    Write-Host "[INFO] Iniciando en modo DESARROLLO" -ForegroundColor Yellow
+    Write-Host "[INFO] Para modo producción, usa: .\scripts\start.ps1 -Production" -ForegroundColor Gray
+    
+    if ($WithLdap) {
+        Write-Host "[INFO] Con LDAP habilitado" -ForegroundColor Cyan
+        Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+        docker-compose --profile ldap up -d --build
+    }
+    else {
+        Write-Host "[INFO] Servicios esenciales (DB + API)" -ForegroundColor Yellow
+        Write-Host "[INFO] Para incluir LDAP, usa: .\scripts\start.ps1 -WithLdap" -ForegroundColor Gray
+        Write-Host "[PASO 1/3] Iniciando servicios..." -ForegroundColor Blue
+        docker-compose up -d --build
+    }
 }
 
 if ($LASTEXITCODE -ne 0) {
@@ -124,14 +164,16 @@ while ($attempt -lt $maxAttempts) {
     $attempt++
     
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:8080/api/actuator/health" -Method Get -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-        if ($response.StatusCode -eq 200) {
+        # Usar curl para verificar el health endpoint (más confiable en scripts)
+        $healthStatus = curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/actuator/health 2>&1
+        
+        if ($healthStatus -eq "200") {
             $apiReady = $true
             break
         }
     }
     catch {
-        # Ignorar errores de conexión
+        # Errores esperados mientras el servicio inicia
     }
     
     if ($attempt -eq 1 -or $attempt % 5 -eq 0) {
@@ -148,9 +190,9 @@ if ($apiReady) {
     Write-Host "========================================" -ForegroundColor Green
     Write-Host ""
     Write-Host "Servicios disponibles:" -ForegroundColor Cyan
-    Write-Host "  API:          http://localhost:8080/api" -ForegroundColor White
-    Write-Host "  Health:       http://localhost:8080/api/actuator/health" -ForegroundColor White
-    Write-Host "  Swagger:      http://localhost:8080/api/swagger-ui.html" -ForegroundColor White
+    Write-Host "  API:          http://localhost:8080/api/v1" -ForegroundColor White
+    Write-Host "  Health:       http://localhost:8080/api/v1/actuator/health" -ForegroundColor White
+    Write-Host "  Swagger:      http://localhost:8080/api/v1/swagger-ui.html" -ForegroundColor White
     Write-Host "  Adminer:      http://localhost:8081" -ForegroundColor White
     
     if ($WithLdap) {
@@ -163,12 +205,24 @@ if ($apiReady) {
     Write-Host "  Ver logs:     .\scripts\logs.ps1" -ForegroundColor White
     Write-Host "  Ver estado:   .\scripts\status.ps1" -ForegroundColor White
     Write-Host "  Detener:      .\scripts\stop.ps1" -ForegroundColor White
+    Write-Host ""
     
-    if (-not $WithLdap) {
-        Write-Host ""
-        Write-Host "Nota: LDAP no está activo. Para habilitarlo:" -ForegroundColor Yellow
-        Write-Host "  .\scripts\stop.ps1" -ForegroundColor Cyan
-        Write-Host "  .\scripts\start.ps1 -WithLdap" -ForegroundColor Cyan
+    if ($Production) {
+        Write-Host "Modo: PRODUCCIÓN (resource limits, security)" -ForegroundColor Green
+        if ($WithLdap) {
+            Write-Host "LDAP: Habilitado" -ForegroundColor Green
+        }
+    }
+    else {
+        Write-Host "Modo: DESARROLLO" -ForegroundColor Yellow
+        if ($WithLdap) {
+            Write-Host "LDAP: Habilitado" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "Nota: LDAP no está activo. Para habilitarlo:" -ForegroundColor Yellow
+            Write-Host "  .\scripts\stop.ps1" -ForegroundColor Cyan
+            Write-Host "  .\scripts\start.ps1 -WithLdap" -ForegroundColor Cyan
+        }
     }
     
     Write-Host ""

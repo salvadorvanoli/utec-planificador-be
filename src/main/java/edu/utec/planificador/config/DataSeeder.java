@@ -344,12 +344,12 @@ public class DataSeeder implements CommandLineRunner {
         CurricularUnit ucIntroTI = new CurricularUnit("Introducción a TI", 6, termLTI1);
         ucIntroTI = curricularUnitRepository.save(ucIntroTI);
 
-        CurricularUnit ucProgramacion1 = new CurricularUnit("Programación I", 8, termLTI1);
-        ucProgramacion1.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
-        ucProgramacion1.getDomainAreas().add(DomainArea.RDI_PROJECTS);
-        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
-        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.PROJECT_DESIGN_MANAGEMENT);
-        ucProgramacion1 = curricularUnitRepository.save(ucProgramacion1);
+        CurricularUnit ucFundamentosProgramacion1 = new CurricularUnit("Fundamentos e Introducción a la Programación", 10, termLTI1);
+        ucFundamentosProgramacion1.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
+        ucFundamentosProgramacion1.getDomainAreas().add(DomainArea.RDI_PROJECTS);
+        ucFundamentosProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
+        ucFundamentosProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.PROJECT_DESIGN_MANAGEMENT);
+        ucFundamentosProgramacion1 = curricularUnitRepository.save(ucFundamentosProgramacion1);
 
         CurricularUnit ucMatDiscreta = new CurricularUnit("Matemática Discreta", 6, termLTI1);
         ucMatDiscreta.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
@@ -387,11 +387,11 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Creating course...");
         Course course = new Course(
             Shift.MORNING,
-            "Curso de Programación I - Grupo 1",
+            "Curso de Fundamentos e Introducción a la Programación - Grupo 1",
             LocalDate.of(2025, 2, 24),
             LocalDate.of(2025, 6, 27),
             PartialGradingSystem.PGS_1,
-            ucProgramacion1
+            ucFundamentosProgramacion1
         );
         
         final Campus finalCampusFrayBentos = campusFrayBentos;

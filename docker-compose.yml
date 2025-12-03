@@ -49,8 +49,13 @@ services:
       db:
         condition: service_healthy
     
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      
+      AI_AGENT_BASE_URL: ${AI_AGENT_BASE_URL:-http://host.docker.internal:8000}
       
       DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
       DATABASE_USERNAME: ${POSTGRES_USER}
@@ -96,9 +101,10 @@ services:
     
     networks:
       - app-network
+      - utec-shared
     
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/actuator/health"]
       interval: ${HEALTHCHECK_INTERVAL:-30s}
       timeout: ${HEALTHCHECK_TIMEOUT:-10s}
       retries: ${HEALTHCHECK_RETRIES:-3}
@@ -144,6 +150,10 @@ services:
 networks:
   app-network:
     driver: bridge
+  
+  utec-shared:
+    external: true
+    name: utec-shared-network
 
 volumes:
   postgres_data:
