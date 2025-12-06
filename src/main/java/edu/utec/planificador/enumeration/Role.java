@@ -35,6 +35,7 @@ public enum Role {
         Permission.USER_READ,
         Permission.COURSE_READ,
         Permission.COURSE_WRITE,
+        Permission.COURSE_DELETE,
         Permission.PLANNING_READ,
         Permission.CONFIGURATION_READ
     )),
@@ -43,6 +44,7 @@ public enum Role {
         Permission.USER_READ,
         Permission.COURSE_READ,
         Permission.COURSE_WRITE,
+        Permission.COURSE_DELETE,
         Permission.CONFIGURATION_READ
     )),
     

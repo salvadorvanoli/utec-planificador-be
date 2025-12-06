@@ -280,7 +280,7 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('PLANNING_WRITE')")
+    @PreAuthorize("hasAuthority('COURSE_WRITE')")
     @Operation(
         summary = "Update course",
         description = "Updates an existing course by its ID"
