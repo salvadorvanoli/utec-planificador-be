@@ -190,341 +190,177 @@ public class DataSeeder implements CommandLineRunner {
         // ========================================
         // CREACIÓN DE PROGRAMAS (CARRERAS)
         // ========================================
-        log.info("Creating Programs (Carreras)...");
+        log.info("Creating Programs...");
 
-        // Programas ITR Suroeste
-        Program progIngMecatronica = new Program("Ingeniería en Mecatrónica", 8, 240);
-        progIngMecatronica = programRepository.save(progIngMecatronica);
-        campusFrayBentos.getPrograms().add(progIngMecatronica);
-
-        Program progIngLogistica = new Program("Ingeniería en Logística", 8, 240);
-        progIngLogistica = programRepository.save(progIngLogistica);
-        campusFrayBentos.getPrograms().add(progIngLogistica);
-
-        Program progTecBiomedica = new Program("Tecnólogo en Ingeniería Biomédica", 6, 180);
-        progTecBiomedica = programRepository.save(progTecBiomedica);
-        campusFrayBentos.getPrograms().add(progTecBiomedica);
-
-        Program progLicAnalisisAlimentario = new Program("Licenciatura en Análisis Alimentario", 7, 210);
-        progLicAnalisisAlimentario = programRepository.save(progLicAnalisisAlimentario);
-        campusFrayBentos.getPrograms().add(progLicAnalisisAlimentario);
-
-        Program progLicTI = new Program("Licenciatura en Tecnologías de la Información", 7, 210);
-        progLicTI = programRepository.save(progLicTI);
-        campusFrayBentos.getPrograms().add(progLicTI);
-
-        Program progLicJazz = new Program("Licenciatura en Jazz y Música Creativa", 7, 210);
-        progLicJazz = programRepository.save(progLicJazz);
-        campusFrayBentos.getPrograms().add(progLicJazz);
-
-        Program progLicLacteos = new Program("Licenciatura en Ciencia y Tecnología de Lácteos", 7, 210);
-        progLicLacteos = programRepository.save(progLicLacteos);
-        campusFrayBentos.getPrograms().add(progLicLacteos);
-
-        Program progTecLechera = new Program("Tecnólogo en Manejo de Sistemas de Producción Lechera", 6, 180);
-        progTecLechera = programRepository.save(progTecLechera);
-        campusFrayBentos.getPrograms().add(progTecLechera);
-
-        campusFrayBentos = campusRepository.save(campusFrayBentos);
-        log.info("✓ Created and associated {} programs to {}", 8, campusFrayBentos.getName());
-
-        // Programas ITR Centro-Sur
-        Program progTecInformatica = new Program("Tecnólogo en Informática", 6, 180);
+        // Tecnólogo en Informática - 252 créditos
+        Program progTecInformatica = new Program("Tecnólogo en Informática", 6, 252);
         progTecInformatica = programRepository.save(progTecInformatica);
-        campusDurazno.getPrograms().add(progTecInformatica);
+        log.info("✓ Created Program: {} ({} créditos)", progTecInformatica.getName(), progTecInformatica.getTotalCredits());
+
+        // Asociar programa al campus San José
         campusSanJose.getPrograms().add(progTecInformatica);
-
-        campusDurazno.getPrograms().add(progLicTI); // LTI también en Centro-Sur
-        campusSanJose.getPrograms().add(progLicTI);
-
-        Program progIngAgua = new Program("Ingeniería en Agua y Desarrollo Sostenible", 8, 240);
-        progIngAgua = programRepository.save(progIngAgua);
-        campusDurazno.getPrograms().add(progIngAgua);
-
-        Program progIngAgroambiental = new Program("Ingeniería Agroambiental", 8, 240);
-        progIngAgroambiental = programRepository.save(progIngAgroambiental);
-        campusDurazno.getPrograms().add(progIngAgroambiental);
-
-        Program progIngEnergias = new Program("Ingeniería en Energías Renovables", 8, 240);
-        progIngEnergias = programRepository.save(progIngEnergias);
-        campusDurazno.getPrograms().add(progIngEnergias);
-
-        campusDurazno = campusRepository.save(campusDurazno);
         campusSanJose = campusRepository.save(campusSanJose);
-        log.info("✓ Created and associated programs to ITR Centro-Sur campuses");
+        log.info("✓ Associated {} to Campus {}", progTecInformatica.getName(), campusSanJose.getName());
 
-        // Programas ITR Norte
-        Program progLicDatosIA = new Program("Licenciatura en Ingeniería de Datos e Inteligencia Artificial", 7, 210);
-        progLicDatosIA = programRepository.save(progLicDatosIA);
-        campusRivera.getPrograms().add(progLicDatosIA);
-
-        campusRivera.getPrograms().add(progIngLogistica); // Logística también en Norte
-
-        Program progTecMecatronicaInd = new Program("Tecnólogo en Mecatrónica Industrial", 6, 180);
-        progTecMecatronicaInd = programRepository.save(progTecMecatronicaInd);
-        campusRivera.getPrograms().add(progTecMecatronicaInd);
-
-        Program progTecDatos = new Program("Tecnólogo en Análisis y Gestión de Datos", 6, 180);
-        progTecDatos = programRepository.save(progTecDatos);
-        campusRivera.getPrograms().add(progTecDatos);
-
-        Program progTecLogistica = new Program("Tecnólogo en Logística", 6, 180);
-        progTecLogistica = programRepository.save(progTecLogistica);
-        campusRivera.getPrograms().add(progTecLogistica);
-
-        campusRivera = campusRepository.save(campusRivera);
-        campusMelo.getPrograms().add(progLicDatosIA);
-        campusMelo = campusRepository.save(campusMelo);
-        log.info("✓ Created and associated programs to ITR Norte campuses");
-
-        // Programas ITR Este
-        campusMinas.getPrograms().add(progIngAgua); // Agua también en Minas
-        campusMinas.getPrograms().add(progLicTI); // LTI también en Minas
-        campusMinas = campusRepository.save(campusMinas);
-
-        campusMaldonado.getPrograms().add(progLicTI);
+        // Asociar programa también al campus Maldonado
+        campusMaldonado.getPrograms().add(progTecInformatica);
         campusMaldonado = campusRepository.save(campusMaldonado);
-        log.info("✓ Associated programs to ITR Este campuses");
-
-        // ========================================
-        // CREACIÓN DE USUARIOS
-        // ========================================
-        log.info("Creating users with positions...");
-
-        // USUARIO 1: Docente y roles en ITR Suroeste (Fray Bentos)
-        PersonalData personalData1 = new PersonalData();
-        personalData1.setName("Juan");
-        personalData1.setLastName("Pérez");
-        personalData1.setIdentityDocument("12345678");
-        personalData1.setPhoneNumber("099123456");
-        personalData1.setCountry("Uruguay");
-        personalData1.setCity("Fray Bentos");
-
-        User user1 = new User(
-            "juan.perez@utec.edu.uy",
-            passwordEncoder.encode("password"),
-            personalData1
-        );
-        user1 = userRepository.save(user1);
-        log.info("✓ Created user: {} (ID: {})", user1.getUtecEmail(), user1.getId());
-
-        Teacher teacherFrayBentos = new Teacher(user1);
-        teacherFrayBentos.addCampus(campusFrayBentos);
-        teacherFrayBentos.addCampus(campusMercedes);
-        user1.addPosition(teacherFrayBentos);
-
-        Coordinator coordinatorFrayBentos = new Coordinator(user1);
-        coordinatorFrayBentos.addCampus(campusFrayBentos);
-        user1.addPosition(coordinatorFrayBentos);
-
-        Administrator administratorFrayBentos = new Administrator(user1);
-        administratorFrayBentos.addCampus(campusFrayBentos);
-        user1.addPosition(administratorFrayBentos);
-
-        EducationManager educationManagerFrayBentos = new EducationManager(user1);
-        educationManagerFrayBentos.addCampus(campusFrayBentos);
-        user1.addPosition(educationManagerFrayBentos);
-
-        Analyst analystFrayBentos = new Analyst(user1);
-        analystFrayBentos.addCampus(campusFrayBentos);
-        user1.addPosition(analystFrayBentos);
-
-        user1 = userRepository.save(user1);
-        log.info("✓ User 1 has access to ITR Suroeste (Fray Bentos, Mercedes)");
+        log.info("✓ Associated {} to Campus {}", progTecInformatica.getName(), campusMaldonado.getName());
 
         // ========================================
         // CREACIÓN DE TÉRMINOS Y UNIDADES CURRICULARES
         // ========================================
-        log.info("Creating Terms and Curricular Units...");
+        log.info("Creating Terms and Curricular Units for {}...", progTecInformatica.getName());
 
-        // Licenciatura en Tecnologías de la Información - Semestre 1
-        Term termLTI1 = new Term(1, progLicTI);
-        termLTI1 = termRepository.save(termLTI1);
+        // Término 1
+        Term term1 = new Term(1, progTecInformatica);
+        term1 = termRepository.save(term1);
 
-        CurricularUnit ucIntroTI = new CurricularUnit("Introducción a TI", 6, termLTI1);
-        ucIntroTI = curricularUnitRepository.save(ucIntroTI);
+        // Unidades Curriculares - Término 1
+        CurricularUnit ucPrincipiosProg = new CurricularUnit("Principios de Programación", 16, term1);
+        ucPrincipiosProg = curricularUnitRepository.save(ucPrincipiosProg);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucPrincipiosProg.getName(), ucPrincipiosProg.getCredits());
 
-        CurricularUnit ucProgramacion1 = new CurricularUnit("Programación I", 8, termLTI1);
-        ucProgramacion1.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
-        ucProgramacion1.getDomainAreas().add(DomainArea.RDI_PROJECTS);
-        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
-        ucProgramacion1.getProfessionalCompetencies().add(ProfessionalCompetency.PROJECT_DESIGN_MANAGEMENT);
-        ucProgramacion1 = curricularUnitRepository.save(ucProgramacion1);
+        CurricularUnit ucArqComputadoras = new CurricularUnit("Arquitectura de Computadoras", 12, term1);
+        ucArqComputadoras = curricularUnitRepository.save(ucArqComputadoras);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucArqComputadoras.getName(), ucArqComputadoras.getCredits());
 
-        CurricularUnit ucMatDiscreta = new CurricularUnit("Matemática Discreta", 6, termLTI1);
-        ucMatDiscreta.getDomainAreas().add(DomainArea.INSTALLATION_DESIGN);
-        ucMatDiscreta.getDomainAreas().add(DomainArea.INSTALLATION_MANAGEMENT);
-        ucMatDiscreta.getProfessionalCompetencies().add(ProfessionalCompetency.TECHNICAL_ASSISTANCE);
-        ucMatDiscreta.getProfessionalCompetencies().add(ProfessionalCompetency.EFFICIENT_MANAGEMENT);
-        ucMatDiscreta = curricularUnitRepository.save(ucMatDiscreta);
+        CurricularUnit ucInglesTec1 = new CurricularUnit("Inglés Técnico 1", 8, term1);
+        ucInglesTec1 = curricularUnitRepository.save(ucInglesTec1);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucInglesTec1.getName(), ucInglesTec1.getCredits());
 
-        CurricularUnit ucFundamentosBD = new CurricularUnit("Fundamentos de Bases de Datos", 6, termLTI1);
-        ucFundamentosBD = curricularUnitRepository.save(ucFundamentosBD);
+        CurricularUnit ucMatDiscreta1 = new CurricularUnit("Matemática Discreta y Lógica 1", 12, term1);
+        ucMatDiscreta1 = curricularUnitRepository.save(ucMatDiscreta1);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucMatDiscreta1.getName(), ucMatDiscreta1.getCredits());
 
-        log.info("✓ Created {} curricular units for {} - Semestre 1", 4, progLicTI.getName());
+        // Término 2
+        Term term2 = new Term(2, progTecInformatica);
+        term2 = termRepository.save(term2);
 
-        // Ingeniería en Logística - Semestre 1
-        Term termLog1 = new Term(1, progIngLogistica);
-        termLog1 = termRepository.save(termLog1);
+        CurricularUnit ucMatDiscreta2 = new CurricularUnit("Matemática Discreta y Lógica 2", 6, term2);
+        ucMatDiscreta2 = curricularUnitRepository.save(ucMatDiscreta2);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucMatDiscreta2.getName(), ucMatDiscreta2.getCredits());
 
-        CurricularUnit ucHerramientasOp = new CurricularUnit("Herramientas Operativas I", 6, termLog1);
-        ucHerramientasOp = curricularUnitRepository.save(ucHerramientasOp);
+        CurricularUnit ucBD1 = new CurricularUnit("Bases de Datos 1", 12, term2);
+        ucBD1 = curricularUnitRepository.save(ucBD1);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucBD1.getName(), ucBD1.getCredits());
 
-        CurricularUnit ucMatematica = new CurricularUnit("Matemática - Álgebra y Cálculo", 8, termLog1);
-        ucMatematica = curricularUnitRepository.save(ucMatematica);
+        CurricularUnit ucEstructuraAlg = new CurricularUnit("Estructura y Diseño de Algoritmos", 12, term2);
+        ucEstructuraAlg = curricularUnitRepository.save(ucEstructuraAlg);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucEstructuraAlg.getName(), ucEstructuraAlg.getCredits());
 
-        CurricularUnit ucFundEconomia = new CurricularUnit("Fundamentos de Economía", 6, termLog1);
-        ucFundEconomia = curricularUnitRepository.save(ucFundEconomia);
+        CurricularUnit ucInglesTec2 = new CurricularUnit("Inglés Técnico 2", 4, term2);
+        ucInglesTec2 = curricularUnitRepository.save(ucInglesTec2);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucInglesTec2.getName(), ucInglesTec2.getCredits());
 
-        CurricularUnit ucIntroLogistica = new CurricularUnit("Introducción a la Logística", 6, termLog1);
-        ucIntroLogistica = curricularUnitRepository.save(ucIntroLogistica);
+        CurricularUnit ucSistemasOp = new CurricularUnit("Sistemas Operativos", 12, term2);
+        ucSistemasOp = curricularUnitRepository.save(ucSistemasOp);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucSistemasOp.getName(), ucSistemasOp.getCredits());
 
-        log.info("✓ Created {} curricular units for {} - Semestre 1", 4, progIngLogistica.getName());
+        log.info("✓ Created {} curricular units for {}", 9, progTecInformatica.getName());
 
         // ========================================
-        // CREACIÓN DE CURSO PARA USUARIO 1
+        // CREACIÓN DE USUARIOS
+        // ========================================
+        log.info("Creating users...");
+
+        PersonalData personalDataJuan = new PersonalData();
+        personalDataJuan.setName("Juan");
+        personalDataJuan.setLastName("Pérez");
+        personalDataJuan.setIdentityDocument("12345678");
+        personalDataJuan.setPhoneNumber("099123456");
+        personalDataJuan.setCountry("Uruguay");
+        personalDataJuan.setCity("San José");
+
+        User userJuan = new User(
+            "juan.perez@utec.edu.uy",
+            passwordEncoder.encode("password123"),
+            personalDataJuan
+        );
+        userJuan = userRepository.save(userJuan);
+        log.info("✓ Created user: {} (ID: {})", userJuan.getUtecEmail(), userJuan.getId());
+
+        // Crear posición de docente en San José
+        Teacher teacherJuan = new Teacher(userJuan);
+        teacherJuan.addCampus(campusSanJose);
+        teacherJuan.addCampus(campusMaldonado);
+        userJuan.addPosition(teacherJuan);
+
+        userJuan = userRepository.save(userJuan);
+        log.info("✓ User Juan Pérez assigned as Teacher at Campuses: {}, {}", campusSanJose.getName(), campusMaldonado.getName());
+
+        // Usuario con múltiples roles
+        PersonalData personalDataMaria = new PersonalData();
+        personalDataMaria.setName("María");
+        personalDataMaria.setLastName("González");
+        personalDataMaria.setIdentityDocument("87654321");
+        personalDataMaria.setPhoneNumber("099654321");
+        personalDataMaria.setCountry("Uruguay");
+        personalDataMaria.setCity("San José");
+
+        User userMaria = new User(
+            "maria.gonzalez@utec.edu.uy",
+            passwordEncoder.encode("password123"),
+            personalDataMaria
+        );
+        userMaria = userRepository.save(userMaria);
+        log.info("✓ Created user: {} (ID: {})", userMaria.getUtecEmail(), userMaria.getId());
+
+        // Crear posición de Analista
+        Analyst analystMaria = new Analyst(userMaria);
+        analystMaria.addCampus(campusSanJose);
+        userMaria.addPosition(analystMaria);
+
+        // Crear posición de Referente de Educación
+        EducationManager educationManagerMaria = new EducationManager(userMaria);
+        educationManagerMaria.addCampus(campusSanJose);
+        userMaria.addPosition(educationManagerMaria);
+
+        // Crear posición de Coordinador
+        Coordinator coordinatorMaria = new Coordinator(userMaria);
+        coordinatorMaria.addCampus(campusSanJose);
+        userMaria.addPosition(coordinatorMaria);
+
+        userMaria = userRepository.save(userMaria);
+        log.info("✓ User María González assigned as Analyst, Education Manager and Coordinator at Campus: {}", campusSanJose.getName());
+
+        // ========================================
+        // CREACIÓN DE CURSO
         // ========================================
         log.info("Creating course...");
-        Course course = new Course(
+
+        Course coursePrincipiosProg = new Course(
             Shift.MORNING,
-            "Curso de Programación I - Grupo 1",
-            LocalDate.of(2025, 2, 24),
-            LocalDate.of(2025, 6, 27),
+            "Principios de Programación - Grupo 1",
+            LocalDate.of(2024, 3, 1),
+            LocalDate.of(2024, 6, 20),
             PartialGradingSystem.PGS_1,
-            ucProgramacion1
+            ucPrincipiosProg
         );
-        
-        final Campus finalCampusFrayBentos = campusFrayBentos;
-        teacherFrayBentos = (Teacher) user1.getPositions().stream()
-            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusFrayBentos))
+
+        // Obtener el teacher guardado desde las posiciones del userJuan
+        final Campus finalCampusSanJose = campusSanJose;
+        Teacher savedTeacherJuan = (Teacher) userJuan.getPositions().stream()
+            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusSanJose))
             .findFirst()
             .orElseThrow();
 
-        course.getTeachers().add(teacherFrayBentos);
+        coursePrincipiosProg.getTeachers().add(savedTeacherJuan);
+        coursePrincipiosProg.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 80);
+        coursePrincipiosProg.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);
+        coursePrincipiosProg.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
+        coursePrincipiosProg.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
+        coursePrincipiosProg.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
+        coursePrincipiosProg.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ACTION_EXPRESSION);
+        coursePrincipiosProg.setIsRelatedToInvestigation(false);
+        coursePrincipiosProg.setInvolvesActivitiesWithProductiveSector(true);
 
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 60);
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 20);
-        course.getHoursPerDeliveryFormat().put(DeliveryFormat.HYBRID, 10);
+        coursePrincipiosProg = courseRepository.save(coursePrincipiosProg);
+        log.info("✓ Created course: {} (ID: {})", coursePrincipiosProg.getDescription(), coursePrincipiosProg.getId());
+        log.info("  - Teacher: {}", userJuan.getUtecEmail());
+        log.info("  - Period: {} to {}", coursePrincipiosProg.getStartDate(), coursePrincipiosProg.getEndDate());
 
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
-        course.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_8);
-
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ACTION_EXPRESSION);
-        course.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);
-
-        course.setIsRelatedToInvestigation(true);
-        course.setInvolvesActivitiesWithProductiveSector(true);
-
-        course = courseRepository.save(course);
-        log.info("✓ Created course: {} (ID: {})", course.getDescription(), course.getId());
-        log.info("  - Shift: {}", course.getShift());
-        log.info("  - Start date: {}", course.getStartDate());
-        log.info("  - End date: {}", course.getEndDate());
-        log.info("  - Teacher: {}", user1.getUtecEmail());
-
-        createWeeklyPlanningsWithContent(course);
-        
-        // ========================================
-        // SEGUNDO USUARIO Y CURSO PARA TESTING DE CONTROL DE ACCESO
-        // ========================================
-        log.info("Creating second user for access control testing...");
-        PersonalData personalData2 = new PersonalData();
-        personalData2.setName("María");
-        personalData2.setLastName("González");
-        personalData2.setIdentityDocument("87654321");
-        personalData2.setPhoneNumber("099654321");
-        personalData2.setCountry("Uruguay");
-        personalData2.setCity("Rivera");
-
-        // Usuario configurado para autenticación LDAP
-        User user2 = new User(
-            "maria.gonzalez@utec.edu.uy",
-            null, // No se almacena password para usuarios LDAP
-            personalData2
-        );
-        user2.setAuthProvider(AuthProvider.LDAP);
-        user2 = userRepository.save(user2);
-        log.info("✓ Created second user: {} (ID: {}) - AUTH: LDAP", user2.getUtecEmail(), user2.getId());
-
-        // María solo tiene acceso al ITR Norte (Campus Rivera)
-        Coordinator coordinatorRivera = new Coordinator(user2);
-        coordinatorRivera.addCampus(campusRivera);
-        user2.addPosition(coordinatorRivera);
-
-        Teacher teacherRivera = new Teacher(user2);
-        teacherRivera.addCampus(campusRivera);
-        user2.addPosition(teacherRivera);
-
-        user2 = userRepository.save(user2);
-        log.info("✓ User 2 has positions ONLY at ITR Norte (Campus: Rivera)");
-
-        // Crear término y UC para LIDIA en Rivera
-        Term termLIDIA1 = new Term(1, progLicDatosIA);
-        termLIDIA1 = termRepository.save(termLIDIA1);
-
-        CurricularUnit ucIntroDatosIA = new CurricularUnit("Introducción a la Ingeniería de Datos e IA", 6, termLIDIA1);
-        ucIntroDatosIA = curricularUnitRepository.save(ucIntroDatosIA);
-
-        CurricularUnit ucProgramacionLIDIA = new CurricularUnit("Programación I", 8, termLIDIA1);
-        ucProgramacionLIDIA = curricularUnitRepository.save(ucProgramacionLIDIA);
-
-        log.info("✓ Created curricular units for LIDIA at ITR Norte");
-
-        // Obtener el teacher guardado desde las posiciones del user2
-        final Campus finalCampusRivera = campusRivera;
-        Teacher savedTeacherRivera = (Teacher) user2.getPositions().stream()
-            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusRivera))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Posición de docente no encontrada para user2"));
-
-        // Crear curso para ITR Norte (solo User 2 tiene acceso)
-        Course courseRivera = new Course(
-            Shift.EVENING,
-            "Curso de Introducción a Datos e IA - Grupo 1",
-            LocalDate.of(2025, 3, 1),
-            LocalDate.of(2025, 7, 15),
-            PartialGradingSystem.PGS_2,
-            ucIntroDatosIA
-        );
-        courseRivera.getTeachers().add(savedTeacherRivera);
-        courseRivera.getHoursPerDeliveryFormat().put(DeliveryFormat.IN_PERSON, 50);
-        courseRivera.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 15);
-        courseRivera.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
-        courseRivera.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
-        courseRivera.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
-        courseRivera.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);
-        courseRivera = courseRepository.save(courseRivera);
-        log.info("✓ Created course for ITR Norte: {} (ID: {})", courseRivera.getDescription(), courseRivera.getId());
-
-        // ========================================
-        // TERCER USUARIO: SOLO ANALYST
-        // ========================================
-        log.info("Creating third user (Analyst only) for testing...");
-        PersonalData personalData3 = new PersonalData();
-        personalData3.setName("Carlos");
-        personalData3.setLastName("Rodríguez");
-        personalData3.setIdentityDocument("11223344");
-        personalData3.setPhoneNumber("099112233");
-        personalData3.setCountry("Uruguay");
-        personalData3.setCity("Durazno");
-
-        User user3 = new User(
-            "carlos.rodriguez@utec.edu.uy",
-            passwordEncoder.encode("password"),
-            personalData3
-        );
-        user3 = userRepository.save(user3);
-        log.info("✓ Created third user: {} (ID: {})", user3.getUtecEmail(), user3.getId());
-
-        // Carlos solo tiene rol de Analyst en ITR Centro-Sur (Campus Durazno)
-        Analyst analystDurazno = new Analyst(user3);
-        analystDurazno.addCampus(campusDurazno);
-        user3.addPosition(analystDurazno);
-
-        user3 = userRepository.save(user3);
-        log.info("✓ User 3 has ONLY Analyst position at ITR Centro-Sur (Campus: Durazno)");
+        createWeeklyPlanningsForPrincipiosProgramacion(coursePrincipiosProg);
 
         // ========================================
         // RESUMEN FINAL
@@ -540,421 +376,499 @@ public class DataSeeder implements CommandLineRunner {
         log.info("   • ITR Norte - Campuses: Rivera, Melo");
         log.info("   • ITR Este - Campuses: Minas, Maldonado");
         log.info("");
-        log.info("🎓 PROGRAMS CREATED ({}): ", 15);
-        log.info("   • Ingeniería en Mecatrónica");
-        log.info("   • Ingeniería en Logística");
-        log.info("   • Licenciatura en Tecnologías de la Información");
-        log.info("   • Licenciatura en Ingeniería de Datos e Inteligencia Artificial");
-        log.info("   • Ingeniería en Agua y Desarrollo Sostenible");
-        log.info("   • Ingeniería en Energías Renovables");
-        log.info("   • Tecnólogo en Informática");
-        log.info("   • Tecnólogo en Mecatrónica Industrial");
-        log.info("   • Y más...");
+        log.info("🎓 PROGRAMS:");
+        log.info("   • Tecnólogo en Informática (252 créditos)");
+        log.info("     - Campuses: San José, Maldonado");
+        log.info("     - 9 Unidades Curriculares distribuidas en 2 términos");
         log.info("");
-        log.info("👥 USERS FOR ACCESS CONTROL TESTING:");
-        log.info("");
-        log.info("👤 USER 1: juan.perez@utec.edu.uy");
-        log.info("Password: password");
-        log.info("Positions:");
-        log.info("  - Teacher at ITR Suroeste (Campuses: Fray Bentos, Mercedes)");
-        log.info("  - Coordinator at ITR Suroeste (Campus: Fray Bentos)");
-        log.info("  - Administrator at ITR Suroeste (Campus: Fray Bentos)");
-        log.info("  - Education Manager at ITR Suroeste (Campus: Fray Bentos)");
-        log.info("  - Analyst at ITR Suroeste (Campus: Fray Bentos)");
-        log.info("✅ HAS ACCESS to: ITR Suroeste ONLY");
-        log.info("⛔ NO ACCESS to: ITR Norte, ITR Centro-Sur, ITR Este");
-        log.info("✅ Can access Course ID: {} (ITR Suroeste - Fray Bentos)", course.getId());
-        log.info("");
-        log.info("👤 USER 2: maria.gonzalez@utec.edu.uy");
-        log.info("Authentication: LDAP (uses LDAP server credentials)");
-        log.info("Note: Password stored in LDAP, not in local database");
-        log.info("Positions:");
-        log.info("  - Coordinator at ITR Norte (Campus: Rivera)");
-        log.info("  - Teacher at ITR Norte (Campus: Rivera)");
-        log.info("✅ HAS ACCESS to: ITR Norte ONLY");
-        log.info("⛔ NO ACCESS to: ITR Suroeste, ITR Centro-Sur, ITR Este");
-        log.info("✅ Can access Course ID: {} (ITR Norte - Rivera)", courseRivera.getId());
-        log.info("⛔ CANNOT access Course ID: {} (ITR Suroeste)", course.getId());
-        log.info("");
-        log.info("👤 USER 3: carlos.rodriguez@utec.edu.uy");
-        log.info("Password: password");
-        log.info("Positions:");
-        log.info("  - Analyst at ITR Centro-Sur (Campus: Durazno)");
-        log.info("✅ HAS ACCESS to: ITR Centro-Sur ONLY");
-        log.info("⛔ NO ACCESS to: ITR Norte, ITR Suroeste, ITR Este");
-        log.info("⛔ CANNOT access Course ID: {} (ITR Suroeste)", course.getId());
-        log.info("⛔ CANNOT access Course ID: {} (ITR Norte)", courseRivera.getId());
+        log.info("👥 USERS:");
+        log.info("   • Juan Pérez (juan.perez@utec.edu.uy)");
+        log.info("     - Password: password123");
+        log.info("     - Role: Teacher at Campuses San José and Maldonado");
+        log.info("   • María González (maria.gonzalez@utec.edu.uy)");
+        log.info("     - Password: password123");
+        log.info("     - Roles: Analyst, Education Manager, Coordinator at Campus San José");
         log.info("");
         log.info("==================================================");
-        log.info("🧪 TEST SCENARIOS TO VERIFY ACCESS CONTROL:");
-        log.info("==================================================");
-        log.info("");
-        log.info("1️⃣  Login as User 1 (juan.perez@utec.edu.uy):");
-        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", course.getId());
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseRivera.getId());
-        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", course.getId());
-        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", courseRivera.getId());
-        log.info("");
-        log.info("2️⃣  Login as User 2 (maria.gonzalez@utec.edu.uy) - LDAP AUTH:");
-        log.info("   🔐 POST /api/v1/auth/login {{ email: maria.gonzalez@utec.edu.uy, password: <LDAP_PASSWORD> }}");
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
-        log.info("   ✅ GET /api/v1/courses/{} → 200 OK", courseRivera.getId());
-        log.info("   ⛔ POST /api/v1/agent/chat/message (courseId={}) → 403 FORBIDDEN", course.getId());
-        log.info("   ✅ POST /api/v1/agent/chat/message (courseId={}) → 200 OK", courseRivera.getId());
-        log.info("");
-        log.info("3️⃣  Login as User 3 (carlos.rodriguez@utec.edu.uy):");
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", course.getId());
-        log.info("   ⛔ GET /api/v1/courses/{} → 403 FORBIDDEN", courseRivera.getId());
-        log.info("   (Analyst has no courses in their ITR in this seed)");
-        log.info("");
-        log.info("==================================================");
-        log.info("📍 Course Locations:");
-        log.info("   Course {} → ITR Suroeste (Fray Bentos) - LTI", course.getId());
-        log.info("   Course {} → ITR Norte (Rivera) - LIDIA", courseRivera.getId());
-        log.info("==================================================");
+
     }
 
-    private void createWeeklyPlanningsWithContent(Course course) {
-        log.info("Creating WeeklyPlannings with content for course: {}", course.getDescription());
+    private void createWeeklyPlanningsForPrincipiosProgramacion(Course course) {
+        log.info("Creating Weekly Plannings for course: {}", course.getDescription());
 
-        // =============== SEMANA 1 ===============
+        // =============== SEMANA 1: 4-10 Marzo ===============
         WeeklyPlanning week1 = new WeeklyPlanning(
             1,
-            LocalDate.of(2025, 2, 24),
-            LocalDate.of(2025, 3, 2)
+            LocalDate.of(2024, 3, 4),
+            LocalDate.of(2024, 3, 10)
         );
 
         // Contenido 1 - Semana 1
         ProgrammaticContent content1Week1 = new ProgrammaticContent(
-            "Introducción a POO",
-            "Conceptos fundamentales de Programación Orientada a Objetos: clases, objetos, encapsulación y abstracción",
+            "Introducción a Estructuras de Datos",
+            "Conceptos fundamentales de organización de datos, tipos de datos primitivos y complejos",
             week1
         );
-        content1Week1.setColor("#F8BBD0"); // Rosa suave
+        content1Week1.setColor("#F8BBD0");
 
-        Activity activity1Content1Week1 = new Activity(
-            "Clase magistral sobre los pilares de POO con ejemplos en Java",
+        Activity act1C1W1 = new Activity(
+            "Clase magistral: Introducción al curso y conceptos básicos de estructuras de datos",
             120,
             LearningModality.IN_PERSON,
             content1Week1
         );
-        activity1Content1Week1.setTitle("Clase Magistral POO");
-        activity1Content1Week1.setColor("#E53935"); // Rojo intenso
-        activity1Content1Week1.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.REMEMBER,
-            CognitiveProcess.UNDERSTAND
-        ));
-        activity1Content1Week1.getLearningResources().add(LearningResource.DEMONSTRATION);
-        activity1Content1Week1.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
-        activity1Content1Week1.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W1.setTitle("Clase Introductoria");
+        act1C1W1.setColor("#E53935");
+        act1C1W1.getCognitiveProcesses().addAll(Arrays.asList(CognitiveProcess.REMEMBER, CognitiveProcess.UNDERSTAND));
+        act1C1W1.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W1.getLearningResources().add(LearningResource.DEMONSTRATION);
 
-        Activity activity2Content1Week1 = new Activity(
-            "Ejercicios prácticos de creación de clases y objetos simples",
-            180,
+        Activity act2C1W1 = new Activity(
+            "Discusión: Análisis de problemas cotidianos que requieren organización de datos",
+            90,
             LearningModality.IN_PERSON,
             content1Week1
         );
-        activity2Content1Week1.setTitle("Práctica de Clases");
-        activity2Content1Week1.setColor("#2979FF"); // Azul eléctrico
-        activity2Content1Week1.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.APPLY,
-            CognitiveProcess.ANALYZE
-        ));
-        activity2Content1Week1.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity2Content1Week1.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
-        activity2Content1Week1.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+        act2C1W1.setTitle("Discusión Casos Reales");
+        act2C1W1.setColor("#2979FF");
+        act2C1W1.getCognitiveProcesses().add(CognitiveProcess.ANALYZE);
+        act2C1W1.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act2C1W1.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
 
-        content1Week1.getActivities().add(activity1Content1Week1);
-        content1Week1.getActivities().add(activity2Content1Week1);
+        Activity act3C1W1 = new Activity(
+            "Ejercicios prácticos: Identificación de tipos de datos en diferentes contextos",
+            90,
+            LearningModality.IN_PERSON,
+            content1Week1
+        );
+        act3C1W1.setTitle("Práctica Tipos de Datos");
+        act3C1W1.setColor("#76FF03");
+        act3C1W1.getCognitiveProcesses().add(CognitiveProcess.APPLY);
+        act3C1W1.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+
+        content1Week1.getActivities().add(act1C1W1);
+        content1Week1.getActivities().add(act2C1W1);
+        content1Week1.getActivities().add(act3C1W1);
 
         // Contenido 2 - Semana 1
         ProgrammaticContent content2Week1 = new ProgrammaticContent(
-            "Herencia y Polimorfismo",
-            "Reutilización de código mediante herencia y comportamiento polimórfico en Java",
+            "Arrays y Memoria",
+            "Estructuras de datos básicas: arrays, acceso a elementos y gestión de memoria",
             week1
         );
-        content2Week1.setColor("#B3E5FC"); // Celeste pastel
+        content2Week1.setColor("#FFF9C4");
 
-        Activity activity1Content2Week1 = new Activity(
-            "Laboratorio práctico: crear jerarquías de clases con herencia",
-            150,
+        Activity act1C2W1 = new Activity(
+            "Presentación: Conceptos de arrays y acceso directo a memoria",
+            90,
             LearningModality.IN_PERSON,
             content2Week1
         );
-        activity1Content2Week1.setTitle("Lab Herencia");
-        activity1Content2Week1.setColor("#76FF03"); // Verde lima
-        activity1Content2Week1.getCognitiveProcesses().add(CognitiveProcess.CREATE);
-        activity1Content2Week1.getLearningResources().add(LearningResource.DEMONSTRATION);
-        activity1Content2Week1.getTransversalCompetencies().add(TransversalCompetency.TEAMWORK);
-        activity1Content2Week1.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+        act1C2W1.setTitle("Arrays y Acceso");
+        act1C2W1.setColor("#D81B60");
+        act1C2W1.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C2W1.getTeachingStrategies().add(TeachingStrategy.LECTURE);
 
-        content2Week1.getActivities().add(activity1Content2Week1);
+        Activity act2C2W1 = new Activity(
+            "Laboratorio: Implementación de arrays y operaciones básicas en C/Java",
+            120,
+            LearningModality.IN_PERSON,
+            content2Week1
+        );
+        act2C2W1.setTitle("Lab Arrays");
+        act2C2W1.setColor("#FF9100");
+        act2C2W1.getCognitiveProcesses().add(CognitiveProcess.APPLY);
+        act2C2W1.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+        act2C2W1.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
+
+        Activity act3C2W1 = new Activity(
+            "Ejercicios autónomos: Problemas de manipulación de arrays",
+            180,
+            LearningModality.AUTONOMOUS,
+            content2Week1
+        );
+        act3C2W1.setTitle("Ejercicios Arrays");
+        act3C2W1.setColor("#FFEB3B");
+        act3C2W1.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act3C2W1.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+
+        content2Week1.getActivities().add(act1C2W1);
+        content2Week1.getActivities().add(act2C2W1);
+        content2Week1.getActivities().add(act3C2W1);
 
         week1.getProgrammaticContents().add(content1Week1);
         week1.getProgrammaticContents().add(content2Week1);
+        week1.getBibliographicReferences().add("Cormen, T. et al. (2009). Introduction to Algorithms. MIT Press. Capítulos 1-2.");
+        week1.getBibliographicReferences().add("Knuth, D. (1997). The Art of Computer Programming, Vol. 1. Addison-Wesley.");
         course.getWeeklyPlannings().add(week1);
 
-        // =============== SEMANA 2 ===============
+        // =============== SEMANA 2: 11-17 Marzo ===============
         WeeklyPlanning week2 = new WeeklyPlanning(
             2,
-            LocalDate.of(2025, 3, 3),
-            LocalDate.of(2025, 3, 9)
+            LocalDate.of(2024, 3, 11),
+            LocalDate.of(2024, 3, 17)
         );
 
         // Contenido 1 - Semana 2
         ProgrammaticContent content1Week2 = new ProgrammaticContent(
-            "Interfaces y Clases Abstractas",
-            "Contratos y abstracción en Java: diferencias entre interfaces y clases abstractas",
+            "Punteros y Referencias",
+            "Manejo de punteros, referencias y gestión dinámica de memoria",
             week2
         );
-        content1Week2.setColor("#C8E6C9"); // Verde menta
+        content1Week2.setColor("#C8E6C9");
 
-        Activity activity1Week2 = new Activity(
-            "Análisis de casos de uso para identificar cuándo usar interfaces vs clases abstractas",
+        Activity act1C1W2 = new Activity(
+            "Clase teórica: Conceptos de punteros y direcciones de memoria",
             120,
             LearningModality.IN_PERSON,
             content1Week2
         );
-        activity1Week2.setTitle("Análisis Interfaces");
-        activity1Week2.setColor("#D81B60"); // Fucsia
-        activity1Week2.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.ANALYZE,
-            CognitiveProcess.EVALUATE
-        ));
-        activity1Week2.getLearningResources().addAll(Arrays.asList(
-            LearningResource.DEMONSTRATION,
-            LearningResource.BOOK_DOCUMENT
-        ));
-        activity1Week2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
-        activity1Week2.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act1C1W2.setTitle("Teoría Punteros");
+        act1C1W2.setColor("#00B8D4");
+        act1C1W2.getCognitiveProcesses().addAll(Arrays.asList(CognitiveProcess.REMEMBER, CognitiveProcess.UNDERSTAND));
+        act1C1W2.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W2.getLearningResources().add(LearningResource.DEMONSTRATION);
 
-        Activity activity2Week2 = new Activity(
-            "Implementación práctica de interfaces y clases abstractas en proyectos",
-            180,
+        Activity act2C1W2 = new Activity(
+            "Demostración práctica: Uso de punteros y operador de dirección",
+            90,
             LearningModality.IN_PERSON,
             content1Week2
         );
-        activity2Week2.setTitle("Implementación Interfaces");
-        activity2Week2.setColor("#FF9100"); // Naranja vibrante
-        activity2Week2.getCognitiveProcesses().add(CognitiveProcess.CREATE);
-        activity2Week2.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity2Week2.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
-        activity2Week2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+        act2C1W2.setTitle("Demo Punteros");
+        act2C1W2.setColor("#8E24AA");
+        act2C1W2.getCognitiveProcesses().add(CognitiveProcess.APPLY);
 
-        content1Week2.getActivities().add(activity1Week2);
-        content1Week2.getActivities().add(activity2Week2);
+        Activity act3C1W2 = new Activity(
+            "Ejercicios guiados: Manipulación de datos mediante punteros",
+            120,
+            LearningModality.IN_PERSON,
+            content1Week2
+        );
+        act3C1W2.setTitle("Ejercicios Punteros");
+        act3C1W2.setColor("#E53935");
+        act3C1W2.getCognitiveProcesses().add(CognitiveProcess.APPLY);
+        act3C1W2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+        act3C1W2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
+
+        content1Week2.getActivities().add(act1C1W2);
+        content1Week2.getActivities().add(act2C1W2);
+        content1Week2.getActivities().add(act3C1W2);
 
         // Contenido 2 - Semana 2
         ProgrammaticContent content2Week2 = new ProgrammaticContent(
-            "Excepciones y Manejo de Errores",
-            "Técnicas para manejo robusto de errores y excepciones en aplicaciones Java",
+            "Listas Enlazadas Simples",
+            "Implementación y operaciones básicas en listas enlazadas",
             week2
         );
-        content2Week2.setColor("#FFDAB9"); // Durazno claro
+        content2Week2.setColor("#B3E5FC");
 
-        Activity activity3Week2 = new Activity(
-            "Práctica de try-catch y manejo de excepciones personalizadas",
-            120,
+        Activity act1C2W2 = new Activity(
+            "Clase magistral: Introducción a listas enlazadas y nodos",
+            90,
             LearningModality.IN_PERSON,
             content2Week2
         );
-        activity3Week2.setTitle("Práctica Excepciones");
-        activity3Week2.setColor("#FFEB3B"); // Amarillo brillante
-        activity3Week2.getCognitiveProcesses().add(CognitiveProcess.APPLY);
-        activity3Week2.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity3Week2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
-        activity3Week2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+        act1C2W2.setTitle("Intro Listas Enlazadas");
+        act1C2W2.setColor("#2979FF");
+        act1C2W2.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C2W2.getTeachingStrategies().add(TeachingStrategy.LECTURE);
 
-        content2Week2.getActivities().add(activity3Week2);
+        Activity act2C2W2 = new Activity(
+            "Laboratorio: Implementación de lista enlazada simple",
+            150,
+            LearningModality.IN_PERSON,
+            content2Week2
+        );
+        act2C2W2.setTitle("Lab Listas");
+        act2C2W2.setColor("#76FF03");
+        act2C2W2.getCognitiveProcesses().addAll(Arrays.asList(CognitiveProcess.APPLY, CognitiveProcess.CREATE));
+        act2C2W2.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+        act2C2W2.getTransversalCompetencies().add(TransversalCompetency.LEARNING_SELF_REGULATION);
+
+        Activity act3C2W2 = new Activity(
+            "Tarea: Operaciones de inserción, eliminación y búsqueda en listas",
+            200,
+            LearningModality.AUTONOMOUS,
+            content2Week2
+        );
+        act3C2W2.setTitle("Tarea Listas");
+        act3C2W2.setColor("#D81B60");
+        act3C2W2.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act3C2W2.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
+        act3C2W2.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
+
+        content2Week2.getActivities().add(act1C2W2);
+        content2Week2.getActivities().add(act2C2W2);
+        content2Week2.getActivities().add(act3C2W2);
+
+        // Contenido 3 - Semana 2
+        ProgrammaticContent content3Week2 = new ProgrammaticContent(
+            "Complejidad Algorítmica Básica",
+            "Introducción al análisis de complejidad temporal y espacial",
+            week2
+        );
+        content3Week2.setColor("#E1BEE7");
+
+        Activity act1C3W2 = new Activity(
+            "Presentación: Notación Big-O y análisis de algoritmos",
+            90,
+            LearningModality.IN_PERSON,
+            content3Week2
+        );
+        act1C3W2.setTitle("Big-O Notation");
+        act1C3W2.setColor("#FF9100");
+        act1C3W2.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C3W2.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+
+        Activity act2C3W2 = new Activity(
+            "Análisis: Comparación de complejidad de diferentes operaciones",
+            60,
+            LearningModality.IN_PERSON,
+            content3Week2
+        );
+        act2C3W2.setTitle("Análisis Complejidad");
+        act2C3W2.setColor("#FFEB3B");
+        act2C3W2.getCognitiveProcesses().add(CognitiveProcess.ANALYZE);
+        act2C3W2.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act2C3W2.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
+
+        Activity act3C3W2 = new Activity(
+            "Ejercicios: Cálculo de complejidad de algoritmos simples",
+            90,
+            LearningModality.AUTONOMOUS,
+            content3Week2
+        );
+        act3C3W2.setTitle("Ejercicios Complejidad");
+        act3C3W2.setColor("#00B8D4");
+        act3C3W2.getCognitiveProcesses().add(CognitiveProcess.APPLY);
+        act3C3W2.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+
+        content3Week2.getActivities().add(act1C3W2);
+        content3Week2.getActivities().add(act2C3W2);
+        content3Week2.getActivities().add(act3C3W2);
 
         week2.getProgrammaticContents().add(content1Week2);
         week2.getProgrammaticContents().add(content2Week2);
+        week2.getProgrammaticContents().add(content3Week2);
+        week2.getBibliographicReferences().add("Kernighan, B. & Ritchie, D. (1988). The C Programming Language. Prentice Hall. Capítulo 5.");
+        week2.getBibliographicReferences().add("Skiena, S. (2008). The Algorithm Design Manual. Springer. Capítulo 3.");
         course.getWeeklyPlannings().add(week2);
 
-        // =============== SEMANA 3 ===============
+        // =============== SEMANA 3: 18-24 Marzo ===============
         WeeklyPlanning week3 = new WeeklyPlanning(
             3,
-            LocalDate.of(2025, 3, 10),
-            LocalDate.of(2025, 3, 16)
+            LocalDate.of(2024, 3, 18),
+            LocalDate.of(2024, 3, 24)
         );
 
         // Contenido 1 - Semana 3
         ProgrammaticContent content1Week3 = new ProgrammaticContent(
-            "Colecciones y Genéricos",
-            "API de colecciones en Java: ArrayList, HashMap, Sets y uso de tipos genéricos",
+            "Pilas (Stacks)",
+            "Implementación y aplicaciones de la estructura de datos tipo pila (LIFO)",
             week3
         );
-        content1Week3.setColor("#FFF9C4"); // Amarillo crema
+        content1Week3.setColor("#FFDAB9");
 
-        Activity activity1Week3 = new Activity(
-            "Presentación del Collections Framework y sus principales estructuras de datos",
+        Activity act1C1W3 = new Activity(
+            "Clase teórica: Concepto de pila y operaciones básicas (push, pop, peek)",
             90,
             LearningModality.IN_PERSON,
             content1Week3
         );
-        activity1Week3.setTitle("Intro Collections");
-        activity1Week3.setColor("#00B8D4"); // Turquesa fuerte
-        activity1Week3.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.REMEMBER,
-            CognitiveProcess.UNDERSTAND
-        ));
-        activity1Week3.getLearningResources().add(LearningResource.DEMONSTRATION);
-        activity1Week3.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
-        activity1Week3.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W3.setTitle("Teoría Pilas");
+        act1C1W3.setColor("#8E24AA");
+        act1C1W3.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C1W3.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W3.getLearningResources().add(LearningResource.DEMONSTRATION);
 
-        Activity activity2Week3 = new Activity(
-            "Laboratorio: implementar estructuras de datos usando colecciones de Java",
-            210,
+        Activity act2C1W3 = new Activity(
+            "Laboratorio: Implementación de pila usando arrays y listas enlazadas",
+            120,
             LearningModality.IN_PERSON,
             content1Week3
         );
-        activity2Week3.setTitle("Lab Colecciones");
-        activity2Week3.setColor("#8E24AA"); // Violeta intenso
-        activity2Week3.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.APPLY,
-            CognitiveProcess.CREATE
-        ));
-        activity2Week3.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity2Week3.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.LEARNING_SELF_REGULATION,
-            TransversalCompetency.TEAMWORK
-        ));
-        activity2Week3.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+        act2C1W3.setTitle("Lab Pilas");
+        act2C1W3.setColor("#E53935");
+        act2C1W3.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act2C1W3.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
 
-        Activity activity3Week3 = new Activity(
-            "Tarea asincrónica: ejercicios de programación con genéricos para entregar",
-            240,
-            LearningModality.AUTONOMOUS,
+        Activity act3C1W3 = new Activity(
+            "Aplicación práctica: Evaluación de expresiones con pilas",
+            150,
+            LearningModality.IN_PERSON,
             content1Week3
         );
-        activity3Week3.setTitle("Tarea Genéricos");
-        activity3Week3.setColor("#E53935"); // Rojo intenso
-        activity3Week3.getCognitiveProcesses().add(CognitiveProcess.CREATE);
-        activity3Week3.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
-        activity3Week3.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.LEARNING_SELF_REGULATION,
-            TransversalCompetency.COMMUNICATION
-        ));
-        activity3Week3.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
+        act3C1W3.setTitle("Aplicación Pilas");
+        act3C1W3.setColor("#2979FF");
+        act3C1W3.getCognitiveProcesses().addAll(Arrays.asList(CognitiveProcess.APPLY, CognitiveProcess.ANALYZE));
+        act3C1W3.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act3C1W3.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
 
-        content1Week3.getActivities().add(activity1Week3);
-        content1Week3.getActivities().add(activity2Week3);
-        content1Week3.getActivities().add(activity3Week3);
+        content1Week3.getActivities().add(act1C1W3);
+        content1Week3.getActivities().add(act2C1W3);
+        content1Week3.getActivities().add(act3C1W3);
+
+        // Contenido 2 - Semana 3
+        ProgrammaticContent content2Week3 = new ProgrammaticContent(
+            "Colas (Queues)",
+            "Implementación y aplicaciones de la estructura de datos tipo cola (FIFO)",
+            week3
+        );
+        content2Week3.setColor("#B2EBF2");
+
+        Activity act1C2W3 = new Activity(
+            "Clase magistral: Concepto de cola y operaciones (enqueue, dequeue)",
+            90,
+            LearningModality.IN_PERSON,
+            content2Week3
+        );
+        act1C2W3.setTitle("Teoría Colas");
+        act1C2W3.setColor("#76FF03");
+        act1C2W3.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C2W3.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+
+        Activity act2C2W3 = new Activity(
+            "Implementación: Colas circulares y colas con prioridad",
+            120,
+            LearningModality.IN_PERSON,
+            content2Week3
+        );
+        act2C2W3.setTitle("Lab Colas");
+        act2C2W3.setColor("#D81B60");
+        act2C2W3.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act2C2W3.getTeachingStrategies().add(TeachingStrategy.LABORATORY_PRACTICES);
+        act2C2W3.getTransversalCompetencies().add(TransversalCompetency.TEAMWORK);
+
+        Activity act3C2W3 = new Activity(
+            "Proyecto: Simulación de sistemas de atención usando colas",
+            180,
+            LearningModality.AUTONOMOUS,
+            content2Week3
+        );
+        act3C2W3.setTitle("Proyecto Colas");
+        act3C2W3.setColor("#FF9100");
+        act3C2W3.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act3C2W3.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
+        act3C2W3.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
+
+        content2Week3.getActivities().add(act1C2W3);
+        content2Week3.getActivities().add(act2C2W3);
+        content2Week3.getActivities().add(act3C2W3);
 
         week3.getProgrammaticContents().add(content1Week3);
+        week3.getProgrammaticContents().add(content2Week3);
+        week3.getBibliographicReferences().add("Weiss, M. A. (2013). Data Structures and Algorithm Analysis in Java. Pearson. Capítulo 3.");
         course.getWeeklyPlannings().add(week3);
 
-        // =============== SEMANA 4 ===============
+        // =============== SEMANA 4: 25-31 Marzo ===============
         WeeklyPlanning week4 = new WeeklyPlanning(
             4,
-            LocalDate.of(2025, 3, 17),
-            LocalDate.of(2025, 3, 23)
+            LocalDate.of(2024, 3, 25),
+            LocalDate.of(2024, 3, 31)
         );
 
         // Contenido 1 - Semana 4
         ProgrammaticContent content1Week4 = new ProgrammaticContent(
-            "Patrones de Diseño",
-            "Patrones de diseño GOF: Singleton, Factory, Observer y otros patrones fundamentales",
+            "Recursión",
+            "Técnicas de programación recursiva y análisis de casos base",
             week4
         );
-        content1Week4.setColor("#E1BEE7"); // Lavanda suave
+        content1Week4.setColor("#D1C4E9");
 
-        Activity activity1Week4 = new Activity(
-            "Estudio y análisis de los principales patrones de diseño Gang of Four",
+        Activity act1C1W4 = new Activity(
+            "Clase teórica: Fundamentos de recursión y casos base",
+            90,
+            LearningModality.IN_PERSON,
+            content1Week4
+        );
+        act1C1W4.setTitle("Teoría Recursión");
+        act1C1W4.setColor("#FFEB3B");
+        act1C1W4.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C1W4.getTeachingStrategies().add(TeachingStrategy.LECTURE);
+        act1C1W4.getLearningResources().add(LearningResource.DEMONSTRATION);
+
+        Activity act2C1W4 = new Activity(
+            "Ejercicios prácticos: Problemas clásicos de recursión (factorial, fibonacci)",
             120,
             LearningModality.IN_PERSON,
             content1Week4
         );
-        activity1Week4.setTitle("Análisis Patrones");
-        activity1Week4.setColor("#2979FF"); // Azul eléctrico
-        activity1Week4.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.UNDERSTAND,
-            CognitiveProcess.ANALYZE
-        ));
-        activity1Week4.getLearningResources().addAll(Arrays.asList(
-            LearningResource.DEMONSTRATION,
-            LearningResource.BOOK_DOCUMENT
-        ));
-        activity1Week4.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.CRITICAL_THINKING,
-            TransversalCompetency.COMMUNICATION
-        ));
-        activity1Week4.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act2C1W4.setTitle("Práctica Recursión");
+        act2C1W4.setColor("#00B8D4");
+        act2C1W4.getCognitiveProcesses().add(CognitiveProcess.APPLY);
+        act2C1W4.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
 
-        Activity activity2Week4 = new Activity(
-            "Trabajo en equipo: implementar patrones de diseño en un proyecto grupal",
-            180,
+        Activity act3C1W4 = new Activity(
+            "Análisis: Recursión vs iteración, ventajas y desventajas",
+            90,
             LearningModality.IN_PERSON,
             content1Week4
         );
-        activity2Week4.setTitle("Proyecto Patrones");
-        activity2Week4.setColor("#76FF03"); // Verde lima
-        activity2Week4.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.APPLY,
-            CognitiveProcess.CREATE
-        ));
-        activity2Week4.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity2Week4.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.TEAMWORK,
-            TransversalCompetency.COMMUNICATION
-        ));
-        activity2Week4.getTeachingStrategies().add(TeachingStrategy.TEAMWORK);
+        act3C1W4.setTitle("Análisis Recursión");
+        act3C1W4.setColor("#8E24AA");
+        act3C1W4.getCognitiveProcesses().add(CognitiveProcess.EVALUATE);
+        act3C1W4.getTeachingStrategies().add(TeachingStrategy.CASE_STUDY);
+        act3C1W4.getTransversalCompetencies().add(TransversalCompetency.CRITICAL_THINKING);
 
-        content1Week4.getActivities().add(activity1Week4);
-        content1Week4.getActivities().add(activity2Week4);
+        content1Week4.getActivities().add(act1C1W4);
+        content1Week4.getActivities().add(act2C1W4);
+        content1Week4.getActivities().add(act3C1W4);
 
         // Contenido 2 - Semana 4
         ProgrammaticContent content2Week4 = new ProgrammaticContent(
-            "Testing y JUnit",
-            "Pruebas unitarias y desarrollo guiado por tests (TDD) con JUnit 5",
+            "Tipos Abstractos de Datos (TAD)",
+            "Concepto de abstracción, encapsulamiento y definición de interfaces",
             week4
         );
-        content2Week4.setColor("#B2EBF2"); // Turquesa claro
+        content2Week4.setColor("#F8BBD0");
 
-        Activity activity3Week4 = new Activity(
-            "Introducción a testing: escribir tests unitarios efectivos con JUnit",
-            150,
+        Activity act1C2W4 = new Activity(
+            "Presentación: Concepto de TAD y separación interfaz/implementación",
+            90,
             LearningModality.IN_PERSON,
             content2Week4
         );
-        activity3Week4.setTitle("Intro Testing");
-        activity3Week4.setColor("#D81B60"); // Fucsia
-        activity3Week4.getCognitiveProcesses().addAll(Arrays.asList(
-            CognitiveProcess.APPLY,
-            CognitiveProcess.EVALUATE
-        ));
-        activity3Week4.getLearningResources().add(LearningResource.BOOK_DOCUMENT);
-        activity3Week4.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.CRITICAL_THINKING,
-            TransversalCompetency.LEARNING_SELF_REGULATION
-        ));
-        activity3Week4.getTeachingStrategies().add(TeachingStrategy.TESTS);
+        act1C2W4.setTitle("Teoría TAD");
+        act1C2W4.setColor("#E53935");
+        act1C2W4.getCognitiveProcesses().add(CognitiveProcess.UNDERSTAND);
+        act1C2W4.getTeachingStrategies().add(TeachingStrategy.LECTURE);
 
-        Activity activity4Week4 = new Activity(
-            "Práctica autónoma de Test-Driven Development aplicado a un proyecto real",
-            300,
+        Activity act2C2W4 = new Activity(
+            "Diseño: Creación de TADs para pilas, colas y listas",
+            120,
+            LearningModality.IN_PERSON,
+            content2Week4
+        );
+        act2C2W4.setTitle("Diseño TAD");
+        act2C2W4.setColor("#2979FF");
+        act2C2W4.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act2C2W4.getTeachingStrategies().add(TeachingStrategy.PRACTICAL_ACTIVITY);
+        act2C2W4.getTransversalCompetencies().add(TransversalCompetency.TEAMWORK);
+
+        Activity act3C2W4 = new Activity(
+            "Proyecto integrador: Implementación completa de un TAD personalizado",
+            240,
             LearningModality.AUTONOMOUS,
             content2Week4
         );
-        activity4Week4.setTitle("Práctica TDD");
-        activity4Week4.setColor("#FF9100"); // Naranja vibrante
-        activity4Week4.getCognitiveProcesses().add(CognitiveProcess.CREATE);
-        activity4Week4.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
-        activity4Week4.getTransversalCompetencies().addAll(Arrays.asList(
-            TransversalCompetency.LEARNING_SELF_REGULATION,
-            TransversalCompetency.CRITICAL_THINKING
-        ));
-        activity4Week4.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
+        act3C2W4.setTitle("Proyecto TAD");
+        act3C2W4.setColor("#76FF03");
+        act3C2W4.getCognitiveProcesses().add(CognitiveProcess.CREATE);
+        act3C2W4.getTeachingStrategies().add(TeachingStrategy.PROJECTS);
+        act3C2W4.getLearningResources().add(LearningResource.ONLINE_EVALUATION);
 
-        content2Week4.getActivities().add(activity3Week4);
-        content2Week4.getActivities().add(activity4Week4);
+        content2Week4.getActivities().add(act1C2W4);
+        content2Week4.getActivities().add(act2C2W4);
+        content2Week4.getActivities().add(act3C2W4);
 
         week4.getProgrammaticContents().add(content1Week4);
         week4.getProgrammaticContents().add(content2Week4);
+        week4.getBibliographicReferences().add("Sedgewick, R. & Wayne, K. (2011). Algorithms. Addison-Wesley. Capítulos 1.1-1.2.");
+        week4.getBibliographicReferences().add("Aho, A. et al. (2006). Compilers: Principles, Techniques, and Tools. Pearson. Capítulo 2.");
         course.getWeeklyPlannings().add(week4);
 
-        // =============== SEMANAS 5-18: VACÍAS ===============
-        // Calcular cuántas semanas hay entre el inicio y fin del curso
+        // =============== SEMANAS RESTANTES VACÍAS ===============
         LocalDate startDate = course.getStartDate();
         LocalDate endDate = course.getEndDate();
         long totalWeeks = java.time.temporal.ChronoUnit.WEEKS.between(startDate, endDate) + 1;
@@ -963,7 +877,6 @@ public class DataSeeder implements CommandLineRunner {
             LocalDate weekStart = startDate.plusWeeks(weekNum - 1);
             LocalDate weekEnd = weekStart.plusDays(6);
             
-            // Asegurarse de que no exceda la fecha de fin
             if (weekEnd.isAfter(endDate)) {
                 weekEnd = endDate;
             }
@@ -976,8 +889,7 @@ public class DataSeeder implements CommandLineRunner {
             course.getWeeklyPlannings().add(emptyWeek);
         }
 
-        // Guardar el curso con todas las planificaciones
         courseRepository.save(course);
-        log.info("Created {} weekly plannings (4 with content, {} empty)", totalWeeks, totalWeeks - 4);
+        log.info("✓ Created {} weekly plannings (4 with content for March, {} empty)", totalWeeks, totalWeeks - 4);
     }
 }

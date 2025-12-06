@@ -31,7 +31,7 @@ function Load-DotEnv {
     )
 
     if (-not (Test-Path $envFilePath)) {
-        Write-Host "Error: .env file not found" -ForegroundColor Red
+        Write-Host " Error: .env file not found" -ForegroundColor Red
         Write-Host "Please copy .env.example to .env and configure it" -ForegroundColor Yellow
         exit 1
     }
@@ -62,7 +62,7 @@ function Load-DotEnv {
         }
     }
 
-    Write-Host "Environment variables loaded" -ForegroundColor Green
+    Write-Host "Environment variables loaded ✓" -ForegroundColor Green
 }
 
 # Main execution
@@ -97,12 +97,12 @@ try {
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
-        Write-Host "Application exited with error code: $LASTEXITCODE" -ForegroundColor Red
+        Write-Host " Application exited with error code: $LASTEXITCODE" -ForegroundColor Red
         exit $LASTEXITCODE
     }
 }
 catch {
     Write-Host ""
-    Write-Host "An error occurred: $_" -ForegroundColor Red
+    Write-Host " An error occurred: $_" -ForegroundColor Red
     exit 1
 }
