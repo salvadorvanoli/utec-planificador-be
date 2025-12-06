@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
+    platform: linux/amd64
     container_name: ${COMPOSE_PROJECT_NAME:-planificador}-db
     restart: unless-stopped
     
@@ -34,6 +35,7 @@ services:
       dockerfile: Dockerfile
       args:
         - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    platform: linux/amd64
     
     container_name: ${COMPOSE_PROJECT_NAME:-planificador}-app
     restart: unless-stopped
@@ -104,7 +106,7 @@ services:
       - utec-shared
     
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/actuator/health"]
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost:8080/api/v1/actuator/health"]
       interval: ${HEALTHCHECK_INTERVAL:-30s}
       timeout: ${HEALTHCHECK_TIMEOUT:-10s}
       retries: ${HEALTHCHECK_RETRIES:-3}
@@ -113,6 +115,7 @@ services:
   ldap:
     profiles: ["ldap"]
     image: osixia/openldap:1.5.0
+    platform: linux/amd64
     container_name: ${COMPOSE_PROJECT_NAME:-planificador}-ldap
     hostname: ldap.utec.edu.uy
     restart: unless-stopped

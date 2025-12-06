@@ -31,7 +31,7 @@ function Load-DotEnv {
     )
 
     if (-not (Test-Path $envFilePath)) {
-        Write-Host "❌ Error: .env file not found" -ForegroundColor Red
+        Write-Host "[ERROR] .env file not found" -ForegroundColor Red
         Write-Host "Please copy .env.example to .env and configure it" -ForegroundColor Yellow
         exit 1
     }
@@ -62,7 +62,7 @@ function Load-DotEnv {
         }
     }
 
-    Write-Host "Environment variables loaded ✓" -ForegroundColor Green
+    Write-Host "[SUCCESS] Environment variables loaded" -ForegroundColor Green
 }
 
 # Main execution
@@ -81,28 +81,35 @@ try {
     Write-Host ""
 
     # Determine the correct gradlew executable based on OS
-    $gradlewCmd = if ($IsWindows -or $env:OS -match "Windows") {
+    # Use PSVersionTable.Platform for cross-version compatibility
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        # PowerShell Core 6+ has $IsWindows automatic variable (read-only)
+        $isWindowsOS = $IsWindows
+    } else {
+        # Windows PowerShell 5.1 and earlier (only runs on Windows)
+        $isWindowsOS = $true
+    }
+
+    $gradlewCmd = if ($isWindowsOS) {
         ".\gradlew.bat"
     } else {
         "./gradlew"
     }
 
-    # Make gradlew executable on Unix-like systems
-    if (-not ($IsWindows -or $env:OS -match "Windows")) {
-        & chmod +x ./gradlew
-    }
+    # Make gradlew executable on Unix-like systems (already done by git)
+    # No need for chmod as gradlew comes with execute permissions from repo
 
     # Run the application with dev profile
     & $gradlewCmd bootRun --args='--spring.profiles.active=dev'
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
-        Write-Host "❌ Application exited with error code: $LASTEXITCODE" -ForegroundColor Red
+        Write-Host "[ERROR] Application exited with error code: $LASTEXITCODE" -ForegroundColor Red
         exit $LASTEXITCODE
     }
 }
 catch {
     Write-Host ""
-    Write-Host "❌ An error occurred: $_" -ForegroundColor Red
+    Write-Host "[ERROR] An error occurred: $_" -ForegroundColor Red
     exit 1
 }
