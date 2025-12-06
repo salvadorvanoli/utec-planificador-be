@@ -3,9 +3,8 @@ package edu.utec.planificador.config;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-
-import java.time.Duration;
 
 @Configuration
 public class RestTemplateConfig {
@@ -18,9 +17,12 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) aiAgentProperties.getConnectTimeout());
+        factory.setReadTimeout((int) aiAgentProperties.getReadTimeout());
+        
         return builder
-                .connectTimeout(Duration.ofMillis(aiAgentProperties.getConnectTimeout()))
-                .readTimeout(Duration.ofMillis(aiAgentProperties.getReadTimeout()))
+                .requestFactory(() -> factory)
                 .build();
     }
 }

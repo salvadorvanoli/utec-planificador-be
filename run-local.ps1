@@ -81,16 +81,23 @@ try {
     Write-Host ""
 
     # Determine the correct gradlew executable based on OS
-    $gradlewCmd = if ($IsWindows -or $env:OS -match "Windows") {
+    # Use PSVersionTable.Platform for cross-version compatibility
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        # PowerShell Core 6+ has $IsWindows automatic variable (read-only)
+        $isWindowsOS = $IsWindows
+    } else {
+        # Windows PowerShell 5.1 and earlier (only runs on Windows)
+        $isWindowsOS = $true
+    }
+
+    $gradlewCmd = if ($isWindowsOS) {
         ".\gradlew.bat"
     } else {
         "./gradlew"
     }
 
-    # Make gradlew executable on Unix-like systems
-    if (-not ($IsWindows -or $env:OS -match "Windows")) {
-        & chmod +x ./gradlew
-    }
+    # Make gradlew executable on Unix-like systems (already done by git)
+    # No need for chmod as gradlew comes with execute permissions from repo
 
     # Run the application with dev profile
     & $gradlewCmd bootRun --args='--spring.profiles.active=dev'

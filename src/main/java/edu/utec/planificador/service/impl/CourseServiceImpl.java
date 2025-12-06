@@ -14,12 +14,16 @@ import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
 import edu.utec.planificador.entity.OfficeHours;
+import edu.utec.planificador.entity.Position;
+import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
+import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.DeliveryFormat;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
+import edu.utec.planificador.enumeration.Role;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import edu.utec.planificador.exception.ForbiddenException;
@@ -484,63 +488,96 @@ public class CourseServiceImpl implements CourseService {
      * @param request Datos de la actualización del curso
      */
     /**
-     * Validates that teachers cannot modify certain restricted fields when updating a course.
-     * Teachers can only modify: description, planning-related fields, and some metadata.
-     * They CANNOT modify: shift, dates, teachers list (now handled separately), or curricularUnit (handled in main method).
+     * Validates that users WITHOUT administrative roles cannot modify certain restricted fields.
+     * Only users with COORDINATOR, ANALYST, or EDUCATION_MANAGER roles in the course's campus
+     * can modify: shift, dates, and teachers list.
+     * Users without these administrative roles are restricted from modifying these fields.
      */
-    private void validateTeacherDoesntModifyRestrictedFields(Course course, CourseRequest request) {
+    private void validateOnlyAdministrativeUsersModifyRestrictedFields(Course course, CourseRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userRepository.findByUtecEmail(authentication.getName())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.current-not-found")));
         
-        boolean isTeacherOfCourse = course.getTeachers().stream()
-            .anyMatch(teacher -> teacher.getUser().getId().equals(currentUser.getId()));
+        // Get course's campus information
+        CurricularUnit curricularUnit = course.getCurricularUnit();
+        Term term = curricularUnit.getTerm();
+        Program program = term.getProgram();
         
-        if (isTeacherOfCourse) {
-            // Check if teacher is trying to change the teachers list
-            Set<Long> currentTeacherIds = course.getTeachers().stream()
-                .map(teacher -> teacher.getUser().getId())
-                .collect(Collectors.toSet());
-            Set<Long> requestedTeacherIds = new HashSet<>(request.getUserIds());
-            
-            if (!currentTeacherIds.equals(requestedTeacherIds)) {
-                log.warn("Teacher {} attempted to modify teachers list for course {}", 
-                    currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-cannot-modify-teachers")
-                );
-            }
-            
-            // Check if teacher is trying to change the shift
-            if (!course.getShift().equals(request.getShift())) {
-                log.warn("Teacher {} attempted to change shift for course {}", 
-                    currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-cannot-modify-shift")
-                );
-            }
-            
-            // Check if teacher is trying to change the start date
-            if (!course.getStartDate().equals(request.getStartDate())) {
-                log.warn("Teacher {} attempted to change start date for course {}", 
-                    currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-cannot-modify-dates")
-                );
-            }
-            
-            // Check if teacher is trying to change the end date
-            if (!course.getEndDate().equals(request.getEndDate())) {
-                log.warn("Teacher {} attempted to change end date for course {}", 
-                    currentUser.getUtecEmail(), course.getId());
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-cannot-modify-dates")
-                );
-            }
-            
-            log.debug("Teacher {} validation passed for course {} update", 
+        // Get campuses where this program is offered
+        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
+        Set<Long> programCampusIds = programCampuses.stream()
+            .map(Campus::getId)
+            .collect(Collectors.toSet());
+        
+        // Load full user with positions to check administrative roles
+        User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
+            .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
+        
+        // Check if user has administrative roles (COORDINATOR, ANALYST, EDUCATION_MANAGER) in relevant campuses
+        boolean hasAdminRoleInCourseCampus = fullUser.getPositions().stream()
+            .filter(Position::getIsActive)
+            .filter(position -> 
+                position.getRole() == Role.COORDINATOR || 
+                position.getRole() == Role.ANALYST
+            )
+            .flatMap(position -> position.getCampuses().stream())
+            .map(Campus::getId)
+            .anyMatch(programCampusIds::contains);
+        
+        // If user has administrative roles, they can modify restricted fields - skip validation
+        if (hasAdminRoleInCourseCampus) {
+            log.debug("User {} has administrative role in course {} campus - allowing all modifications", 
                 currentUser.getUtecEmail(), course.getId());
+            return;
         }
+        
+        // User does NOT have administrative roles - enforce restrictions on sensitive fields
+        log.debug("User {} does not have administrative roles for course {} - enforcing restrictions", 
+            currentUser.getUtecEmail(), course.getId());
+        
+        // Check if user is trying to change the teachers list
+        Set<Long> currentTeacherIds = course.getTeachers().stream()
+            .map(teacher -> teacher.getUser().getId())
+            .collect(Collectors.toSet());
+        Set<Long> requestedTeacherIds = new HashSet<>(request.getUserIds());
+        
+        if (!currentTeacherIds.equals(requestedTeacherIds)) {
+            log.warn("User {} (without admin role) attempted to modify teachers list for course {}", 
+                currentUser.getUtecEmail(), course.getId());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.teacher-cannot-modify-teachers")
+            );
+        }
+        
+        // Check if user is trying to change the shift
+        if (!course.getShift().equals(request.getShift())) {
+            log.warn("User {} (without admin role) attempted to change shift for course {}", 
+                currentUser.getUtecEmail(), course.getId());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.teacher-cannot-modify-shift")
+            );
+        }
+        
+        // Check if user is trying to change the start date
+        if (!course.getStartDate().equals(request.getStartDate())) {
+            log.warn("User {} (without admin role) attempted to change start date for course {}", 
+                currentUser.getUtecEmail(), course.getId());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.teacher-cannot-modify-dates")
+            );
+        }
+        
+        // Check if user is trying to change the end date
+        if (!course.getEndDate().equals(request.getEndDate())) {
+            log.warn("User {} (without admin role) attempted to change end date for course {}", 
+                currentUser.getUtecEmail(), course.getId());
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.teacher-cannot-modify-dates")
+            );
+        }
+        
+        log.debug("User {} (without admin role) validation passed for course {} update", 
+            currentUser.getUtecEmail(), course.getId());
     }
     
     /**
@@ -588,7 +625,7 @@ public class CourseServiceImpl implements CourseService {
         }
         
         // Additional validation: Teachers cannot modify shift or dates
-        validateTeacherDoesntModifyRestrictedFields(course, request);
+        validateOnlyAdministrativeUsersModifyRestrictedFields(course, request);
         
         // Validate that the course has not finished
         accessControlService.validateCourseNotExpired(id);
