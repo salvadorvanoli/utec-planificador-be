@@ -7,6 +7,7 @@ import edu.utec.planificador.entity.Modification;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.User;
+import edu.utec.planificador.enumeration.DisplayableEnum;
 import edu.utec.planificador.enumeration.ModificationType;
 import edu.utec.planificador.repository.CourseRepository;
 import edu.utec.planificador.repository.ModificationRepository;
@@ -126,31 +127,32 @@ public class ModificationServiceImpl implements ModificationService {
 
         if (!equals(oldActivity.getLearningModality(), newActivity.getLearningModality())) {
             changes.append(String.format("; la modalidad era: %s; ahora es: %s",
-                oldActivity.getLearningModality(), newActivity.getLearningModality()));
+                oldActivity.getLearningModality().getDisplayValue(), 
+                newActivity.getLearningModality().getDisplayValue()));
         }
 
         if (!oldActivity.getCognitiveProcesses().equals(newActivity.getCognitiveProcesses())) {
             changes.append(String.format("; los procesos cognitivos eran: [%s]; ahora son: [%s]",
-                oldActivity.getCognitiveProcesses().stream().map(Enum::name).collect(Collectors.joining(", ")),
-                newActivity.getCognitiveProcesses().stream().map(Enum::name).collect(Collectors.joining(", "))));
+                formatEnumCollection(oldActivity.getCognitiveProcesses()),
+                formatEnumCollection(newActivity.getCognitiveProcesses())));
         }
 
         if (!oldActivity.getTransversalCompetencies().equals(newActivity.getTransversalCompetencies())) {
             changes.append(String.format("; las competencias transversales eran: [%s]; ahora son: [%s]",
-                oldActivity.getTransversalCompetencies().stream().map(Enum::name).collect(Collectors.joining(", ")),
-                newActivity.getTransversalCompetencies().stream().map(Enum::name).collect(Collectors.joining(", "))));
+                formatEnumCollection(oldActivity.getTransversalCompetencies()),
+                formatEnumCollection(newActivity.getTransversalCompetencies())));
         }
 
         if (!oldActivity.getTeachingStrategies().equals(newActivity.getTeachingStrategies())) {
             changes.append(String.format("; las estrategias de enseñanza eran: [%s]; ahora son: [%s]",
-                oldActivity.getTeachingStrategies().stream().map(Enum::name).collect(Collectors.joining(", ")),
-                newActivity.getTeachingStrategies().stream().map(Enum::name).collect(Collectors.joining(", "))));
+                formatEnumCollection(oldActivity.getTeachingStrategies()),
+                formatEnumCollection(newActivity.getTeachingStrategies())));
         }
 
         if (!oldActivity.getLearningResources().equals(newActivity.getLearningResources())) {
             changes.append(String.format("; los recursos de aprendizaje eran: [%s]; ahora son: [%s]",
-                oldActivity.getLearningResources().stream().map(Enum::name).collect(Collectors.joining(", ")),
-                newActivity.getLearningResources().stream().map(Enum::name).collect(Collectors.joining(", "))));
+                formatEnumCollection(oldActivity.getLearningResources()),
+                formatEnumCollection(newActivity.getLearningResources())));
         }
 
         if (!equals(oldActivity.getColor(), newActivity.getColor())) {
@@ -185,6 +187,12 @@ public class ModificationServiceImpl implements ModificationService {
             return false;
         }
         return a.equals(b);
+    }
+
+    private <T extends DisplayableEnum> String formatEnumCollection(java.util.Collection<T> collection) {
+        return collection.stream()
+            .map(DisplayableEnum::getDisplayValue)
+            .collect(Collectors.joining(", "));
     }
 
     public Teacher getCurrentTeacher() {

@@ -8,6 +8,8 @@ import edu.utec.planificador.entity.Coordinator;
 import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
 import edu.utec.planificador.entity.EducationManager;
+import edu.utec.planificador.entity.Modification;
+import edu.utec.planificador.entity.OfficeHours;
 import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.RegionalTechnologicalInstitute;
@@ -19,6 +21,7 @@ import edu.utec.planificador.enumeration.CognitiveProcess;
 import edu.utec.planificador.enumeration.DeliveryFormat;
 import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
+import edu.utec.planificador.enumeration.ModificationType;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
 import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
@@ -42,6 +45,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 
 @Slf4j
@@ -422,6 +427,103 @@ public class DataSeeder implements CommandLineRunner {
         log.info("✓ Created course: {} (ID: {})", coursePrincipiosProg.getDescription(), coursePrincipiosProg.getId());
         log.info("  - Teacher: {}", userJuan.getUtecEmail());
         log.info("  - Period: {} to {}", coursePrincipiosProg.getStartDate(), coursePrincipiosProg.getEndDate());
+
+        // ========================================
+        // CREACIÓN DE OFFICE HOURS Y MODIFICACIONES
+        // ========================================
+        log.info("Creating Office Hours and Modifications for {}...", coursePrincipiosProg.getDescription());
+
+        // Crear Office Hours (Horario de consulta: Lunes 14:00-16:00)
+        OfficeHours officeHours1 = new OfficeHours(
+            LocalDate.of(2024, 3, 11),  // Semana 2
+            LocalTime.of(14, 0),
+            LocalTime.of(16, 0),
+            coursePrincipiosProg
+        );
+        coursePrincipiosProg.getOfficeHours().add(officeHours1);
+        log.info("✓ Created Office Hours: {} from {} to {}", officeHours1.getDate(), officeHours1.getStartTime(), officeHours1.getEndTime());
+
+        // Crear Office Hours adicional (Viernes 10:00-12:00)
+        OfficeHours officeHours2 = new OfficeHours(
+            LocalDate.of(2024, 3, 18),  // Semana 3
+            LocalTime.of(10, 0),
+            LocalTime.of(12, 0),
+            coursePrincipiosProg
+        );
+        coursePrincipiosProg.getOfficeHours().add(officeHours2);
+        log.info("✓ Created Office Hours: {} from {} to {}", officeHours2.getDate(), officeHours2.getStartTime(), officeHours2.getEndTime());
+
+        // Crear Modificación 1 - Creación de nueva actividad en semana 2
+        Modification modification1 = new Modification(
+            "Se creó la actividad 'Taller Práctico de Punteros'",
+            ModificationType.CREATE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification1.setModificationDate(LocalDateTime.of(2024, 3, 8, 16, 30));
+        coursePrincipiosProg.getModifications().add(modification1);
+        log.info("✓ Created Modification: {} - {}", modification1.getType().getDisplayValue(), modification1.getDescription());
+
+        // Crear Modificación 2 - Actualización de actividad (duración aumentada)
+        Modification modification2 = new Modification(
+            "Se modificó la actividad 'Lab Arrays'; la duración era: 120 minutos; ahora es: 150 minutos",
+            ModificationType.UPDATE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification2.setModificationDate(LocalDateTime.of(2024, 3, 9, 10, 15));
+        coursePrincipiosProg.getModifications().add(modification2);
+        log.info("✓ Created Modification: {} - {}", modification2.getType().getDisplayValue(), modification2.getDescription());
+
+        // Crear Modificación 3 - Actualización de contenido programático (título y color)
+        Modification modification3 = new Modification(
+            "Se modificó el contenido programático 'Punteros y Referencias'; el título era: 'Punteros y Referencias'; ahora es: 'Gestión de Memoria y Punteros'; el color era: '#C8E6C9'; ahora es: '#FFE0B2'",
+            ModificationType.UPDATE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification3.setModificationDate(LocalDateTime.of(2024, 3, 13, 14, 45));
+        coursePrincipiosProg.getModifications().add(modification3);
+        log.info("✓ Created Modification: {} - {}", modification3.getType().getDisplayValue(), modification3.getDescription());
+
+        // Crear Modificación 4 - Actualización de actividad (modalidad y procesos cognitivos)
+        Modification modification4 = new Modification(
+            "Se modificó la actividad 'Ejercicios Complejidad'; la modalidad era: Autónomo; ahora es: Presencial; los procesos cognitivos eran: [Aplicar]; ahora son: [Aplicar, Analizar]",
+            ModificationType.UPDATE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification4.setModificationDate(LocalDateTime.of(2024, 3, 16, 9, 0));
+        coursePrincipiosProg.getModifications().add(modification4);
+        log.info("✓ Created Modification: {} - {}", modification4.getType().getDisplayValue(), modification4.getDescription());
+
+        // Crear Modificación 5 - Eliminación de actividad
+        Modification modification5 = new Modification(
+            "Se eliminó la actividad 'Demo Básica Arrays'",
+            ModificationType.DELETE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification5.setModificationDate(LocalDateTime.of(2024, 3, 20, 11, 30));
+        coursePrincipiosProg.getModifications().add(modification5);
+        log.info("✓ Created Modification: {} - {}", modification5.getType().getDisplayValue(), modification5.getDescription());
+
+        // Crear Modificación 6 - Actualización de actividad (estrategias de enseñanza)
+        Modification modification6 = new Modification(
+            "Se modificó la actividad 'Lab Listas'; las estrategias de enseñanza eran: [Prácticas de laboratorio]; ahora son: [Prácticas de laboratorio, Trabajo en equipo]",
+            ModificationType.UPDATE,
+            savedTeacherJuan,
+            coursePrincipiosProg
+        );
+        modification6.setModificationDate(LocalDateTime.of(2024, 3, 22, 15, 20));
+        coursePrincipiosProg.getModifications().add(modification6);
+        log.info("✓ Created Modification: {} - {}", modification6.getType().getDisplayValue(), modification6.getDescription());
+
+        coursePrincipiosProg = courseRepository.save(coursePrincipiosProg);
+        log.info("✓ Saved {} Office Hours and {} Modifications for course {}", 
+            coursePrincipiosProg.getOfficeHours().size(), 
+            coursePrincipiosProg.getModifications().size(),
+            coursePrincipiosProg.getDescription());
 
         createWeeklyPlanningsForPrincipiosProgramacion(coursePrincipiosProg);
 
