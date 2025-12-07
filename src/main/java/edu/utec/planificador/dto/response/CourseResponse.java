@@ -64,6 +64,9 @@ public class CourseResponse {
     @Schema(description = "Curricular unit information")
     private CurricularUnitResponse curricularUnit;
 
+    @Schema(description = "Campus information")
+    private CampusResponse campus;
+
     @Schema(description = "Teachers information")
     private List<UserBasicResponse> teachers;
 }

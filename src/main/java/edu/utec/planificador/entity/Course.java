@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Getter
-@ToString(exclude = {"curricularUnit", "teachers", "weeklyPlannings", "modifications", "officeHours"})
+@ToString(exclude = {"curricularUnit", "campus", "teachers", "weeklyPlannings", "modifications", "officeHours"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -56,12 +56,13 @@ public class Course {
     @EqualsAndHashCode.Include
     private Long id;
 
-    // Constructor con campos obligatorios: shift, startDate, endDate, curricularUnit
-    public Course(Shift shift, LocalDate startDate, LocalDate endDate, CurricularUnit curricularUnit) {
+    // Constructor con campos obligatorios: shift, startDate, endDate, curricularUnit, campus
+    public Course(Shift shift, LocalDate startDate, LocalDate endDate, CurricularUnit curricularUnit, Campus campus) {
         this.shift = shift;
         this.startDate = startDate;
         this.endDate = endDate;
         this.curricularUnit = curricularUnit;
+        this.campus = campus;
         // Initialize collections to avoid null
         this.hoursPerDeliveryFormat = new HashMap<>();
         this.sustainableDevelopmentGoals = new HashSet<>();
@@ -76,13 +77,14 @@ public class Course {
 
     // Constructor completo (mantener para compatibilidad con DataSeeder)
     public Course(Shift shift, String description, LocalDate startDate, LocalDate endDate, 
-                  PartialGradingSystem partialGradingSystem, CurricularUnit curricularUnit) {
+                  PartialGradingSystem partialGradingSystem, CurricularUnit curricularUnit, Campus campus) {
         this.shift = shift;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.partialGradingSystem = partialGradingSystem;
         this.curricularUnit = curricularUnit;
+        this.campus = campus;
         // Initialize collections to avoid null
         this.hoursPerDeliveryFormat = new HashMap<>();
         this.sustainableDevelopmentGoals = new HashSet<>();
@@ -155,6 +157,12 @@ public class Course {
     @JoinColumn(name = "curricular_unit_id", nullable = false)
     @NotNull
     private CurricularUnit curricularUnit;
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "campus_id", nullable = false)
+    @NotNull
+    private Campus campus;
 
     @ManyToMany
     @JoinTable(

@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@ToString(exclude = {"programs"})
+@ToString(exclude = {"programs", "courses"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @Entity
@@ -66,4 +67,7 @@ public class Campus {
     )
     @OrderBy("name ASC")
     private List<Program> programs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "campus", fetch = FetchType.LAZY)
+    private List<Course> courses = new ArrayList<>();
 }

@@ -2,7 +2,6 @@ package edu.utec.planificador.config;
 
 import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.entity.Activity;
-import edu.utec.planificador.entity.Administrator;
 import edu.utec.planificador.entity.Analyst;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Coordinator;
@@ -16,14 +15,11 @@ import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
-import edu.utec.planificador.enumeration.AuthProvider;
 import edu.utec.planificador.enumeration.CognitiveProcess;
 import edu.utec.planificador.enumeration.DeliveryFormat;
-import edu.utec.planificador.enumeration.DomainArea;
 import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
-import edu.utec.planificador.enumeration.ProfessionalCompetency;
 import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.repository.CampusRepository;
@@ -401,7 +397,8 @@ public class DataSeeder implements CommandLineRunner {
             LocalDate.of(2024, 3, 1),
             LocalDate.of(2024, 6, 20),
             PartialGradingSystem.PGS_1,
-            ucPrincipiosProg
+            ucPrincipiosProg,
+            campusSanJose
         );
 
         // Obtener el teacher guardado desde las posiciones del userJuan
@@ -435,7 +432,8 @@ public class DataSeeder implements CommandLineRunner {
             LocalDate.of(2024, 3, 1),
             LocalDate.of(2024, 6, 20),
             PartialGradingSystem.PGS_2,
-            ucFundamentosProg
+            ucFundamentosProg,
+            campusDurazno
         );
 
         // Obtener el teacher guardado desde las posiciones del userCarlos

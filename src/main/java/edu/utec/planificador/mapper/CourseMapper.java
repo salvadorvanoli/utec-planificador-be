@@ -17,6 +17,7 @@ import java.util.List;
 public class CourseMapper {
 
     private final CurricularUnitMapper curricularUnitMapper;
+    private final CampusMapper campusMapper;
     private final UserMapper userMapper;
 
     /**
@@ -47,6 +48,7 @@ public class CourseMapper {
             .sustainableDevelopmentGoals(course.getSustainableDevelopmentGoals())
             .universalDesignLearningPrinciples(course.getUniversalDesignLearningPrinciples())
             .curricularUnit(curricularUnit)
+            .campus(campusMapper.toSimplifiedResponse(course.getCampus()))
             .teachers(teachers)
             .build();
     }
@@ -84,6 +86,7 @@ public class CourseMapper {
             .curricularUnitName(course.getCurricularUnit().getName())
             .termName(course.getCurricularUnit().getTerm().getDisplayName())
             .programName(course.getCurricularUnit().getTerm().getProgram().getName())
+            .campusName(course.getCampus().getName())
             .teachers(teachers)
             .lastModificationDate(lastModificationDate)
             .build();
