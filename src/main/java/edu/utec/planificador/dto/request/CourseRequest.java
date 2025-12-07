@@ -70,6 +70,10 @@ public class CourseRequest {
     @NotNull(message = "{validation.course.curricularUnitId.required}")
     private Long curricularUnitId;
 
+    @Schema(description = "Campus ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "{validation.course.campusId.required}")
+    private Long campusId;
+
     @Schema(description = "User (teacher) IDs", example = "[1, 2]", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "{validation.course.userIds.required}")
     @Size(min = 1, message = "{validation.course.userIds.notEmpty}")

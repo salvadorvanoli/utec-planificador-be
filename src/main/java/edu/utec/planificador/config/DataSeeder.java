@@ -2,7 +2,6 @@ package edu.utec.planificador.config;
 
 import edu.utec.planificador.datatype.PersonalData;
 import edu.utec.planificador.entity.Activity;
-import edu.utec.planificador.entity.Administrator;
 import edu.utec.planificador.entity.Analyst;
 import edu.utec.planificador.entity.Campus;
 import edu.utec.planificador.entity.Coordinator;
@@ -16,14 +15,11 @@ import edu.utec.planificador.entity.Teacher;
 import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
-import edu.utec.planificador.enumeration.AuthProvider;
 import edu.utec.planificador.enumeration.CognitiveProcess;
 import edu.utec.planificador.enumeration.DeliveryFormat;
-import edu.utec.planificador.enumeration.DomainArea;
 import edu.utec.planificador.enumeration.LearningModality;
 import edu.utec.planificador.enumeration.LearningResource;
 import edu.utec.planificador.enumeration.PartialGradingSystem;
-import edu.utec.planificador.enumeration.ProfessionalCompetency;
 import edu.utec.planificador.enumeration.Shift;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.repository.CampusRepository;
@@ -202,10 +198,15 @@ public class DataSeeder implements CommandLineRunner {
         campusSanJose = campusRepository.save(campusSanJose);
         log.info("✓ Associated {} to Campus {}", progTecInformatica.getName(), campusSanJose.getName());
 
-        // Asociar programa también al campus Maldonado
-        campusMaldonado.getPrograms().add(progTecInformatica);
-        campusMaldonado = campusRepository.save(campusMaldonado);
-        log.info("✓ Associated {} to Campus {}", progTecInformatica.getName(), campusMaldonado.getName());
+        // Licenciatura en Tecnologías de la Información - 360 créditos
+        Program progLicTI = new Program("Licenciatura en Tecnologías de la Información", 8, 360);
+        progLicTI = programRepository.save(progLicTI);
+        log.info("✓ Created Program: {} ({} créditos)", progLicTI.getName(), progLicTI.getTotalCredits());
+
+        // Asociar programa al campus Durazno
+        campusDurazno.getPrograms().add(progLicTI);
+        campusDurazno = campusRepository.save(campusDurazno);
+        log.info("✓ Associated {} to Campus {}", progLicTI.getName(), campusDurazno.getName());
 
         // ========================================
         // CREACIÓN DE TÉRMINOS Y UNIDADES CURRICULARES
@@ -259,6 +260,22 @@ public class DataSeeder implements CommandLineRunner {
 
         log.info("✓ Created {} curricular units for {}", 9, progTecInformatica.getName());
 
+        // Términos y Unidades Curriculares para Licenciatura en TI
+        log.info("Creating Terms and Curricular Units for {}...", progLicTI.getName());
+
+        Term termLic1 = new Term(1, progLicTI);
+        termLic1 = termRepository.save(termLic1);
+
+        CurricularUnit ucIntroPerspectivas = new CurricularUnit("Introducción y Perspectivas de las TI", 2, termLic1);
+        ucIntroPerspectivas = curricularUnitRepository.save(ucIntroPerspectivas);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucIntroPerspectivas.getName(), ucIntroPerspectivas.getCredits());
+
+        CurricularUnit ucFundamentosProg = new CurricularUnit("Fundamentos e Introducción a la Programación", 10, termLic1);
+        ucFundamentosProg = curricularUnitRepository.save(ucFundamentosProg);
+        log.info("  ✓ Created UC: {} ({} créditos)", ucFundamentosProg.getName(), ucFundamentosProg.getCredits());
+
+        log.info("✓ Created {} curricular units for {}", 2, progLicTI.getName());
+
         // ========================================
         // CREACIÓN DE USUARIOS
         // ========================================
@@ -283,11 +300,10 @@ public class DataSeeder implements CommandLineRunner {
         // Crear posición de docente en San José
         Teacher teacherJuan = new Teacher(userJuan);
         teacherJuan.addCampus(campusSanJose);
-        teacherJuan.addCampus(campusMaldonado);
         userJuan.addPosition(teacherJuan);
 
         userJuan = userRepository.save(userJuan);
-        log.info("✓ User Juan Pérez assigned as Teacher at Campuses: {}, {}", campusSanJose.getName(), campusMaldonado.getName());
+        log.info("✓ User Juan Pérez assigned as Teacher at Campus: {}", campusSanJose.getName());
 
         // Usuario con múltiples roles
         PersonalData personalDataMaria = new PersonalData();
@@ -306,23 +322,69 @@ public class DataSeeder implements CommandLineRunner {
         userMaria = userRepository.save(userMaria);
         log.info("✓ Created user: {} (ID: {})", userMaria.getUtecEmail(), userMaria.getId());
 
-        // Crear posición de Analista
+        // Crear posición de Analista en San José
         Analyst analystMaria = new Analyst(userMaria);
         analystMaria.addCampus(campusSanJose);
         userMaria.addPosition(analystMaria);
 
-        // Crear posición de Referente de Educación
-        EducationManager educationManagerMaria = new EducationManager(userMaria);
-        educationManagerMaria.addCampus(campusSanJose);
-        userMaria.addPosition(educationManagerMaria);
-
-        // Crear posición de Coordinador
+        // Crear posición de Coordinador en San José
         Coordinator coordinatorMaria = new Coordinator(userMaria);
         coordinatorMaria.addCampus(campusSanJose);
         userMaria.addPosition(coordinatorMaria);
 
         userMaria = userRepository.save(userMaria);
-        log.info("✓ User María González assigned as Analyst, Education Manager and Coordinator at Campus: {}", campusSanJose.getName());
+        log.info("✓ User María González assigned as Analyst and Coordinator at Campus: {}", campusSanJose.getName());
+
+        // Nuevo docente para Licenciatura en TI
+        PersonalData personalDataCarlos = new PersonalData();
+        personalDataCarlos.setName("Carlos");
+        personalDataCarlos.setLastName("Rodríguez");
+        personalDataCarlos.setIdentityDocument("98765432");
+        personalDataCarlos.setPhoneNumber("099876543");
+        personalDataCarlos.setCountry("Uruguay");
+        personalDataCarlos.setCity("Durazno");
+
+        User userCarlos = new User(
+            "carlos.rodriguez@utec.edu.uy",
+            passwordEncoder.encode("password123"),
+            personalDataCarlos
+        );
+        userCarlos = userRepository.save(userCarlos);
+        log.info("✓ Created user: {} (ID: {})", userCarlos.getUtecEmail(), userCarlos.getId());
+
+        // Crear posición de docente en Durazno
+        Teacher teacherCarlos = new Teacher(userCarlos);
+        teacherCarlos.addCampus(campusDurazno);
+        userCarlos.addPosition(teacherCarlos);
+
+        userCarlos = userRepository.save(userCarlos);
+        log.info("✓ User Carlos Rodríguez assigned as Teacher at Campus: {}", campusDurazno.getName());
+
+        // Nuevo usuario como Referente de Educación
+        PersonalData personalDataLaura = new PersonalData();
+        personalDataLaura.setName("Laura");
+        personalDataLaura.setLastName("Martínez");
+        personalDataLaura.setIdentityDocument("45678901");
+        personalDataLaura.setPhoneNumber("099456789");
+        personalDataLaura.setCountry("Uruguay");
+        personalDataLaura.setCity("San José");
+
+        User userLaura = new User(
+            "laura.martinez@utec.edu.uy",
+            passwordEncoder.encode("password123"),
+            personalDataLaura
+        );
+        userLaura = userRepository.save(userLaura);
+        log.info("✓ Created user: {} (ID: {})", userLaura.getUtecEmail(), userLaura.getId());
+
+        // Crear posición de Referente de Educación en San José y Durazno
+        EducationManager educationManagerLaura = new EducationManager(userLaura);
+        educationManagerLaura.addCampus(campusSanJose);
+        educationManagerLaura.addCampus(campusDurazno);
+        userLaura.addPosition(educationManagerLaura);
+
+        userLaura = userRepository.save(userLaura);
+        log.info("✓ User Laura Martínez assigned as Education Manager at Campuses: {}, {}", campusSanJose.getName(), campusDurazno.getName());
 
         // ========================================
         // CREACIÓN DE CURSO
@@ -335,7 +397,8 @@ public class DataSeeder implements CommandLineRunner {
             LocalDate.of(2024, 3, 1),
             LocalDate.of(2024, 6, 20),
             PartialGradingSystem.PGS_1,
-            ucPrincipiosProg
+            ucPrincipiosProg,
+            campusSanJose
         );
 
         // Obtener el teacher guardado desde las posiciones del userJuan
@@ -362,6 +425,39 @@ public class DataSeeder implements CommandLineRunner {
 
         createWeeklyPlanningsForPrincipiosProgramacion(coursePrincipiosProg);
 
+        // Curso virtual para Licenciatura en TI
+        Course courseFundamentosProg = new Course(
+            Shift.EVENING,
+            "Fundamentos e Introducción a la Programación - Grupo 1",
+            LocalDate.of(2024, 3, 1),
+            LocalDate.of(2024, 6, 20),
+            PartialGradingSystem.PGS_2,
+            ucFundamentosProg,
+            campusDurazno
+        );
+
+        // Obtener el teacher guardado desde las posiciones del userCarlos
+        final Campus finalCampusDurazno = campusDurazno;
+        Teacher savedTeacherCarlos = (Teacher) userCarlos.getPositions().stream()
+            .filter(p -> p instanceof Teacher && p.getCampuses().contains(finalCampusDurazno))
+            .findFirst()
+            .orElseThrow();
+
+        courseFundamentosProg.getTeachers().add(savedTeacherCarlos);
+        courseFundamentosProg.getHoursPerDeliveryFormat().put(DeliveryFormat.VIRTUAL, 100);
+        courseFundamentosProg.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_4);
+        courseFundamentosProg.getSustainableDevelopmentGoals().add(SustainableDevelopmentGoal.SDG_9);
+        courseFundamentosProg.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_REPRESENTATION);
+        courseFundamentosProg.getUniversalDesignLearningPrinciples().add(UniversalDesignLearningPrinciple.MEANS_OF_ENGAGEMENT);
+        courseFundamentosProg.setIsRelatedToInvestigation(true);
+        courseFundamentosProg.setInvolvesActivitiesWithProductiveSector(true);
+
+        courseFundamentosProg = courseRepository.save(courseFundamentosProg);
+        log.info("✓ Created course: {} (ID: {})", courseFundamentosProg.getDescription(), courseFundamentosProg.getId());
+        log.info("  - Teacher: {}", userCarlos.getUtecEmail());
+        log.info("  - Period: {} to {}", courseFundamentosProg.getStartDate(), courseFundamentosProg.getEndDate());
+        log.info("  - Modality: Virtual");
+
         // ========================================
         // RESUMEN FINAL
         // ========================================
@@ -378,16 +474,24 @@ public class DataSeeder implements CommandLineRunner {
         log.info("");
         log.info("🎓 PROGRAMS:");
         log.info("   • Tecnólogo en Informática (252 créditos)");
-        log.info("     - Campuses: San José, Maldonado");
+        log.info("     - Campus: San José");
         log.info("     - 9 Unidades Curriculares distribuidas en 2 términos");
+        log.info("   • Licenciatura en Tecnologías de la Información (360 créditos)");
+        log.info("     - Campus: Durazno");
         log.info("");
         log.info("👥 USERS:");
         log.info("   • Juan Pérez (juan.perez@utec.edu.uy)");
         log.info("     - Password: password123");
-        log.info("     - Role: Teacher at Campuses San José and Maldonado");
+        log.info("     - Role: Teacher at Campus San José");
         log.info("   • María González (maria.gonzalez@utec.edu.uy)");
         log.info("     - Password: password123");
-        log.info("     - Roles: Analyst, Education Manager, Coordinator at Campus San José");
+        log.info("     - Roles: Analyst, Coordinator at Campus San José");
+        log.info("   • Carlos Rodríguez (carlos.rodriguez@utec.edu.uy)");
+        log.info("     - Password: password123");
+        log.info("     - Role: Teacher at Campus Durazno");
+        log.info("   • Laura Martínez (laura.martinez@utec.edu.uy)");
+        log.info("     - Password: password123");
+        log.info("     - Role: Education Manager at Campuses San José and Durazno");
         log.info("");
         log.info("==================================================");
 

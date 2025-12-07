@@ -41,6 +41,9 @@ public class CourseBasicResponse {
     @Schema(description = "Program name", example = "Ingeniería en Sistemas")
     private String programName;
 
+    @Schema(description = "Campus name", example = "UTEC Rivera")
+    private String campusName;
+
     @Schema(description = "List of teachers assigned to this course")
     private List<UserBasicResponse> teachers;
 

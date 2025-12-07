@@ -63,32 +63,21 @@ public class AccessControlServiceImpl implements AccessControlService {
             ));
 
         User currentUser = getCurrentUser();
-        CurricularUnit curricularUnit = course.getCurricularUnit();
-        Term term = curricularUnit.getTerm();
-        Program program = term.getProgram();
-
-        // Get campuses where this program is offered
-        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
-
-        if (programCampuses.isEmpty()) {
-            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
-        }
-
-        Set<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .collect(Collectors.toSet());
+        
+        // Use direct campus relationship from course
+        Campus courseCampus = course.getCampus();
+        Long courseCampusId = courseCampus.getId();
+        Long courseRtiId = courseCampus.getRegionalTechnologicalInstitute().getId();
 
         Set<Long> userCampusIds = getUserCampusIds();
         Set<Long> userRtiIds = getUserRtiIds();
 
-        // First check: User must have access to the campus/RTI where the course belongs
-        boolean hasCampusAccess = programCampusIds.stream().anyMatch(userCampusIds::contains) ||
-                                  programCampuses.stream()
-                                      .anyMatch(campus -> userRtiIds.contains(campus.getRegionalTechnologicalInstitute().getId()));
+        // First check: User must have access to the campus/RTI where the course is offered
+        boolean hasCampusAccess = userCampusIds.contains(courseCampusId) || userRtiIds.contains(courseRtiId);
 
         if (!hasCampusAccess) {
-            log.warn("User {} attempted to access course {} without campus access",
-                currentUser.getUtecEmail(), courseId);
+            log.warn("User {} attempted to access course {} without campus access (course campus: {})",
+                currentUser.getUtecEmail(), courseId, courseCampus.getName());
             throw new ForbiddenException(
                 messageService.getMessage("error.access.no-course-access")
             );
@@ -485,22 +474,11 @@ public class AccessControlServiceImpl implements AccessControlService {
                 messageService.getMessage("error.course.not-found")
             ));
 
-        CurricularUnit curricularUnit = course.getCurricularUnit();
-        Term term = curricularUnit.getTerm();
-        Program program = term.getProgram();
+        // Get course's campus directly from the new relationship
+        Campus courseCampus = course.getCampus();
+        Long courseCampusId = courseCampus.getId();
 
-        // Get campuses where this program is offered
-        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
-
-        if (programCampuses.isEmpty()) {
-            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
-        }
-
-        Set<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .collect(Collectors.toSet());
-
-        // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
+        // Get user's active positions with ANALYST or COORDINATOR roles in the course's campus
         User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
 
@@ -509,7 +487,7 @@ public class AccessControlServiceImpl implements AccessControlService {
             .filter(position -> position.getRole() == Role.ANALYST || position.getRole() == Role.COORDINATOR)
             .flatMap(position -> position.getCampuses().stream())
             .map(Campus::getId)
-            .anyMatch(programCampusIds::contains);
+            .anyMatch(campusId -> campusId.equals(courseCampusId));
 
         // Check if user is a teacher of this course
         boolean isTeacherOfCourse = course.getTeachers().stream()
@@ -541,22 +519,11 @@ public class AccessControlServiceImpl implements AccessControlService {
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("error.course.not-found")));
 
-        CurricularUnit curricularUnit = course.getCurricularUnit();
-        Term term = curricularUnit.getTerm();
-        Program program = term.getProgram();
+        // Get course's campus directly from the new relationship
+        Campus courseCampus = course.getCampus();
+        Long courseCampusId = courseCampus.getId();
 
-        // Get campuses where this program is offered
-        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
-
-        if (programCampuses.isEmpty()) {
-            throw new ForbiddenException(messageService.getMessage("error.access.no-campuses"));
-        }
-
-        Set<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .collect(Collectors.toSet());
-
-        // Get user's active positions with ANALYST or COORDINATOR roles in the relevant campuses
+        // Get user's active positions with ANALYST or COORDINATOR roles in the course's campus
         User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
 
@@ -565,7 +532,7 @@ public class AccessControlServiceImpl implements AccessControlService {
             .filter(position -> position.getRole() == Role.ANALYST || position.getRole() == Role.COORDINATOR)
             .flatMap(position -> position.getCampuses().stream())
             .map(Campus::getId)
-            .anyMatch(programCampusIds::contains);
+            .anyMatch(campusId -> campusId.equals(courseCampusId));
 
         // Only users with ANALYST or COORDINATOR roles can delete courses
         // Teachers are NOT allowed to delete courses

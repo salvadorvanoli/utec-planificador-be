@@ -15,10 +15,8 @@ import edu.utec.planificador.entity.Course;
 import edu.utec.planificador.entity.CurricularUnit;
 import edu.utec.planificador.entity.OfficeHours;
 import edu.utec.planificador.entity.Position;
-import edu.utec.planificador.entity.Program;
 import edu.utec.planificador.entity.ProgrammaticContent;
 import edu.utec.planificador.entity.Teacher;
-import edu.utec.planificador.entity.Term;
 import edu.utec.planificador.entity.User;
 import edu.utec.planificador.entity.WeeklyPlanning;
 import edu.utec.planificador.enumeration.DeliveryFormat;
@@ -93,19 +91,26 @@ public class CourseServiceImpl implements CourseService {
                 messageService.getMessage("error.curricular-unit.not-found")
             ));
         
-        Long programId = curricularUnit.getTerm().getProgram().getId();
-        List<Campus> programCampuses = campusRepository.findByProgram(programId);
+        // Validate that the specified campus exists
+        Campus campus = campusRepository.findById(request.getCampusId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.campus.not-found")
+            ));
         
-        if (programCampuses.isEmpty()) {
-            throw new IllegalStateException(messageService.getMessage("error.course.program-no-campuses"));
+        // Validate that the program is offered at the specified campus
+        Long programId = curricularUnit.getTerm().getProgram().getId();
+        boolean programOfferedAtCampus = campus.getPrograms().stream()
+            .anyMatch(program -> program.getId().equals(programId));
+        
+        if (!programOfferedAtCampus) {
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.program-not-offered-at-campus")
+            );
         }
         
-        List<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .toList();
+        log.debug("Validated that program {} is offered at campus {}", programId, campus.getId());
         
-        log.debug("Curricular unit's program is offered at {} campus(es): {}", programCampuses.size(), programCampusIds);
-        
+        // Validate teachers
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
@@ -117,50 +122,27 @@ public class CourseServiceImpl implements CourseService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher")));
             
-            boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
-                .anyMatch(campus -> programCampusIds.contains(campus.getId()));
+            // Validate that the teacher belongs to the specified campus
+            boolean teacherBelongsToCampus = teacher.getCampuses().stream()
+                .anyMatch(c -> c.getId().equals(request.getCampusId()));
             
-            if (!teacherBelongsToValidCampus) {
+            if (!teacherBelongsToCampus) {
                 throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teacher-wrong-campus")
+                    messageService.getMessage("error.course.teacher-not-in-campus")
                 );
             }
             
             teachers.add(teacher);
         }
         
-        log.debug("Validated {} teacher(s) for course", teachers.size());
-        
-        // If multiple teachers, validate they share at least one common campus within the program's campuses
-        if (teachers.size() > 1) {
-            Set<Long> commonCampusIds = teachers.get(0).getCampuses().stream()
-                .map(Campus::getId)
-                .filter(programCampusIds::contains)
-                .collect(Collectors.toSet());
-            
-            for (int i = 1; i < teachers.size(); i++) {
-                Set<Long> teacherCampusIds = teachers.get(i).getCampuses().stream()
-                    .map(Campus::getId)
-                    .filter(programCampusIds::contains)
-                    .collect(Collectors.toSet());
-                
-                commonCampusIds.retainAll(teacherCampusIds);
-            }
-            
-            if (commonCampusIds.isEmpty()) {
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teachers-no-common-campus")
-                );
-            }
-            
-            log.debug("Teachers share {} common campus(es): {}", commonCampusIds.size(), commonCampusIds);
-        }
+        log.debug("Validated {} teacher(s) for course at campus {}", teachers.size(), campus.getId());
         
         Course course = new Course(
             request.getShift(),
             request.getStartDate(),
             request.getEndDate(),
-            curricularUnit
+            curricularUnit,
+            campus
         );
         
         if (request.getDescription() != null && !request.getDescription().isBlank()) {
@@ -498,22 +480,15 @@ public class CourseServiceImpl implements CourseService {
         User currentUser = userRepository.findByUtecEmail(authentication.getName())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.current-not-found")));
         
-        // Get course's campus information
-        CurricularUnit curricularUnit = course.getCurricularUnit();
-        Term term = curricularUnit.getTerm();
-        Program program = term.getProgram();
-        
-        // Get campuses where this program is offered
-        List<Campus> programCampuses = campusRepository.findByProgram(program.getId());
-        Set<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .collect(Collectors.toSet());
+        // Get course's campus directly from the new relationship
+        Campus courseCampus = course.getCampus();
+        Long courseCampusId = courseCampus.getId();
         
         // Load full user with positions to check administrative roles
         User fullUser = userRepository.findByIdWithPositions(currentUser.getId())
             .orElseThrow(() -> new RuntimeException(messageService.getMessage("error.user.not-found", currentUser.getId())));
         
-        // Check if user has administrative roles (COORDINATOR, ANALYST, EDUCATION_MANAGER) in relevant campuses
+        // Check if user has administrative roles (COORDINATOR, ANALYST) in the course's campus
         boolean hasAdminRoleInCourseCampus = fullUser.getPositions().stream()
             .filter(Position::getIsActive)
             .filter(position -> 
@@ -522,7 +497,7 @@ public class CourseServiceImpl implements CourseService {
             )
             .flatMap(position -> position.getCampuses().stream())
             .map(Campus::getId)
-            .anyMatch(programCampusIds::contains);
+            .anyMatch(campusId -> campusId.equals(courseCampusId));
         
         // If user has administrative roles, they can modify restricted fields - skip validation
         if (hasAdminRoleInCourseCampus) {
@@ -655,22 +630,26 @@ public class CourseServiceImpl implements CourseService {
             );
         }
         
-        // Validate and update teachers
-        Long programId = curricularUnit.getTerm().getProgram().getId();
-        List<Campus> programCampuses = campusRepository.findByProgram(programId);
+        // Validate that the specified campus exists
+        Campus campus = campusRepository.findById(request.getCampusId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageService.getMessage("error.campus.not-found")
+            ));
         
-        if (programCampuses.isEmpty()) {
-            throw new IllegalStateException(
-                messageService.getMessage("error.course.program-no-campuses")
+        // Validate that the program is offered at the specified campus
+        Long programId = curricularUnit.getTerm().getProgram().getId();
+        boolean programOfferedAtCampus = campus.getPrograms().stream()
+            .anyMatch(program -> program.getId().equals(programId));
+        
+        if (!programOfferedAtCampus) {
+            throw new IllegalArgumentException(
+                messageService.getMessage("error.course.program-not-offered-at-campus")
             );
         }
         
-        List<Long> programCampusIds = programCampuses.stream()
-            .map(Campus::getId)
-            .toList();
+        log.debug("Validated that program {} is offered at campus {} for course update", programId, campus.getId());
         
-        log.debug("Validating teachers for program offered at {} campus(es): {}", programCampuses.size(), programCampusIds);
-        
+        // Validate and update teachers
         List<Teacher> teachers = new ArrayList<>();
         for (Long userId : request.getUserIds()) {
             User user = userRepository.findByIdWithPositions(userId)
@@ -682,45 +661,20 @@ public class CourseServiceImpl implements CourseService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(messageService.getMessage("error.course.user-not-teacher")));
             
-            boolean teacherBelongsToValidCampus = teacher.getCampuses().stream()
-                .anyMatch(campus -> programCampusIds.contains(campus.getId()));
+            // Validate that the teacher belongs to the specified campus
+            boolean teacherBelongsToCampus = teacher.getCampuses().stream()
+                .anyMatch(c -> c.getId().equals(request.getCampusId()));
             
-            if (!teacherBelongsToValidCampus) {
+            if (!teacherBelongsToCampus) {
                 throw new IllegalArgumentException(
-                    String.format("Teacher with id %d does not belong to any campus where this program is offered. Required campuses: %s", 
-                    userId, programCampusIds)
+                    messageService.getMessage("error.course.teacher-not-in-campus")
                 );
             }
             
             teachers.add(teacher);
         }
         
-        log.debug("Validated {} teacher(s) for course update", teachers.size());
-        
-        // If multiple teachers, validate they share at least one common campus within the program's campuses
-        if (teachers.size() > 1) {
-            Set<Long> commonCampusIds = teachers.get(0).getCampuses().stream()
-                .map(Campus::getId)
-                .filter(programCampusIds::contains)
-                .collect(Collectors.toSet());
-            
-            for (int i = 1; i < teachers.size(); i++) {
-                Set<Long> teacherCampusIds = teachers.get(i).getCampuses().stream()
-                    .map(Campus::getId)
-                    .filter(programCampusIds::contains)
-                    .collect(Collectors.toSet());
-                
-                commonCampusIds.retainAll(teacherCampusIds);
-            }
-            
-            if (commonCampusIds.isEmpty()) {
-                throw new IllegalArgumentException(
-                    messageService.getMessage("error.course.teachers-no-common-campus")
-                );
-            }
-            
-            log.debug("Teachers share {} common campus(es): {}", commonCampusIds.size(), commonCampusIds);
-        }
+        log.debug("Validated {} teacher(s) for course update at campus {}", teachers.size(), campus.getId());
         
         // Clear planning if all teachers were replaced
         if (shouldClearPlanning) {
@@ -736,6 +690,7 @@ public class CourseServiceImpl implements CourseService {
         course.setIsRelatedToInvestigation(request.getIsRelatedToInvestigation());
         course.setInvolvesActivitiesWithProductiveSector(request.getInvolvesActivitiesWithProductiveSector());
         course.setCurricularUnit(curricularUnit);
+        course.setCampus(campus);
         
         // Update teachers
         course.getTeachers().clear();
@@ -1104,13 +1059,12 @@ public class CourseServiceImpl implements CourseService {
             throw new ResourceNotFoundException(messageService.getMessage("error.curricular-unit.not-found"));
         }
 
-        // Find the teacher position
-        Teacher teacher = (Teacher) teacherUser.getPositions().stream()
-            .filter(p -> p instanceof Teacher)
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException(
-                messageService.getMessage("error.course.user-not-teacher")
-            ));
+        // Validate that the user has a teacher position
+        boolean isTeacher = teacherUser.getPositions().stream()
+            .anyMatch(p -> p instanceof Teacher);
+        if (!isTeacher) {
+            throw new IllegalStateException(messageService.getMessage("error.course.user-not-teacher"));
+        }
 
         // Get all courses where this teacher is assigned AND the curricular unit matches
         List<Course> courses = courseRepository.findAll(
@@ -1119,35 +1073,23 @@ public class CourseServiceImpl implements CourseService {
             .filter(course -> course.getCurricularUnit().getId().equals(curricularUnitId))
             .toList();
 
-        // Build response with formatted display names
+        // Build response with formatted display names using the course's specific campus
         List<TeacherCourseResponse> response = courses.stream()
-            .flatMap(course -> {
-                if (course.getCurricularUnit().getTerm() == null || course.getCurricularUnit().getTerm().getProgram() == null) {
-                    return java.util.stream.Stream.empty();
-                }
+            .map(course -> {
+                String curricularUnitName = course.getCurricularUnit().getName();
+                String period = course.getPeriod();
+                Campus courseCampus = course.getCampus();
+                String campusName = courseCampus.getName();
+                String displayName = String.format("%s - %s - %s", curricularUnitName, period, campusName);
 
-                Long programId = course.getCurricularUnit().getTerm().getProgram().getId();
-                List<Campus> programCampuses = campusRepository.findByProgram(programId);
-
-                // Filter teacher's campuses that offer this program
-                return teacher.getCampuses().stream()
-                    .filter(campus -> programCampuses.stream()
-                        .anyMatch(pc -> pc.getId().equals(campus.getId())))
-                    .map(campus -> {
-                        String curricularUnitName = course.getCurricularUnit().getName();
-                        String period = course.getPeriod();
-                        String campusName = campus.getName();
-                        String displayName = String.format("%s - %s - %s", curricularUnitName, period, campusName);
-
-                        return TeacherCourseResponse.builder()
-                            .teacherId(teacherId)
-                            .courseId(course.getId())
-                            .displayName(displayName)
-                            .curricularUnitName(curricularUnitName)
-                            .period(period)
-                            .campusName(campusName)
-                            .build();
-                    });
+                return TeacherCourseResponse.builder()
+                    .teacherId(teacherId)
+                    .courseId(course.getId())
+                    .displayName(displayName)
+                    .curricularUnitName(curricularUnitName)
+                    .period(period)
+                    .campusName(campusName)
+                    .build();
             })
             .sorted((a, b) -> a.getDisplayName().compareTo(b.getDisplayName()))
             .toList();
