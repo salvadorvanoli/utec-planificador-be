@@ -817,11 +817,7 @@ public class CourseServiceImpl implements CourseService {
             CourseSpecification.withFilters(currentUser.getId(), campusId, null, null)
         );
 
-        // Exclude courses whose endDate is after today
-        LocalDate today = LocalDate.now();
-        List<Course> visibleCourses = courses.stream()
-            .filter(c -> c.getEndDate() == null || !c.getEndDate().isAfter(today))
-            .toList();
+        List<Course> visibleCourses = courses.stream().toList();
 
         List<CourseBriefResponse> brief = visibleCourses.stream()
             .map(course -> CourseBriefResponse.builder()

@@ -2,10 +2,7 @@ package edu.utec.planificador.service;
 
 import edu.utec.planificador.dto.aiagent.AIReportRequest.CourseStatisticsDto;
 import edu.utec.planificador.dto.request.CourseRequest;
-import edu.utec.planificador.dto.response.CourseBasicResponse;
-import edu.utec.planificador.dto.response.CoursePdfDataResponse;
-import edu.utec.planificador.dto.response.CourseResponse;
-import edu.utec.planificador.dto.response.PeriodResponse;
+import edu.utec.planificador.dto.response.*;
 import edu.utec.planificador.enumeration.SustainableDevelopmentGoal;
 import edu.utec.planificador.enumeration.UniversalDesignLearningPrinciple;
 import org.springframework.data.domain.Page;
@@ -28,7 +25,7 @@ public interface CourseService {
     // Returns brief course info (id, curricular unit name, start date, shift) for the current user in a campus
     // If courseId is provided, validates that the course belongs to the current user's courses in that campus,
     // otherwise throws a ForbiddenException or ResourceNotFoundException as appropriate.
-    java.util.List<edu.utec.planificador.dto.response.CourseBriefResponse> getCoursesForCurrentUserInCampus(Long campusId, Long courseId);
+    List<CourseBriefResponse> getCoursesForCurrentUserInCampus(Long campusId, Long courseId);
 
     List<PeriodResponse> getPeriods(Long campusId, Long userId);
 
